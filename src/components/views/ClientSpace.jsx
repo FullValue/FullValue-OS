@@ -1,0 +1,784 @@
+import { useState } from 'react'
+import {
+  Plus, Settings, LayoutDashboard, Kanban, FileText, Paperclip,
+  Timer, Receipt, Trash2, Archive, Check, X, ExternalLink,
+  CheckSquare, Clock, StickyNote, Calendar, Upload,
+} from 'lucide-react'
+import { useStore } from '@/store/useStore'
+import ViewContainer from '@/views/ViewContainer'
+import Drawer from '@/components/ui/Drawer'
+import FileUploader from '@/components/files/FileUploader'
+import FilePreview from '@/components/files/FilePreview'
+import YouTubeThumbnail from '@/components/youtube/YouTubeThumbnail'
+import YouTubeEmbed from '@/components/youtube/YouTubeEmbed'
+import AddYouTubeForm from '@/components/youtube/AddYouTubeForm'
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const ACCENT_COLORS = [
+  '#8B7CFF', '#A8E6BD', '#FFD66B', '#FFB088',
+  '#F87171', '#FFC1E0', '#A8D4F0', '#7DD3D8',
+]
+
+const STATUS_LABELS = {
+  prospect: { label: 'Prospect', color: '#A8D4F0' },
+  onboarding: { label: 'Onboarding', color: '#FFD66B' },
+  active: { label: 'Actif', color: '#A8E6BD' },
+  paused: { label: 'Pause', color: '#FFB088' },
+  completed: { label: 'Terminé', color: '#8B7CFF' },
+  archived: { label: 'Archivé', color: '#5C5A58' },
+}
+
+const ACTIVITY_TYPES = ['E-commerce', 'Service B2B', 'Santé', 'Restauration', 'Retail', 'Tech', 'Immobilier', 'Autre']
+
+const CLIENT_TABS = [
+  { id: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+  { id: 'kanban', label: 'Kanban', Icon: Kanban },
+  { id: 'notes', label: 'Notes', Icon: FileText },
+  { id: 'hub', label: 'Hub Docs', Icon: Paperclip },
+  { id: 'sessions', label: 'Sessions', Icon: Timer },
+  { id: 'facturation', label: 'Facturation', Icon: Receipt },
+]
+
+const DOC_TYPES = ['doc', 'pdf', 'lien', 'spreadsheet', 'design']
+const DOC_ICONS = { doc: '📝', pdf: '📕', lien: '🔗', spreadsheet: '📊', design: '🎨' }
+
+const INVOICE_STATUSES = {
+  to_emit: { label: 'À émettre', color: '#FFD66B' },
+  sent: { label: 'Envoyée', color: '#A8D4F0' },
+  paid: { label: 'Payée', color: '#A8E6BD' },
+  overdue: { label: 'En retard', color: '#F87171' },
+}
+
+function formatDuration(s) {
+  if (!s) return '0m'
+  const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60)
+  return h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`
+}
+
+function formatMoney(n) {
+  return n?.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }) ?? '0 €'
+}
+
+function getWeekStart() {
+  const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d
+}
+function getMonthStart() {
+  const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d
+}
+
+// ─── Stat Widget ──────────────────────────────────────────────────────────────
+
+function Widget({ icon, label, main, sub, accent, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="rounded-xl p-4 text-left w-full transition-all hover:scale-[1.02] focus:outline-none"
+      style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-base">{icon}</span>
+        <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">{label}</span>
+      </div>
+      <p className="font-mono text-2xl font-semibold leading-none" style={{ color: accent }}>{main}</p>
+      <p className="text-[11px] text-white/30 mt-1">{sub}</p>
+    </button>
+  )
+}
+
+// ─── Dashboard Tab ────────────────────────────────────────────────────────────
+
+function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, clientInvoices, appointments, onTabChange, accent }) {
+  const weekStart = getWeekStart()
+  const clientTasks = tasks.filter(t => t.clientId === client.id && t.status !== 'done')
+  const totalTasks = tasks.filter(t => t.clientId === client.id)
+  const clientSessions = sessions.filter(s => s.clientId === client.id)
+  const weekTime = clientSessions.filter(s => new Date(s.date) >= weekStart).reduce((a, s) => a + s.duration, 0)
+  const notes = clientNotes.filter(n => n.clientId === client.id)
+  const docs = clientDocuments.filter(d => d.clientId === client.id)
+  const now = new Date()
+  const upcomingRdv = appointments.filter(a => a.clientId === client.id && new Date(a.date) >= now && new Date(a.date) <= new Date(now.getTime() + 7 * 86400000))
+  const pendingInvoices = clientInvoices.filter(i => i.clientId === client.id && i.status === 'to_emit')
+  const pendingAmount = pendingInvoices.reduce((a, i) => a + (i.amountTtc || 0), 0)
+
+  return (
+    <div className="p-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <Widget icon="✓" label="Tâches" main={clientTasks.length} sub={`/${totalTasks.length} au total`} accent={accent} onClick={() => onTabChange('kanban')} />
+        <Widget icon="📎" label="Hub" main={docs.length} sub="documents" accent={accent} onClick={() => onTabChange('hub')} />
+        <Widget icon="⏱" label="Temps" main={formatDuration(weekTime)} sub="cette semaine" accent={accent} onClick={() => onTabChange('sessions')} />
+        <Widget icon="📝" label="Notes" main={notes.length} sub="notes" accent={accent} onClick={() => onTabChange('notes')} />
+        <Widget icon="📅" label="Prochains" main={upcomingRdv.length} sub="RDV 7 jours" accent={accent} onClick={() => onTabChange('sessions')} />
+        <Widget icon="💰" label="Facturation" main={formatMoney(pendingAmount)} sub="à émettre" accent={accent} onClick={() => onTabChange('facturation')} />
+      </div>
+    </div>
+  )
+}
+
+// ─── Notes Tab ────────────────────────────────────────────────────────────────
+
+function NotesTab({ client, accent }) {
+  const { state, dispatch } = useStore()
+  const [editing, setEditing] = useState(null)
+  const [draft, setDraft] = useState('')
+  const [showNew, setShowNew] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+
+  const notes = state.clientNotes.filter(n => n.clientId === client.id).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+
+  function addNote() {
+    if (!newTitle.trim()) return
+    dispatch({ type: 'ADD_CLIENT_NOTE', payload: { clientId: client.id, title: newTitle.trim(), content: '' } })
+    setNewTitle(''); setShowNew(false)
+  }
+
+  function saveNote(id) {
+    dispatch({ type: 'UPDATE_CLIENT_NOTE', payload: { id, content: draft } })
+    setEditing(null)
+  }
+
+  return (
+    <div className="p-4 space-y-3">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] text-white/30 uppercase tracking-wider">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
+        <button onClick={() => setShowNew(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-colors" style={{ background: accent + '18', color: accent }}>
+          <Plus size={12} /> Nouvelle note
+        </button>
+      </div>
+
+      {showNew && (
+        <div className="rounded-xl p-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+          <input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addNote(); if (e.key === 'Escape') setShowNew(false) }} placeholder="Titre de la note..." className="w-full bg-transparent text-sm text-white/80 focus:outline-none" />
+          <div className="flex gap-2 mt-2">
+            <button onClick={addNote} className="text-xs px-3 py-1 rounded-lg text-white font-medium" style={{ background: accent }}>Créer</button>
+            <button onClick={() => setShowNew(false)} className="text-xs px-3 py-1 rounded-lg bg-white/5 text-white/40">Annuler</button>
+          </div>
+        </div>
+      )}
+
+      {notes.length === 0 && !showNew && (
+        <div className="text-center py-16"><p className="text-3xl mb-3">📝</p><p className="text-white/30 text-sm">Aucune note pour ce client</p></div>
+      )}
+
+      {notes.map(note => (
+        <div key={note.id} className="rounded-xl overflow-hidden group" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+          <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: editing === note.id ? '1px solid var(--c-border)' : 'none' }}>
+            <span className="flex-1 text-sm font-medium text-white/80">{note.title}</span>
+            <span className="font-mono text-[10px] text-white/25">{new Date(note.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+            <button onClick={() => { setEditing(editing === note.id ? null : note.id); setDraft(note.content) }} className="text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 transition-colors">{editing === note.id ? 'Fermer' : 'Éditer'}</button>
+            <button onClick={() => dispatch({ type: 'DELETE_CLIENT_NOTE', payload: note.id })} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red transition-all"><Trash2 size={12} /></button>
+          </div>
+          {editing === note.id ? (
+            <div className="p-4">
+              <textarea autoFocus value={draft} onChange={e => setDraft(e.target.value)} rows={8} placeholder="Markdown..." className="w-full bg-transparent text-sm text-white/70 focus:outline-none resize-none font-mono leading-relaxed" />
+              <button onClick={() => saveNote(note.id)} className="mt-2 text-xs px-3 py-1.5 rounded-lg text-white font-medium" style={{ background: accent }}>Enregistrer</button>
+            </div>
+          ) : note.content ? (
+            <div className="px-4 py-3"><p className="text-white/50 text-xs leading-relaxed whitespace-pre-wrap line-clamp-3">{note.content}</p></div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Hub Docs Tab ─────────────────────────────────────────────────────────────
+
+function HubTab({ client, accent }) {
+  const { state, dispatch } = useStore()
+  const [showForm, setShowForm] = useState(false)
+  const [mode, setMode] = useState('lien') // 'lien' | 'upload' | 'youtube'
+  const [name, setName] = useState('')
+  const [type, setType] = useState('lien')
+  const [url, setUrl] = useState('')
+  const [desc, setDesc] = useState('')
+  const [uploadedFile, setUploadedFile] = useState(null)
+  const [uploadError, setUploadError] = useState('')
+  const [playingId, setPlayingId] = useState(null)
+
+  const docs = state.clientDocuments.filter(d => d.clientId === client.id)
+
+  function addDoc() {
+    if (!name.trim()) return
+    const payload = { clientId: client.id, name: name.trim(), type: mode === 'upload' ? 'upload' : type, url: mode === 'upload' ? '' : url.trim(), description: desc.trim() }
+    if (uploadedFile) Object.assign(payload, uploadedFile)
+    dispatch({ type: 'ADD_CLIENT_DOCUMENT', payload })
+    setName(''); setUrl(''); setDesc(''); setUploadedFile(null); setShowForm(false)
+  }
+
+  function handleYouTubeSubmit(data) {
+    dispatch({ type: 'ADD_CLIENT_DOCUMENT', payload: { clientId: client.id, name: data.title, description: desc.trim(), ...data } })
+    setDesc(''); setShowForm(false)
+  }
+
+  function resetForm() { setName(''); setUrl(''); setDesc(''); setUploadedFile(null); setMode('lien'); setShowForm(false) }
+
+  return (
+    <div className="p-4 space-y-3">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] text-white/30 uppercase tracking-wider">{docs.length} document{docs.length > 1 ? 's' : ''}</p>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg" style={{ background: accent + '18', color: accent }}>
+          <Plus size={12} /> Ajouter
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+          {/* Mode switch */}
+          <div className="flex gap-2">
+            {[['lien', '🔗 Lien'], ['upload', '📎 Fichier'], ['youtube', '▶ YouTube']].map(([m, label]) => (
+              <button key={m} type="button" onClick={() => setMode(m)}
+                className="flex-1 py-2 rounded-xl text-xs font-medium transition-colors"
+                style={mode === m ? { background: accent + '20', color: accent, border: `1px solid ${accent}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {mode === 'youtube' ? (
+            <AddYouTubeForm
+              onSubmit={handleYouTubeSubmit}
+              onCancel={resetForm}
+              extraFields={
+                <div>
+                  <label className="text-white/40 text-xs mb-1 block">Description (optionnel)</label>
+                  <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Contexte, notes..."
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+                </div>
+              }
+            />
+          ) : (
+            <>
+              {mode === 'upload' ? (
+                uploadedFile ? (
+                  <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(168,230,189,0.1)', border: '1px solid rgba(168,230,189,0.2)' }}>
+                    <span className="text-lg">✓</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white/80 truncate">{uploadedFile.fileName}</p>
+                      <p className="text-xs text-white/30">Fichier prêt</p>
+                    </div>
+                    <button type="button" onClick={() => setUploadedFile(null)} className="text-white/30 hover:text-white/60"><X size={14} /></button>
+                  </div>
+                ) : (
+                  <div>
+                    <FileUploader
+                      bucket="client-documents"
+                      subPath={client.id}
+                      onSuccess={r => { setUploadedFile(r); setUploadError(''); if (!name) setName(r.fileName) }}
+                      onError={msg => setUploadError(msg)}
+                    />
+                    {uploadError && <p className="text-xs text-red mt-2">{uploadError}</p>}
+                  </div>
+                )
+              ) : (
+                <div className="flex gap-2 flex-wrap">
+                  {DOC_TYPES.map(t => (
+                    <button key={t} type="button" onClick={() => setType(t)} className="text-xs px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={type === t ? { background: accent + '20', color: accent, border: `1px solid ${accent}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
+                      {DOC_ICONS[t]} {t}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Nom du document *"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+              {mode === 'lien' && (
+                <input value={url} onChange={e => setUrl(e.target.value)} placeholder="URL (optionnel)"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none font-mono" />
+              )}
+              <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Description (optionnel)"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+              <div className="flex gap-2">
+                <button onClick={addDoc} disabled={mode === 'upload' && !uploadedFile}
+                  className="flex-1 py-2 rounded-xl text-sm font-medium text-white disabled:opacity-40" style={{ background: accent }}>
+                  Ajouter
+                </button>
+                <button onClick={resetForm} className="flex-1 py-2 rounded-xl text-sm bg-white/5 text-white/40">Annuler</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {docs.length === 0 && !showForm ? (
+        <div className="text-center py-16"><p className="text-3xl mb-3">📎</p><p className="text-white/30 text-sm">Aucun document</p></div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {docs.map(doc => (
+            <div key={doc.id} className="rounded-xl group" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+              {doc.type === 'youtube' && doc.youtubeId ? (
+                <div className="p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white/80 truncate font-medium">{doc.name}</p>
+                      {doc.youtubeChannel && <p className="text-[10px] text-white/30">{doc.youtubeChannel}</p>}
+                    </div>
+                    <button onClick={() => dispatch({ type: 'DELETE_CLIENT_DOCUMENT', payload: doc.id })} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red transition-all flex-shrink-0">
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  {playingId === doc.id ? (
+                    <YouTubeEmbed youtubeId={doc.youtubeId} title={doc.name} />
+                  ) : (
+                    <YouTubeThumbnail youtubeId={doc.youtubeId} title={doc.name} onClick={() => setPlayingId(doc.id)} />
+                  )}
+                </div>
+              ) : doc.filePath ? (
+                <div className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <p className="text-sm text-white/80 truncate font-medium">{doc.name}</p>
+                      {doc.description && <p className="text-[10px] text-white/30 truncate">{doc.description}</p>}
+                    </div>
+                    <button onClick={() => dispatch({ type: 'DELETE_CLIENT_DOCUMENT', payload: doc.id })} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red transition-all flex-shrink-0">
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  <FilePreview
+                    bucket="client-documents"
+                    filePath={doc.filePath}
+                    fileName={doc.fileName}
+                    fileSizeBytes={doc.fileSizeBytes}
+                    fileMimeType={doc.fileMimeType}
+                    onDelete={() => dispatch({ type: 'DELETE_CLIENT_DOCUMENT', payload: doc.id })}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <span className="text-lg flex-shrink-0">{DOC_ICONS[doc.type] || '📄'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white/80 truncate">{doc.name}</p>
+                    {doc.description && <p className="text-[10px] text-white/30 truncate">{doc.description}</p>}
+                  </div>
+                  {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-white/30 hover:text-white/70 transition-colors"><ExternalLink size={12} /></a>}
+                  <button onClick={() => dispatch({ type: 'DELETE_CLIENT_DOCUMENT', payload: doc.id })} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red transition-all"><Trash2 size={12} /></button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Sessions Tab ─────────────────────────────────────────────────────────────
+
+function SessionsTab({ client, accent }) {
+  const { state } = useStore()
+  const weekStart = getWeekStart(); const monthStart = getMonthStart()
+
+  const sessions = state.sessions.filter(s => s.clientId === client.id).sort((a, b) => new Date(b.date) - new Date(a.date))
+  const weekTime = sessions.filter(s => new Date(s.date) >= weekStart).reduce((a, s) => a + s.duration, 0)
+  const monthTime = sessions.filter(s => new Date(s.date) >= monthStart).reduce((a, s) => a + s.duration, 0)
+  const allTime = sessions.reduce((a, s) => a + s.duration, 0)
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        {[['Cette semaine', weekTime], ['Ce mois', monthTime], ['Total', allTime]].map(([label, val]) => (
+          <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+            <p className="font-mono text-xl font-medium" style={{ color: accent }}>{formatDuration(val)}</p>
+            <p className="text-[10px] text-white/30 mt-0.5">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {sessions.length === 0 ? (
+        <div className="text-center py-16"><p className="text-3xl mb-3">⏱</p><p className="text-white/30 text-sm">Aucune session enregistrée</p></div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {sessions.map(s => (
+            <div key={s.id} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: accent }} />
+              <span className="flex-1 text-sm text-white/65 truncate">{s.note || '—'}</span>
+              <span className="font-mono text-sm font-medium" style={{ color: accent }}>{formatDuration(s.duration)}</span>
+              <span className="font-mono text-[10px] text-white/25 flex-shrink-0">
+                {new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Facturation Tab ──────────────────────────────────────────────────────────
+
+function FacturationTab({ client, accent }) {
+  const { state, dispatch } = useStore()
+  const [showForm, setShowForm] = useState(false)
+  const [num, setNum] = useState(''); const [date, setDate] = useState(''); const [amtHt, setAmtHt] = useState(''); const [vat, setVat] = useState('20'); const [desc, setDesc] = useState(''); const [status, setStatus] = useState('to_emit')
+
+  const invoices = state.clientInvoices.filter(i => i.clientId === client.id).sort((a, b) => new Date(b.date) - new Date(a.date))
+  const totalFact = invoices.filter(i => i.status === 'paid').reduce((a, i) => a + (i.amountTtc || 0), 0)
+  const toReceive = invoices.filter(i => i.status === 'sent').reduce((a, i) => a + (i.amountTtc || 0), 0)
+  const overdue = invoices.filter(i => i.status === 'overdue').reduce((a, i) => a + (i.amountTtc || 0), 0)
+
+  function addInvoice() {
+    const ht = parseFloat(amtHt) || 0; const vatRate = parseFloat(vat) || 0
+    const ttc = ht * (1 + vatRate / 100)
+    dispatch({ type: 'ADD_CLIENT_INVOICE', payload: { clientId: client.id, invoiceNumber: num.trim(), date: date || new Date().toISOString().slice(0, 10), amountHt: ht, vatRate, amountTtc: ttc, description: desc.trim(), status } })
+    setNum(''); setDate(''); setAmtHt(''); setDesc(''); setStatus('to_emit'); setShowForm(false)
+  }
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        {[['Payé', totalFact, '#A8E6BD'], ['À recevoir', toReceive, '#FFD66B'], ['En retard', overdue, '#F87171']].map(([label, val, color]) => (
+          <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+            <p className="font-mono text-lg font-semibold" style={{ color }}>{formatMoney(val)}</p>
+            <p className="text-[10px] text-white/30 mt-0.5">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] text-white/30 uppercase tracking-wider">{invoices.length} facture{invoices.length > 1 ? 's' : ''}</p>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg" style={{ background: accent + '18', color: accent }}>
+          <Plus size={12} /> Nouvelle facture
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+          <div className="grid grid-cols-2 gap-3">
+            <input value={num} onChange={e => setNum(e.target.value)} placeholder="N° facture *" className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+            <input value={amtHt} onChange={e => setAmtHt(e.target.value)} placeholder="Montant HT (€) *" type="number" className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+            <input value={vat} onChange={e => setVat(e.target.value)} placeholder="TVA (%)" type="number" className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+          </div>
+          <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Description (optionnel)" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+          <div className="flex gap-2 flex-wrap">
+            {Object.entries(INVOICE_STATUSES).map(([k, v]) => (
+              <button key={k} onClick={() => setStatus(k)} className="text-xs px-2.5 py-1 rounded-lg transition-colors" style={status === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={addInvoice} className="flex-1 py-2 rounded-xl text-sm font-medium text-white" style={{ background: accent }}>Enregistrer</button>
+            <button onClick={() => setShowForm(false)} className="flex-1 py-2 rounded-xl text-sm bg-white/5 text-white/40">Annuler</button>
+          </div>
+        </div>
+      )}
+
+      {invoices.length === 0 && !showForm ? (
+        <div className="text-center py-16"><p className="text-3xl mb-3">💰</p><p className="text-white/30 text-sm">Aucune facture</p></div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {invoices.map(inv => {
+            const s = INVOICE_STATUSES[inv.status] || INVOICE_STATUSES.to_emit
+            return (
+              <div key={inv.id} className="flex items-center gap-3 px-4 py-3 rounded-xl group" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+                <div>
+                  <p className="text-sm font-medium text-white/80">{inv.invoiceNumber || '—'}</p>
+                  {inv.description && <p className="text-[10px] text-white/30">{inv.description}</p>}
+                </div>
+                <div className="ml-auto text-right flex-shrink-0">
+                  <p className="font-mono text-sm font-semibold" style={{ color: s.color }}>{formatMoney(inv.amountTtc)}</p>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: s.color + '18', color: s.color }}>{s.label}</span>
+                </div>
+                {['to_emit', 'sent', 'paid', 'overdue'].filter(k => k !== inv.status).slice(0, 1).map(nextStatus => (
+                  <button key={nextStatus} onClick={() => dispatch({ type: 'UPDATE_CLIENT_INVOICE', payload: { id: inv.id, status: nextStatus } })} className="text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 transition-colors flex-shrink-0">
+                    → {INVOICE_STATUSES[nextStatus]?.label}
+                  </button>
+                ))}
+                <button onClick={() => dispatch({ type: 'DELETE_CLIENT_INVOICE', payload: inv.id })} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red transition-all flex-shrink-0"><Trash2 size={12} /></button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Client Form ──────────────────────────────────────────────────────────────
+
+function ClientForm({ initial = {}, onSubmit, onClose }) {
+  const [name, setName] = useState(initial.name || '')
+  const [shortName, setShortName] = useState(initial.shortName || '')
+  const [city, setCity] = useState(initial.city || '')
+  const [activityType, setActivityType] = useState(initial.activityType || '')
+  const [status, setStatus] = useState(initial.status || 'prospect')
+  const [startDate, setStartDate] = useState(initial.startDate || '')
+  const [accentColor, setAccentColor] = useState(initial.accentColor || ACCENT_COLORS[0])
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    if (!name.trim()) return
+    onSubmit({ name: name.trim(), shortName: shortName.trim(), city: city.trim(), activityType, status, startDate: startDate || new Date().toISOString().slice(0, 10), accentColor })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div>
+        <label className="text-white/40 text-xs mb-1 block">Nom du client *</label>
+        <input autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="Cabinet médical Dr. Dupont" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/80 placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet/40" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-white/40 text-xs mb-1 block">Nom court (switcher)</label>
+          <input value={shortName} onChange={e => setShortName(e.target.value)} placeholder="Dr. Dupont" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+        </div>
+        <div>
+          <label className="text-white/40 text-xs mb-1 block">Ville</label>
+          <input value={city} onChange={e => setCity(e.target.value)} placeholder="Paris" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-white/40 text-xs mb-1 block">Type d'activité</label>
+          <select value={activityType} onChange={e => setActivityType(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none">
+            <option value="" style={{ background: '#1A1A20' }}>— Sélectionner —</option>
+            {ACTIVITY_TYPES.map(t => <option key={t} value={t} style={{ background: '#1A1A20' }}>{t}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-white/40 text-xs mb-1 block">Statut</label>
+          <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none">
+            {Object.entries(STATUS_LABELS).filter(([k]) => k !== 'archived').map(([k, v]) => <option key={k} value={k} style={{ background: '#1A1A20' }}>{v.label}</option>)}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label className="text-white/40 text-xs mb-1 block">Date de démarrage</label>
+        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none" />
+      </div>
+      <div>
+        <label className="text-white/40 text-xs mb-2 block">Couleur d'accent</label>
+        <div className="flex gap-2 flex-wrap">
+          {ACCENT_COLORS.map(c => (
+            <button key={c} type="button" onClick={() => setAccentColor(c)} className="w-7 h-7 rounded-full transition-all" style={{ background: c, outline: accentColor === c ? `2px solid ${c}` : 'none', outlineOffset: '2px', opacity: accentColor === c ? 1 : 0.5 }} />
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-3 pt-2">
+        <button type="submit" className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-colors" style={{ background: accentColor }}>
+          {initial.id ? 'Mettre à jour' : 'Créer le client'}
+        </button>
+        <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm bg-white/5 text-white/50">Annuler</button>
+      </div>
+    </form>
+  )
+}
+
+// ─── Settings Panel ───────────────────────────────────────────────────────────
+
+function ClientSettingsDrawer({ client, onClose }) {
+  const { dispatch } = useStore()
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  return (
+    <div className="flex flex-col gap-4">
+      <ClientForm
+        initial={client}
+        onClose={onClose}
+        onSubmit={data => { dispatch({ type: 'UPDATE_CLIENT', payload: { id: client.id, ...data } }); onClose() }}
+      />
+      <div className="pt-4 flex flex-col gap-2" style={{ borderTop: '1px solid var(--c-border)' }}>
+        <button onClick={() => { dispatch({ type: 'ARCHIVE_CLIENT', payload: client.id }); onClose() }} className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm text-white/50 bg-white/5 hover:bg-white/8 transition-colors">
+          <Archive size={14} /> Archiver ce client
+        </button>
+        {confirmDelete ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/40 flex-1">Supprimer définitivement ?</span>
+            <button onClick={() => { dispatch({ type: 'DELETE_CLIENT', payload: client.id }); onClose() }} className="text-xs bg-red/15 text-red px-3 py-1.5 rounded-lg">Confirmer</button>
+            <button onClick={() => setConfirmDelete(false)} className="text-white/30 hover:text-white/60"><X size={14} /></button>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm text-red bg-red/8 hover:bg-red/15 transition-colors">
+            <Trash2 size={14} /> Supprimer ce client
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Client Dashboard Shell ───────────────────────────────────────────────────
+
+function ClientDashboard({ client }) {
+  const { state, dispatch } = useStore()
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  const accent = client.accentColor || '#8B7CFF'
+  const statusInfo = STATUS_LABELS[client.status] || STATUS_LABELS.prospect
+  const clientTasks = state.tasks.filter(t => t.clientId === client.id)
+
+  function handleTaskUpdate(id, updates) {
+    dispatch({ type: 'UPDATE_TASK', payload: { id, ...updates } })
+  }
+
+  function handleTaskCreate(data) {
+    dispatch({ type: 'ADD_TASK', payload: { ...data, clientId: client.id } })
+  }
+
+  function handleTaskDelete(id) {
+    dispatch({ type: 'DELETE_TASK', payload: id })
+  }
+
+  return (
+    <div className="flex flex-col flex-1">
+      {/* Client header */}
+      <div className="px-4 pt-4 pb-0 max-w-5xl mx-auto w-full">
+        <div className="rounded-2xl p-4 mb-4 flex items-start gap-4" style={{ background: accent + '0D', border: `1px solid ${accent}20` }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0" style={{ background: accent + '25', color: accent }}>
+            {(client.shortName || client.name).charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold leading-tight" style={{ color: accent }}>{client.name}</h2>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: statusInfo.color + '18', color: statusInfo.color }}>{statusInfo.label}</span>
+              {client.startDate && <span className="text-[10px] text-white/30">Démarré le {new Date(client.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+              {client.activityType && <span className="text-[10px] text-white/25">{client.activityType}</span>}
+            </div>
+          </div>
+          <button onClick={() => setSettingsOpen(true)} className="p-2 rounded-xl text-white/30 hover:text-white/70 hover:bg-white/8 transition-all flex-shrink-0">
+            <Settings size={14} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-0.5 overflow-x-auto" style={{ borderBottom: '1px solid var(--c-border)' }}>
+          {CLIENT_TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition-all whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? '' : 'text-white/40 hover:text-white/70'}`}
+              style={activeTab === tab.id ? { borderBottom: `2px solid ${accent}`, marginBottom: '-1px', color: accent } : {}}
+            >
+              <tab.Icon size={12} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <div className="flex-1 max-w-5xl mx-auto w-full">
+        {activeTab === 'dashboard' && (
+          <DashboardTab
+            client={client} accent={accent}
+            tasks={state.tasks} sessions={state.sessions}
+            clientNotes={state.clientNotes} clientDocuments={state.clientDocuments}
+            clientInvoices={state.clientInvoices} appointments={state.appointments}
+            onTabChange={setActiveTab}
+          />
+        )}
+        {activeTab === 'kanban' && (
+          <div className="p-4">
+            <ViewContainer
+              contextId={`client:${client.id}`}
+              tasks={clientTasks}
+              projects={state.projects}
+              onTaskUpdate={handleTaskUpdate}
+              onTaskCreate={handleTaskCreate}
+              onTaskDelete={handleTaskDelete}
+            />
+          </div>
+        )}
+        {activeTab === 'notes' && <NotesTab client={client} accent={accent} />}
+        {activeTab === 'hub' && <HubTab client={client} accent={accent} />}
+        {activeTab === 'sessions' && <SessionsTab client={client} accent={accent} />}
+        {activeTab === 'facturation' && <FacturationTab client={client} accent={accent} />}
+      </div>
+
+      <Drawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} title="Paramètres du client">
+        <ClientSettingsDrawer client={client} onClose={() => setSettingsOpen(false)} />
+      </Drawer>
+    </div>
+  )
+}
+
+// ─── Main ClientSpace ─────────────────────────────────────────────────────────
+
+export default function ClientSpace() {
+  const { state, dispatch } = useStore()
+  const [selectedClientId, setSelectedClientId] = useState(null)
+  const [addDrawer, setAddDrawer] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
+
+  const activeClients = state.clients.filter(c => c.status !== 'archived')
+  const archivedClients = state.clients.filter(c => c.status === 'archived')
+
+  const selectedClient = state.clients.find(c => c.id === selectedClientId) || activeClients[0] || null
+
+  function addClient(data) {
+    dispatch({ type: 'ADD_CLIENT', payload: data })
+    setAddDrawer(false)
+  }
+
+  if (activeClients.length === 0 && !addDrawer) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+        <p className="text-5xl mb-4">🤝</p>
+        <h2 className="text-xl font-semibold text-white/80 mb-2">Aucun client Ulycom</h2>
+        <p className="text-white/30 text-sm mb-6">Crée ton premier espace client pour centraliser tâches, notes, sessions et facturation.</p>
+        <button onClick={() => setAddDrawer(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-colors" style={{ background: '#A8E6BD' }}>
+          <Plus size={16} /> Créer mon premier client
+        </button>
+
+        <Drawer isOpen={addDrawer} onClose={() => setAddDrawer(false)} title="Nouveau client">
+          <ClientForm onSubmit={addClient} onClose={() => setAddDrawer(false)} />
+        </Drawer>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      {/* Switcher horizontal */}
+      <div className="px-4 pt-4 pb-0 max-w-5xl mx-auto w-full">
+        <div className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: 'rgba(0,0,0,0.18)' }}>
+          {activeClients.map(c => (
+            <button
+              key={c.id}
+              onClick={() => setSelectedClientId(c.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 focus:outline-none"
+              style={
+                (selectedClient?.id === c.id)
+                  ? { background: 'var(--c-card)', color: c.accentColor || '#E8E6E3', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }
+                  : { color: 'rgba(255,255,255,0.40)' }
+              }
+            >
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.accentColor || '#8B7CFF' }} />
+              {c.shortName || c.name}
+            </button>
+          ))}
+          <button
+            onClick={() => setAddDrawer(true)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-white/25 hover:text-white/50 transition-colors whitespace-nowrap flex-shrink-0"
+          >
+            <Plus size={13} /> Ajouter
+          </button>
+          {archivedClients.length > 0 && (
+            <button onClick={() => setShowArchived(!showArchived)} className="ml-auto text-[10px] text-white/20 hover:text-white/40 px-2 py-1 flex-shrink-0 transition-colors">
+              {showArchived ? 'Masquer archivés' : `Archivés (${archivedClients.length})`}
+            </button>
+          )}
+        </div>
+
+        {showArchived && archivedClients.length > 0 && (
+          <div className="flex gap-2 mt-2 flex-wrap">
+            {archivedClients.map(c => (
+              <button key={c.id} onClick={() => setSelectedClientId(c.id)} className="text-[11px] px-2.5 py-1 rounded-lg text-white/25 bg-white/5 hover:bg-white/8 transition-colors">{c.shortName || c.name}</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {selectedClient ? (
+        <ClientDashboard key={selectedClient.id} client={selectedClient} />
+      ) : null}
+
+      <Drawer isOpen={addDrawer} onClose={() => setAddDrawer(false)} title="Nouveau client">
+        <ClientForm onSubmit={addClient} onClose={() => setAddDrawer(false)} />
+      </Drawer>
+    </div>
+  )
+}

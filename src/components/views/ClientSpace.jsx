@@ -421,22 +421,24 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
           <Widget icon="📅" label="Prochains" main={upcomingRdv.length} sub="RDV 7 jours" accent={accent} onClick={() => onTabChange('sessions')} />
           <Widget icon="💰" label="Facturation" main={formatMoney(pendingAmount)} sub="à émettre" accent={accent} onClick={() => onTabChange('facturation')} />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col gap-3">
+          {urgentTasks.length > 0 && (
+            <div className="rounded-xl overflow-hidden"
+              style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+              <div className="px-4 py-2.5 flex items-center gap-2"
+                style={{ borderBottom: '1px solid var(--c-border)' }}>
+                <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                  Tâches urgentes · {urgentTasks.length}
+                </span>
+              </div>
+              <div className="p-2.5 flex flex-col gap-2">
+                {urgentTasks.map(task => <UrgentTaskRow key={task.id} task={task} />)}
+              </div>
+            </div>
+          )}
           <DeadlinesPanel tasks={tasks} />
         </div>
       </div>
-
-      {/* ── Tâches urgentes ───────────────────────────────────────────────── */}
-      {urgentTasks.length > 0 && (
-        <div>
-          <p className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: 'var(--text-tertiary)' }}>
-            Tâches urgentes · {urgentTasks.length}
-          </p>
-          <div className="flex flex-col gap-2">
-            {urgentTasks.map(task => <UrgentTaskRow key={task.id} task={task} />)}
-          </div>
-        </div>
-      )}
 
       {/* ── Overdue alert ─────────────────────────────────────────────────── */}
       {overdueTasks.length > 0 && (

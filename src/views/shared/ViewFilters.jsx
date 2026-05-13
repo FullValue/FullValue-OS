@@ -8,7 +8,7 @@ const STATUS_OPTIONS = [
   { value: 'done', label: 'Livrés' },
 ]
 
-export const DEFAULT_FILTERS = { search: '', status: 'all', impact: 'all', hideCompleted: false }
+export const DEFAULT_FILTERS = { search: '', status: 'all', urgency: null, hideCompleted: false }
 
 export function applyFilters(tasks, filters) {
   let result = tasks
@@ -17,7 +17,7 @@ export function applyFilters(tasks, filters) {
     result = result.filter(t => t.title.toLowerCase().includes(q) || t.notes?.toLowerCase().includes(q))
   }
   if (filters.status && filters.status !== 'all') result = result.filter(t => t.status === filters.status)
-  if (filters.impact && filters.impact !== 'all') result = result.filter(t => t.impact === filters.impact)
+  if (filters.urgency) result = result.filter(t => t.urgency === filters.urgency)
   if (filters.hideCompleted) result = result.filter(t => t.status !== 'done')
   return result
 }
@@ -53,14 +53,23 @@ export default function ViewFilters({ filters, onChange, compact = false }) {
         </button>
       ))}
 
-      {/* Impact filter */}
-      <button
-        onClick={() => onChange({ ...filters, impact: filters.impact === 'high' ? 'all' : 'high' })}
-        className="text-[11px] px-2.5 py-1.5 rounded-lg transition-colors"
-        style={filters.impact === 'high' ? { background: '#F59E0B18', color: '#F59E0B' } : { color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.04)' }}
-      >
-        ⚡ High only
-      </button>
+      {/* Urgency filter */}
+      {[
+        { value: 'urgent',      label: '⚡ Urgent',      activeColor: '#B45309', activeBg: 'rgba(245,158,11,0.15)' },
+        { value: 'very-urgent', label: '🔥 Très urgent', activeColor: '#CC5500', activeBg: 'rgba(204,85,0,0.15)' },
+        { value: 'critical',    label: '🚨 Critique',    activeColor: '#DC2626', activeBg: 'rgba(220,38,38,0.15)' },
+      ].map(opt => (
+        <button
+          key={opt.value}
+          onClick={() => onChange({ ...filters, urgency: filters.urgency === opt.value ? null : opt.value })}
+          className="text-[11px] px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+          style={filters.urgency === opt.value
+            ? { background: opt.activeBg, color: opt.activeColor }
+            : { color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.04)' }}
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   )
 }

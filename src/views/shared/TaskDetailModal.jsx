@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Trash2, Plus, Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { ImpactBadge, StatusBadge } from './TaskBadge'
-import { TAG_PALETTE, getTagColor } from './taskColors'
+import { TAG_PALETTE, getTagColor, URGENCY_OPTIONS, getUrgencyStyle } from './taskColors'
 import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
 
 const nanoid = () => Math.random().toString(36).slice(2, 10)
@@ -182,7 +182,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
   const [title, setTitle] = useState(task.title)
   const [notes, setNotes] = useState(task.notes || '')
   const [status, setStatus] = useState(task.status)
-  const [impact, setImpact] = useState(task.impact || 'low')
+  const [urgency, setUrgency] = useState(task.urgency ?? null)
   const [dueDate, setDueDate] = useState(task.dueDate || '')
   const [startDate, setStartDate] = useState(task.startDate || '')
   const [tags, setTags] = useState(task.tags || [])
@@ -346,17 +346,25 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--text-tertiary)' }}>Impact</label>
-                <div className="flex gap-2">
-                  {['high', 'low'].map(v => (
-                    <button key={v} onClick={() => { setImpact(v); save({ impact: v }) }}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                      style={impact === v
-                        ? { background: '#F59E0B20', color: '#F59E0B', border: '1px solid #F59E0B40' }
-                        : { background: 'rgba(255,255,255,0.05)', color: 'var(--text-tertiary)' }}>
-                      {v === 'high' ? '⚡ High' : '· Low'}
-                    </button>
-                  ))}
+                <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--text-tertiary)' }}>Urgence</label>
+                <div className="flex flex-col gap-1">
+                  {URGENCY_OPTIONS.map(opt => {
+                    const s = opt.value ? getUrgencyStyle(opt.value, project?.color) : null
+                    const isActive = urgency === opt.value
+                    return (
+                      <button
+                        key={opt.value ?? 'none'}
+                        onClick={() => { setUrgency(opt.value); save({ urgency: opt.value }) }}
+                        className="py-1.5 rounded-lg text-xs font-medium transition-colors text-left px-2.5"
+                        style={isActive && s
+                          ? { background: s.bg, color: s.text, border: `1px solid ${s.text}40` }
+                          : isActive
+                          ? { background: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)' }
+                          : { background: 'rgba(255,255,255,0.04)', color: 'var(--text-tertiary)' }}>
+                        {opt.label}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay,
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, useDroppable,
 } from '@dnd-kit/core'
 import {
   SortableContext, useSortable, verticalListSortingStrategy,
@@ -43,6 +43,7 @@ function SortableTaskCard({ task, project, onOpen, tagStyles }) {
 // ─── Droppable column ──────────────────────────────────────────────────────────
 
 function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyles }) {
+  const { setNodeRef: setDropRef } = useDroppable({ id: col.id })
   const [adding, setAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const taskIds = tasks.map(t => t.id)
@@ -56,6 +57,7 @@ function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
 
   return (
     <div
+      ref={setDropRef}
       className="flex flex-col flex-1 min-w-0 rounded-xl p-3 transition-colors"
       style={{
         background: isOver ? col.color + '08' : 'rgba(255,255,255,0.02)',

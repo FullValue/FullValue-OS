@@ -10,7 +10,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import TaskDetailModal from './shared/TaskDetailModal'
-import { TAG_PALETTE, getTagColor, computeProgress } from './shared/taskColors'
+import { TAG_PALETTE, getTagColor, computeProgress, getUrgencyStyle } from './shared/taskColors'
 
 export { TAG_PALETTE, getTagColor, computeProgress, TrelloCard }
 
@@ -163,7 +163,9 @@ function TrelloCard({ task, project, onOpen, tagStyles, isDragging }) {
   const progress = computeProgress(task)
   const hasProgress = (task.checklist?.length > 0) || (task.progressPercentage != null && task.progressPercentage > 0)
   const hasImage = !!(task.cardImagePath || task.cardImageUrl)
-  const accentColor = getCardAccent(task.cardColor)
+  // Use project color as accent when no custom cardColor is set
+  const accentColor = task.cardColor ? getCardAccent(task.cardColor) : (project?.color || null)
+  const urgencyStyle = getUrgencyStyle(task.urgency, project?.color)
 
   function toggleChecklistItem(itemId) {
     const updated = (task.checklist || []).map(i =>
@@ -171,7 +173,9 @@ function TrelloCard({ task, project, onOpen, tagStyles, isDragging }) {
     )
     const doneCnt = updated.filter(i => i.done).length
     const pct = updated.length > 0 ? Math.round((doneCnt / updated.length) * 100) : 0
-    dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, checklist: updated, progressPercentage: pct } })
+    const updates = { checklist: updated, progressPercentage: pct }
+    if (task.status === 'todo' && doneCnt > 0) updates.status = 'inprogress'
+    dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, ...updates } })
   }
 
   return (
@@ -192,6 +196,16 @@ function TrelloCard({ task, project, onOpen, tagStyles, isDragging }) {
       {hasImage && <CardImage task={task} />}
 
       <div className="p-3.5">
+        {/* Urgency pill */}
+        {urgencyStyle && (
+          <div className="mb-2">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: urgencyStyle.bg, color: urgencyStyle.text }}>
+              {urgencyStyle.label}
+            </span>
+          </div>
+        )}
+
         {/* Tags */}
         {(task.tags || []).length > 0 && (
           <div className="flex items-center gap-1 flex-wrap mb-2.5">

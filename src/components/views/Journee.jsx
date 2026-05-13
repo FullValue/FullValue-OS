@@ -315,11 +315,7 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
   const todayAll = tasks.filter(t => t.today)
   const todayNotDone = todayAll.filter(t => t.status !== 'done')
   const todayDone = todayAll.filter(t => t.status === 'done')
-  const canAdd = todayNotDone.length < 3
-
-  useEffect(() => {
-    if (!canAdd) setPicking(false)
-  }, [canAdd])
+  const tooMany = todayNotDone.length > 5
 
   const available = tasks.filter(t => !t.today && t.status !== 'done')
   const filtered = search
@@ -338,18 +334,25 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
 
   return (
     <WidgetCard
-      title="Priorités du jour · 3 max"
-      badge={<span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{todayDone.length}/{todayAll.length}</span>}
+      title="Priorités du jour · 5 max"
+      badge={
+        <div className="flex items-center gap-1.5">
+          {tooMany && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--yellow-bg)', color: 'var(--yellow-deep)' }}>
+              Trop chargé
+            </span>
+          )}
+          <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{todayDone.length}/{todayAll.length}</span>
+        </div>
+      }
       action={
-        canAdd ? (
-          <button
-            onClick={() => { setPicking(p => !p); setSearch('') }}
-            className="w-5 h-5 rounded-full flex items-center justify-center transition-all"
-            style={{ background: picking ? 'var(--violet-deep)' : 'var(--violet-bg)', color: picking ? '#fff' : 'var(--violet-deep)' }}
-          >
-            {picking ? <X size={10} /> : <Plus size={10} />}
-          </button>
-        ) : null
+        <button
+          onClick={() => { setPicking(p => !p); setSearch('') }}
+          className="w-5 h-5 rounded-full flex items-center justify-center transition-all"
+          style={{ background: picking ? 'var(--violet-deep)' : 'var(--violet-bg)', color: picking ? '#fff' : 'var(--violet-deep)' }}
+        >
+          {picking ? <X size={10} /> : <Plus size={10} />}
+        </button>
       }
     >
       {/* Current today tasks */}
@@ -491,7 +494,7 @@ function SortableWidget({ id, children }) {
         <button
           {...attributes}
           {...listeners}
-          className="absolute top-3 right-3 z-10 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          className="absolute top-3 left-3 z-10 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
           style={{ background: 'var(--bg-card-soft)', color: 'var(--text-tertiary)' }}
           title="Réorganiser"
         >

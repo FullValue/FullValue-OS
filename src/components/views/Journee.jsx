@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   Play, AlertTriangle, Inbox, ChevronRight,
   TrendingUp, TrendingDown, Minus, Zap, GripVertical,
+  Check, Plus, X,
 } from 'lucide-react'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -308,50 +309,165 @@ function StatsRow({ state, nowMinutes, onNavigate, dispatch }) {
 // ── PrioritiesCard ────────────────────────────────────────────────────────────
 
 function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
-  const todayTasks = tasks
-    .filter(t => t.today && t.status !== 'done')
-    .sort((a, b) => (a.impact === 'high' ? -1 : 1) - (b.impact === 'high' ? -1 : 1))
-    .slice(0, 3)
+  const [picking, setPicking] = useState(false)
+  const [search, setSearch] = useState('')
 
-  const doneToday = tasks.filter(t => t.today && t.status === 'done').length
-  const total = tasks.filter(t => t.today).length
+  const todayAll = tasks.filter(t => t.today)
+  const todayNotDone = todayAll.filter(t => t.status !== 'done')
+  const todayDone = todayAll.filter(t => t.status === 'done')
+  const canAdd = todayNotDone.length < 3
+
+  useEffect(() => {
+    if (!canAdd) setPicking(false)
+  }, [canAdd])
+
+  const available = tasks.filter(t => !t.today && t.status !== 'done')
+  const filtered = search
+    ? available.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
+    : available
+
+  const byProject = projects
+    .map(p => ({ ...p, items: filtered.filter(t => t.projectId === p.id) }))
+    .filter(p => p.items.length > 0)
+  const orphaned = filtered.filter(t => !projects.find(p => p.id === t.projectId))
+
+  const sortedToday = [
+    ...todayNotDone.sort((a, b) => (a.impact === 'high' ? -1 : 1) - (b.impact === 'high' ? -1 : 1)),
+    ...todayDone,
+  ]
 
   return (
     <WidgetCard
-      title={`Priorités du jour · ${Math.min(3, total)} max`}
-      badge={<span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{doneToday}/{total}</span>}
+      title="Priorités du jour · 3 max"
+      badge={<span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{todayDone.length}/{todayAll.length}</span>}
+      action={
+        canAdd ? (
+          <button
+            onClick={() => { setPicking(p => !p); setSearch('') }}
+            className="w-5 h-5 rounded-full flex items-center justify-center transition-all"
+            style={{ background: picking ? 'var(--violet-deep)' : 'var(--violet-bg)', color: picking ? '#fff' : 'var(--violet-deep)' }}
+          >
+            {picking ? <X size={10} /> : <Plus size={10} />}
+          </button>
+        ) : null
+      }
     >
-      {todayTasks.length === 0 ? (
-        <p className="text-sm text-center py-4" style={{ color: 'var(--text-tertiary)' }}>Aucune priorité — va dans Tâches pour en épingler</p>
+      {/* Current today tasks */}
+      {sortedToday.length === 0 && !picking ? (
+        <p className="text-sm text-center py-4" style={{ color: 'var(--text-tertiary)' }}>
+          Clique <strong>+</strong> pour choisir tes priorités du jour
+        </p>
       ) : (
-        <div className="flex flex-col gap-2">
-          {todayTasks.map(task => {
+        <div className="flex flex-col gap-1">
+          {sortedToday.map(task => {
             const project = projects.find(p => p.id === task.projectId)
+            const isDone = task.status === 'done'
             return (
-              <div key={task.id} className="flex items-center gap-3 py-1">
+              <div
+                key={task.id}
+                className="flex items-center gap-3 py-1.5 px-1 rounded-xl group"
+                style={{ opacity: isDone ? 0.5 : 1 }}
+              >
                 <button
                   onClick={() => dispatch({ type: 'TOGGLE_TASK_DONE', payload: task.id })}
-                  className="w-4 h-4 rounded border-2 flex-shrink-0 transition-colors"
-                  style={{ borderColor: 'var(--border-medium)' }}
-                />
+                  className="w-4 h-4 rounded border-2 flex-shrink-0 transition-all flex items-center justify-center"
+                  style={{
+                    borderColor: isDone ? 'var(--violet-deep)' : 'var(--border-medium)',
+                    background: isDone ? 'var(--violet-bg)' : 'transparent',
+                  }}
+                >
+                  {isDone && <Check size={9} style={{ color: 'var(--violet-deep)' }} />}
+                </button>
                 {project && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />}
-                <span className="flex-1 text-sm truncate" style={{ color: 'var(--text-primary)' }}>{task.title}</span>
+                <span
+                  className="flex-1 text-sm truncate"
+                  style={{ color: 'var(--text-primary)', textDecoration: isDone ? 'line-through' : 'none' }}
+                >
+                  {task.title}
+                </span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {task.impact === 'high' && <Zap size={10} style={{ color: 'var(--yellow-deep)' }} />}
                   {task.ship80 && (
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}>80%</span>
                   )}
+                  {!isDone && (
+                    <button
+                      onClick={() => onStartTask(task.projectId, task.id)}
+                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg"
+                      style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}
+                    >
+                      <Play size={9} /> Go
+                    </button>
+                  )}
                   <button
-                    onClick={() => onStartTask(task.projectId, task.id)}
-                    className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg transition-colors"
-                    style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}
+                    onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, today: false } })}
+                    className="p-0.5 rounded transition-all opacity-0 group-hover:opacity-100"
+                    style={{ color: 'var(--text-tertiary)' }}
+                    title="Retirer des priorités"
                   >
-                    <Play size={9} /> Go
+                    <X size={11} />
                   </button>
                 </div>
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Picker */}
+      {picking && (
+        <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
+          <input
+            autoFocus
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Chercher une tâche..."
+            className="w-full text-sm px-3 py-2 rounded-xl focus:outline-none mb-2"
+            style={{ background: 'var(--bg-input)', border: '1px solid var(--border-soft)', color: 'var(--text-primary)' }}
+          />
+          {filtered.length === 0 ? (
+            <p className="text-sm text-center py-3" style={{ color: 'var(--text-tertiary)' }}>
+              {search ? 'Aucun résultat' : 'Toutes les tâches sont épinglées ou terminées'}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-0.5 max-h-52 overflow-y-auto">
+              {byProject.map(p => (
+                <div key={p.id} className="mb-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide px-2 py-1" style={{ color: 'var(--text-tertiary)' }}>
+                    {p.emoji} {p.name}
+                  </p>
+                  {p.items.map(task => (
+                    <button
+                      key={task.id}
+                      onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, today: true } })}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-left"
+                      style={{ color: 'var(--text-primary)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--violet-bg)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <Plus size={10} style={{ color: 'var(--violet-deep)', flexShrink: 0 }} />
+                      <span className="flex-1 truncate">{task.title}</span>
+                      {task.impact === 'high' && <Zap size={10} style={{ color: 'var(--yellow-deep)', flexShrink: 0 }} />}
+                      {task.ship80 && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0" style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}>80%</span>}
+                    </button>
+                  ))}
+                </div>
+              ))}
+              {orphaned.map(task => (
+                <button
+                  key={task.id}
+                  onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, today: true } })}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-left"
+                  style={{ color: 'var(--text-primary)' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--violet-bg)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Plus size={10} style={{ color: 'var(--violet-deep)', flexShrink: 0 }} />
+                  <span className="flex-1 truncate">{task.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </WidgetCard>

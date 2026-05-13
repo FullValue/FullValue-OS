@@ -81,6 +81,8 @@ function ProgressRing({ pct, size = 148 }) {
           height: size - 28,
           background: 'var(--violet-bg)',
           fontSize: size * 0.44,
+          transform: 'translateZ(0)',
+          imageRendering: 'auto',
         }}
       >
         🧠

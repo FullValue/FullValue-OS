@@ -12,7 +12,7 @@ import { useStore } from '@/store/useStore'
 import TaskDetailModal from './shared/TaskDetailModal'
 import { TAG_PALETTE, getTagColor, computeProgress } from './shared/taskColors'
 
-export { TAG_PALETTE, getTagColor, computeProgress }
+export { TAG_PALETTE, getTagColor, computeProgress, TrelloCard }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

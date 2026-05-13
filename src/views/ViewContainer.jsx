@@ -2,7 +2,6 @@ import { useState } from 'react'
 import ViewSwitcher, { getStoredView, setStoredView } from './shared/ViewSwitcher'
 import ViewFilters, { DEFAULT_FILTERS, applyFilters } from './shared/ViewFilters'
 import KanbanView from './KanbanView'
-import TrelloCardsView from './TrelloCardsView'
 import CalendarView from './CalendarView'
 import ListView from './ListView'
 import GanttView from './GanttView'
@@ -45,7 +44,6 @@ export default function ViewContainer({
 
       {/* Active view */}
       {activeView === 'kanban'   && <KanbanView {...sharedProps} />}
-      {activeView === 'trello'   && <TrelloCardsView {...sharedProps} />}
       {activeView === 'calendar' && <CalendarView {...sharedProps} />}
       {activeView === 'list'     && <ListView {...sharedProps} />}
       {activeView === 'gantt'    && <GanttView {...sharedProps} />}

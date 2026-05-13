@@ -7,7 +7,8 @@ import {
   SortableContext, useSortable, verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import TaskCard from './shared/TaskCard'
+import { useStore } from '@/store/useStore'
+import { TrelloCard } from './TrelloCardsView'
 import TaskDetailModal from './shared/TaskDetailModal'
 
 const COLUMNS = [
@@ -18,20 +19,22 @@ const COLUMNS = [
 
 // ─── Sortable task card ────────────────────────────────────────────────────────
 
-function SortableTaskCard({ task, project, onOpen }) {
+function SortableTaskCard({ task, project, onOpen, tagStyles }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1 }}
+      {...attributes}
+      {...listeners}
     >
-      <TaskCard
+      <TrelloCard
         task={task}
         project={project}
-        onClick={() => onOpen(task)}
-        dragHandleProps={{ ...attributes, ...listeners }}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        onOpen={onOpen}
+        tagStyles={tagStyles}
+        isDragging={isDragging}
       />
     </div>
   )
@@ -39,7 +42,7 @@ function SortableTaskCard({ task, project, onOpen }) {
 
 // ─── Droppable column ──────────────────────────────────────────────────────────
 
-function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver }) {
+function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyles }) {
   const [adding, setAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const taskIds = tasks.map(t => t.id)
@@ -82,6 +85,7 @@ function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver }) {
               task={task}
               project={projects.find(p => p.id === task.projectId)}
               onOpen={onOpen}
+              tagStyles={tagStyles}
             />
           ))}
 
@@ -115,6 +119,8 @@ function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver }) {
 // ─── KanbanView ───────────────────────────────────────────────────────────────
 
 export default function KanbanView({ tasks = [], projects = [], onTaskUpdate, onTaskCreate, onTaskDelete }) {
+  const { state } = useStore()
+  const tagStyles = state.tagStyles || {}
   const [activeTask, setActiveTask] = useState(null)
   const [detailTask, setDetailTask] = useState(null)
   const [overColumn, setOverColumn] = useState(null)
@@ -192,16 +198,19 @@ export default function KanbanView({ tasks = [], projects = [], onTaskUpdate, on
               onOpen={setDetailTask}
               isOver={overColumn === col.id}
               onAddTask={data => onTaskCreate?.({ ...data, projectId: projects[0]?.id })}
+              tagStyles={tagStyles}
             />
           ))}
         </div>
 
         <DragOverlay>
           {activeTask ? (
-            <TaskCard
+            <TrelloCard
               task={activeTask}
               project={projects.find(p => p.id === activeTask.projectId)}
-              style={{ opacity: 0.9, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', transform: 'rotate(1.5deg)', cursor: 'grabbing' }}
+              onOpen={() => {}}
+              tagStyles={tagStyles}
+              isDragging={true}
             />
           ) : null}
         </DragOverlay>

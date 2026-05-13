@@ -1,11 +1,10 @@
-import { Columns3, LayoutGrid, Calendar, List, GanttChart } from 'lucide-react'
+import { Columns3, Calendar, List, GanttChart } from 'lucide-react'
 
 const VIEWS = [
-  { id: 'kanban',  Icon: Columns3,     label: 'Kanban' },
-  { id: 'trello',  Icon: LayoutGrid,   label: 'Cartes' },
-  { id: 'calendar',Icon: Calendar,     label: 'Calendrier' },
-  { id: 'list',    Icon: List,         label: 'Liste' },
-  { id: 'gantt',   Icon: GanttChart,   label: 'Gantt' },
+  { id: 'kanban',  Icon: Columns3,   label: 'Kanban' },
+  { id: 'calendar',Icon: Calendar,   label: 'Calendrier' },
+  { id: 'list',    Icon: List,       label: 'Liste' },
+  { id: 'gantt',   Icon: GanttChart, label: 'Gantt' },
 ]
 
 const STORAGE_PREFIX = 'cockpit:view:'

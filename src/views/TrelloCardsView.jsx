@@ -164,15 +164,10 @@ function TrelloCard({ task, project, onOpen, tagStyles, isDragging }) {
   const hasProgress = (task.checklist?.length > 0) || (task.progressPercentage != null && task.progressPercentage > 0)
   const hasImage = !!(task.cardImagePath || task.cardImageUrl)
   const urgencyStyle = getUrgencyStyle(task.urgency, project?.color)
-  // Card background: manual color > urgency tint > default gray
-  const cardBg = task.cardColor
-    ? task.cardColor
-    : urgencyStyle?.cardBg || 'var(--c-card)'
-  // Title accent: urgency color when urgency set, manual card accent when cardColor set, else default
-  const accentColor = isDone ? null
-    : urgencyStyle ? urgencyStyle.text
-    : task.cardColor ? getCardAccent(task.cardColor)
-    : null
+  // Card background: ONLY urgency determines card color — default gray otherwise
+  const cardBg = urgencyStyle?.cardBg || 'var(--c-card)'
+  // Title accent: urgency color when set, else default text
+  const accentColor = isDone ? null : urgencyStyle?.text || null
 
   function toggleChecklistItem(itemId) {
     const updated = (task.checklist || []).map(i =>

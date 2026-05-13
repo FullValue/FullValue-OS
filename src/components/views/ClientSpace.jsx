@@ -423,17 +423,32 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
         </div>
         <div className="flex-1 flex flex-col gap-3">
           {urgentTasks.length > 0 && (
-            <div className="rounded-xl overflow-hidden"
+            <div className="rounded-xl"
               style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-              <div className="px-4 py-2.5 flex items-center gap-2"
-                style={{ borderBottom: '1px solid var(--c-border)' }}>
+              <div className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--c-border)' }}>
                 <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)' }}>
                   Tâches urgentes · {urgentTasks.length}
                 </span>
               </div>
-              <div className="p-2.5 flex flex-col gap-2">
-                {urgentTasks.map(task => <UrgentTaskRow key={task.id} task={task} />)}
-              </div>
+              {urgentTasks.map((task, i) => {
+                const meta = {
+                  critical:      { icon: '🚨', color: '#DC2626', label: 'Critique' },
+                  'very-urgent': { icon: '🔥', color: '#CC5500', label: 'Très urgent' },
+                  urgent:        { icon: '⚡', color: '#B45309', label: 'Urgent' },
+                }[task.urgency] || {}
+                return (
+                  <div key={task.id} className="flex items-center gap-3 px-4 py-2.5"
+                    style={i < urgentTasks.length - 1 ? { borderBottom: '1px solid var(--c-border)' } : {}}>
+                    <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: meta.color }} />
+                    <span className="text-sm flex-shrink-0">{meta.icon}</span>
+                    <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{task.title}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium"
+                      style={{ background: meta.color + '20', color: meta.color }}>
+                      {meta.label}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           )}
           <DeadlinesPanel tasks={tasks} />

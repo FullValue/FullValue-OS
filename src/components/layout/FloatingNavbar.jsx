@@ -175,6 +175,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
   const { state, dispatch } = useStore()
   const { user, signOut } = useAuth()
   const [hovered, setHovered] = useState(false)
+  const [addingProject, setAddingProject] = useState(false)
   const expanded = sidebarLocked || hovered || addingProject
   const inboxCount = state.inbox.length
 
@@ -192,7 +193,6 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editEmoji, setEditEmoji] = useState('')
-  const [addingProject, setAddingProject] = useState(false)
   const [newName, setNewName] = useState('')
   const [newEmoji, setNewEmoji] = useState('📁')
 

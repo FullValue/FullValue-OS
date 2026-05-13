@@ -183,7 +183,10 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
           boxShadow: 'var(--shadow-float)',
           borderRadius: expanded ? 24 : 9999,
           padding: '12px 8px',
-          overflow: 'hidden',
+          overflowX: 'hidden',
+          overflowY: 'auto',
+          maxHeight: 'calc(100dvh - 32px)',
+          scrollbarWidth: 'none',
           gap: 2,
         }}
         animate={{ width: expanded ? 220 : 56 }}

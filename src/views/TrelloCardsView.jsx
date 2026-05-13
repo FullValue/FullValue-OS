@@ -163,9 +163,16 @@ function TrelloCard({ task, project, onOpen, tagStyles, isDragging }) {
   const progress = computeProgress(task)
   const hasProgress = (task.checklist?.length > 0) || (task.progressPercentage != null && task.progressPercentage > 0)
   const hasImage = !!(task.cardImagePath || task.cardImageUrl)
-  // Use project color as accent when no custom cardColor is set
-  const accentColor = task.cardColor ? getCardAccent(task.cardColor) : (project?.color || null)
   const urgencyStyle = getUrgencyStyle(task.urgency, project?.color)
+  // Card background: manual color > urgency tint > default gray
+  const cardBg = task.cardColor
+    ? task.cardColor
+    : urgencyStyle?.cardBg || 'var(--c-card)'
+  // Title accent: urgency color when urgency set, manual card accent when cardColor set, else default
+  const accentColor = isDone ? null
+    : urgencyStyle ? urgencyStyle.text
+    : task.cardColor ? getCardAccent(task.cardColor)
+    : null
 
   function toggleChecklistItem(itemId) {
     const updated = (task.checklist || []).map(i =>
@@ -174,7 +181,12 @@ function TrelloCard({ task, project, onOpen, tagStyles, isDragging }) {
     const doneCnt = updated.filter(i => i.done).length
     const pct = updated.length > 0 ? Math.round((doneCnt / updated.length) * 100) : 0
     const updates = { checklist: updated, progressPercentage: pct }
-    if (task.status === 'todo' && doneCnt > 0) updates.status = 'inprogress'
+    if (updated.length > 0 && doneCnt === updated.length) {
+      updates.status = 'done'
+      updates.completedAt = new Date().toISOString()
+    } else if (task.status === 'todo' && doneCnt > 0) {
+      updates.status = 'inprogress'
+    }
     dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, ...updates } })
   }
 
@@ -183,7 +195,7 @@ function TrelloCard({ task, project, onOpen, tagStyles, isDragging }) {
       onClick={() => !isDragging && onOpen(task)}
       className="rounded-2xl overflow-hidden cursor-pointer group transition-all hover:-translate-y-0.5"
       style={{
-        background: task.cardColor || 'var(--c-card)',
+        background: cardBg,
         border: '1px solid var(--c-border)',
         opacity: isDone ? 0.65 : 1,
         boxShadow: isDragging

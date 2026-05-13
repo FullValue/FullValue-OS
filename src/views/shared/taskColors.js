@@ -29,23 +29,39 @@ export const URGENCY_OPTIONS = [
   { value: 'critical',    label: '🚨 Critique' },
 ]
 
-// Returns { bg, text, label } for a given urgency level.
-// For 'urgent', derives color from project base color shifted toward orange.
+// Shifts RGB toward orange (for urgency color derivation from project color)
+function shiftToOrange(r, g, b) {
+  return [Math.min(255, r), Math.round(g * 0.45), Math.round(b * 0.20)]
+}
+
+// Returns { bg, cardBg, text, label } for a given urgency level.
+// - bg: pill badge background
+// - cardBg: full card background tint
+// - text: text / accent color
 export function getUrgencyStyle(urgency, projectColor) {
-  if (urgency === 'critical')    return { bg: 'rgba(220,38,38,0.16)',  text: '#DC2626', label: '🚨 Critique' }
-  if (urgency === 'very-urgent') return { bg: 'rgba(204,85,0,0.16)',   text: '#CC5500', label: '🔥 Très urgent' }
-  if (urgency === 'urgent') {
-    if (projectColor && /^#[0-9a-fA-F]{6}$/.test(projectColor)) {
-      const r = parseInt(projectColor.slice(1, 3), 16)
-      const g = parseInt(projectColor.slice(3, 5), 16)
-      const b = parseInt(projectColor.slice(5, 7), 16)
-      const nr = Math.min(255, r)
-      const ng = Math.round(g * 0.45)
-      const nb = Math.round(b * 0.20)
-      const text = `rgb(${nr},${ng},${nb})`
-      return { bg: `rgba(${nr},${ng},${nb},0.18)`, text, label: '⚡ Urgent' }
-    }
-    return { bg: 'rgba(245,158,11,0.18)', text: '#B45309', label: '⚡ Urgent' }
+  const hasHex = projectColor && /^#[0-9a-fA-F]{6}$/.test(projectColor)
+  let pr = 245, pg = 158, pb = 11 // fallback amber
+  if (hasHex) {
+    pr = parseInt(projectColor.slice(1, 3), 16)
+    pg = parseInt(projectColor.slice(3, 5), 16)
+    pb = parseInt(projectColor.slice(5, 7), 16)
+  }
+  const [or, og, ob] = shiftToOrange(pr, pg, pb)
+
+  if (urgency === 'critical') return {
+    bg: 'rgba(220,38,38,0.18)', cardBg: 'rgba(220,38,38,0.11)', text: '#DC2626', label: '🚨 Critique',
+  }
+  if (urgency === 'very-urgent') return {
+    bg: `rgba(${or},${og},${ob},0.20)`,
+    cardBg: `rgba(${or},${og},${ob},0.13)`, // card = orange-shifted project color
+    text: `rgb(${or},${og},${ob})`,
+    label: '🔥 Très urgent',
+  }
+  if (urgency === 'urgent') return {
+    bg: `rgba(${or},${og},${ob},0.18)`,
+    cardBg: `rgba(${pr},${pg},${pb},0.11)`, // card = raw project color (light tint)
+    text: `rgb(${or},${og},${ob})`,
+    label: '⚡ Urgent',
   }
   return null
 }

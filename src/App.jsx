@@ -161,7 +161,7 @@ function AppInner() {
       )
       case 'hub-ressources': return <HubRessources />
       case 'formation':      return <Formation />
-      case 'ulycom_clients': return <ClientSpace />
+      case 'ulycom_clients': return <ClientSpace onStartTask={goToSessionsWithTask} />
       case 'projets':        return <Projets onNavigate={setActivePage} />
       case 'migrate':        return <MigratePage />
       case 'import':         return <ImportPage />

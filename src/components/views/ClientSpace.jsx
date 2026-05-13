@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Plus, Settings, LayoutDashboard, Kanban, FileText, Paperclip,
   Timer, Receipt, Trash2, Archive, Check, X, ExternalLink,
-  CheckSquare, Clock, StickyNote, Calendar, Upload, Zap,
+  CheckSquare, Clock, StickyNote, Calendar, Upload, Zap, Play, CalendarDays,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import ViewContainer from '@/views/ViewContainer'
@@ -87,31 +87,313 @@ function Widget({ icon, label, main, sub, accent, onClick }) {
   )
 }
 
+// ─── Inline date editor ───────────────────────────────────────────────────────
+
+function InlineDateEditor({ value, onSave, placeholder, color }) {
+  const [editing, setEditing] = useState(false)
+  const inputRef = useRef(null)
+
+  useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="date"
+        defaultValue={value || ''}
+        onBlur={e => { onSave(e.target.value || null); setEditing(false) }}
+        onKeyDown={e => { if (e.key === 'Escape') setEditing(false) }}
+        className="bg-transparent text-xs font-mono focus:outline-none"
+        style={{ color: 'var(--text-secondary)' }}
+      />
+    )
+  }
+
+  if (!value) {
+    return (
+      <button onClick={() => setEditing(true)} className="text-[11px] transition-colors hover:opacity-70"
+        style={{ color: 'var(--text-tertiary)' }}>
+        {placeholder}
+      </button>
+    )
+  }
+
+  return (
+    <button onClick={() => setEditing(true)} className="text-[11px] font-mono transition-colors hover:opacity-70"
+      style={{ color: color || 'var(--text-secondary)' }}>
+      {new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+    </button>
+  )
+}
+
+// ─── Session task picker ──────────────────────────────────────────────────────
+
+function ClientSessionPicker({ client, tasks, accent, onStart, onClose }) {
+  const active = tasks.filter(t => t.clientId === client.id && t.status !== 'done')
+  const URGENCY_ORDER = { critical: 0, 'very-urgent': 1, urgent: 2 }
+  const sorted = [...active].sort((a, b) => (URGENCY_ORDER[a.urgency] ?? 9) - (URGENCY_ORDER[b.urgency] ?? 9))
+
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className="absolute top-full left-0 mt-2 z-20 w-72 rounded-2xl overflow-hidden shadow-2xl"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--c-border)' }}>
+        <div className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--c-border)' }}>
+          <p className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)' }}>
+            Choisir une tâche
+          </p>
+        </div>
+        <div className="max-h-56 overflow-y-auto">
+          <button onClick={() => onStart(null, null)}
+            className="w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/5"
+            style={{ color: 'var(--text-tertiary)' }}>
+            — Sans tâche spécifique
+          </button>
+          {sorted.map(task => {
+            const icon = task.urgency === 'critical' ? '🚨' : task.urgency === 'very-urgent' ? '🔥' : task.urgency === 'urgent' ? '⚡' : null
+            return (
+              <button key={task.id} onClick={() => onStart(null, task.id)}
+                className="w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/5 flex items-center gap-2"
+                style={{ borderTop: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}>
+                {icon && <span className="flex-shrink-0">{icon}</span>}
+                <span className="truncate flex-1">{task.title}</span>
+                {task.status === 'inprogress' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: 'rgba(255,214,107,0.15)', color: '#FFD66B' }}>En cours</span>
+                )}
+              </button>
+            )
+          })}
+          {sorted.length === 0 && (
+            <p className="px-4 py-4 text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
+              Aucune tâche active
+            </p>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Urgent task row ──────────────────────────────────────────────────────────
+
+function UrgentTaskRow({ task }) {
+  const meta = {
+    critical:      { icon: '🚨', color: '#DC2626', label: 'Critique' },
+    'very-urgent': { icon: '🔥', color: '#CC5500', label: 'Très urgent' },
+    urgent:        { icon: '⚡', color: '#B45309', label: 'Urgent' },
+  }[task.urgency] || {}
+
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
+      style={{ background: meta.color + '0C', border: `1px solid ${meta.color}25` }}>
+      <span className="text-sm flex-shrink-0">{meta.icon}</span>
+      <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{task.title}</span>
+      <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium"
+        style={{ background: meta.color + '20', color: meta.color }}>
+        {meta.label}
+      </span>
+      {task.dueDate && (
+        <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+          {new Date(task.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+        </span>
+      )}
+    </div>
+  )
+}
+
 // ─── Dashboard Tab ────────────────────────────────────────────────────────────
 
-function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, clientInvoices, appointments, onTabChange, accent }) {
+function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, clientInvoices, appointments, onTabChange, accent, onStartTask }) {
+  const { dispatch } = useStore()
+  const [showPicker, setShowPicker] = useState(false)
+
   const weekStart = getWeekStart()
-  const clientTasks = tasks.filter(t => t.clientId === client.id && t.status !== 'done')
-  const totalTasks = tasks.filter(t => t.clientId === client.id)
+  const clientTasks = tasks.filter(t => t.clientId === client.id)
+  const activeTasks = clientTasks.filter(t => t.status !== 'done')
+  const doneTasks = clientTasks.filter(t => t.status === 'done')
   const clientSessions = sessions.filter(s => s.clientId === client.id)
-  const weekTime = clientSessions.filter(s => new Date(s.date) >= weekStart).reduce((a, s) => a + s.duration, 0)
+  const weekSessions = clientSessions.filter(s => new Date(s.date) >= weekStart)
+  const weekTime = weekSessions.reduce((a, s) => a + s.duration, 0)
   const notes = clientNotes.filter(n => n.clientId === client.id)
   const docs = clientDocuments.filter(d => d.clientId === client.id)
   const now = new Date()
   const upcomingRdv = appointments.filter(a => a.clientId === client.id && new Date(a.date) >= now && new Date(a.date) <= new Date(now.getTime() + 7 * 86400000))
   const pendingInvoices = clientInvoices.filter(i => i.clientId === client.id && i.status === 'to_emit')
   const pendingAmount = pendingInvoices.reduce((a, i) => a + (i.amountTtc || 0), 0)
+  const overdueTasks = clientTasks.filter(t => t.dueDate && new Date(t.dueDate) < now && t.status !== 'done')
+
+  const URGENCY_ORDER = { critical: 0, 'very-urgent': 1, urgent: 2 }
+  const urgentTasks = clientTasks
+    .filter(t => t.urgency && t.status !== 'done')
+    .sort((a, b) => (URGENCY_ORDER[a.urgency] ?? 9) - (URGENCY_ORDER[b.urgency] ?? 9))
+
+  const daysSigned = client.startDate
+    ? Math.floor((new Date() - new Date(client.startDate)) / 86400000)
+    : null
+
+  const daysLeft = client.deadline
+    ? Math.ceil((new Date(client.deadline) - new Date()) / 86400000)
+    : null
+  const deadlineColor = daysLeft == null ? null : daysLeft < 0 ? '#F87171' : daysLeft <= 7 ? '#FFD66B' : accent
+
+  function handleStartSession(_, taskId) {
+    setShowPicker(false)
+    onStartTask?.(null, taskId)
+  }
 
   return (
-    <div className="p-4">
+    <div className="p-4 space-y-4">
+
+      {/* ── Hero card ─────────────────────────────────────────────────────── */}
+      <div className="rounded-2xl p-5" style={{ background: accent + '0E', border: `1px solid ${accent}28` }}>
+        <div className="flex items-start gap-4 mb-5">
+          {/* Left: identity */}
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
+            style={{ background: accent + '22', color: accent }}>
+            {(client.shortName || client.name).charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-bold leading-tight mb-1" style={{ color: accent }}>
+              {client.name}
+            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              {daysSigned !== null ? (
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  Signé le{' '}
+                  <InlineDateEditor
+                    value={client.startDate}
+                    onSave={v => dispatch({ type: 'UPDATE_CLIENT', payload: { id: client.id, startDate: v } })}
+                    placeholder="+ date signature"
+                    color={accent}
+                  />
+                  {' '}·{' '}
+                  <span className="font-mono font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    {daysSigned}j
+                  </span>
+                </span>
+              ) : (
+                <InlineDateEditor
+                  value={client.startDate}
+                  onSave={v => dispatch({ type: 'UPDATE_CLIENT', payload: { id: client.id, startDate: v } })}
+                  placeholder="+ date de signature"
+                  color={accent}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Right: deadline */}
+          <div className="flex-shrink-0 text-right">
+            {daysLeft !== null ? (
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Deadline</span>
+                <span className="font-mono text-2xl font-bold leading-none" style={{ color: deadlineColor }}>
+                  {daysLeft < 0 ? `+${Math.abs(daysLeft)}j` : `J-${daysLeft}`}
+                </span>
+                <InlineDateEditor
+                  value={client.deadline}
+                  onSave={v => dispatch({ type: 'UPDATE_CLIENT', payload: { id: client.id, deadline: v } })}
+                  placeholder=""
+                  color={deadlineColor}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-colors hover:bg-white/8"
+                style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                <CalendarDays size={12} />
+                <InlineDateEditor
+                  value={client.deadline}
+                  onSave={v => dispatch({ type: 'UPDATE_CLIENT', payload: { id: client.id, deadline: v } })}
+                  placeholder="Deadline remise"
+                  color={accent}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 relative">
+          <button
+            onClick={() => setShowPicker(v => !v)}
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-semibold transition-all hover:opacity-90"
+            style={{ background: accent, color: '#0a0a0a' }}
+          >
+            <Play size={13} strokeWidth={2.5} />
+            Lancer session
+          </button>
+          {showPicker && (
+            <ClientSessionPicker
+              client={client}
+              tasks={tasks}
+              accent={accent}
+              onStart={handleStartSession}
+              onClose={() => setShowPicker(false)}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* ── Stats ─────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <Widget icon="✓" label="Tâches" main={clientTasks.length} sub={`/${totalTasks.length} au total`} accent={accent} onClick={() => onTabChange('kanban')} />
+        <Widget icon="✓" label="Tâches" main={activeTasks.length} sub={`${doneTasks.length} terminées`} accent={accent} onClick={() => onTabChange('kanban')} />
         <Widget icon="📎" label="Hub" main={docs.length} sub="documents" accent={accent} onClick={() => onTabChange('hub')} />
         <Widget icon="⏱" label="Temps" main={formatDuration(weekTime)} sub="cette semaine" accent={accent} onClick={() => onTabChange('sessions')} />
         <Widget icon="📝" label="Notes" main={notes.length} sub="notes" accent={accent} onClick={() => onTabChange('notes')} />
         <Widget icon="📅" label="Prochains" main={upcomingRdv.length} sub="RDV 7 jours" accent={accent} onClick={() => onTabChange('sessions')} />
         <Widget icon="💰" label="Facturation" main={formatMoney(pendingAmount)} sub="à émettre" accent={accent} onClick={() => onTabChange('facturation')} />
       </div>
+
+      {/* ── Tâches urgentes ───────────────────────────────────────────────── */}
+      {urgentTasks.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: 'var(--text-tertiary)' }}>
+            Tâches urgentes · {urgentTasks.length}
+          </p>
+          <div className="flex flex-col gap-2">
+            {urgentTasks.map(task => <UrgentTaskRow key={task.id} task={task} />)}
+          </div>
+        </div>
+      )}
+
+      {/* ── Overdue alert ─────────────────────────────────────────────────── */}
+      {overdueTasks.length > 0 && (
+        <div className="rounded-xl px-4 py-3 flex items-center gap-2"
+          style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)' }}>
+          <span className="text-sm">⚠</span>
+          <span className="text-xs" style={{ color: '#F87171' }}>
+            {overdueTasks.length} tâche{overdueTasks.length > 1 ? 's' : ''} en retard
+          </span>
+          <div className="ml-auto flex flex-col gap-0.5">
+            {overdueTasks.slice(0, 3).map(t => (
+              <span key={t.id} className="text-[10px] text-white/40 truncate max-w-[200px]">{t.title}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Sessions récentes ─────────────────────────────────────────────── */}
+      {weekSessions.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: 'var(--text-tertiary)' }}>
+            Sessions cette semaine
+          </p>
+          <div className="flex flex-col gap-2">
+            {weekSessions.slice(0, 5).map(s => (
+              <div key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-xl"
+                style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: accent }} />
+                <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{s.note || '—'}</span>
+                <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{formatDuration(s.duration)}</span>
+                <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                  {new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -602,7 +884,7 @@ function ClientSettingsDrawer({ client, onClose }) {
 
 // ─── Client Dashboard Shell ───────────────────────────────────────────────────
 
-function ClientDashboard({ client }) {
+function ClientDashboard({ client, onStartTask }) {
   const { state, dispatch } = useStore()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -680,7 +962,7 @@ function ClientDashboard({ client }) {
             tasks={state.tasks} sessions={state.sessions}
             clientNotes={state.clientNotes} clientDocuments={state.clientDocuments}
             clientInvoices={state.clientInvoices} appointments={state.appointments}
-            onTabChange={setActiveTab}
+            onTabChange={setActiveTab} onStartTask={onStartTask}
           />
         )}
         {activeTab === 'kanban' && (
@@ -757,7 +1039,7 @@ function ClientDashboard({ client }) {
 
 // ─── Main ClientSpace ─────────────────────────────────────────────────────────
 
-export default function ClientSpace() {
+export default function ClientSpace({ onStartTask }) {
   const { state, dispatch } = useStore()
   const [selectedClientId, setSelectedClientId] = useState(null)
   const [addDrawer, setAddDrawer] = useState(false)
@@ -833,7 +1115,7 @@ export default function ClientSpace() {
       </div>
 
       {selectedClient ? (
-        <ClientDashboard key={selectedClient.id} client={selectedClient} />
+        <ClientDashboard key={selectedClient.id} client={selectedClient} onStartTask={onStartTask} />
       ) : null}
 
       <Drawer isOpen={addDrawer} onClose={() => setAddDrawer(false)} title="Nouveau client">

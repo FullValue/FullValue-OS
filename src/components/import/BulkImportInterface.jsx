@@ -326,7 +326,7 @@ function ImportPreview({ data, excluded, onToggle, defaultProjectSlug }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function BulkImportInterface({ defaultProjectSlug, onImportSuccess, onCancel }) {
+export default function BulkImportInterface({ defaultProjectSlug, defaultClientId, contextLabel, onImportSuccess, onCancel }) {
   const { state } = useStore()
   const [rawJson, setRawJson] = useState('')
   const [parsed, setParsed] = useState(null)
@@ -384,7 +384,7 @@ export default function BulkImportInterface({ defaultProjectSlug, onImportSucces
 
   function handleImport() {
     if (!parsed) return
-    const r = importBulk(parsed, { dryRun, excluded, fallbackSlug: defaultProjectSlug })
+    const r = importBulk(parsed, { dryRun, excluded, fallbackSlug: defaultProjectSlug, fallbackClientId: defaultClientId })
     setResult(r)
     if (r.success && !dryRun) {
       onImportSuccess?.(r.created)
@@ -404,12 +404,21 @@ export default function BulkImportInterface({ defaultProjectSlug, onImportSucces
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header hint */}
+      {/* Header hint — project */}
       {defaultProject && (
         <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl"
           style={{ background: defaultProject.color + '12', border: `1px solid ${defaultProject.color}25`, color: defaultProject.color }}>
           <span>{defaultProject.emoji}</span>
           <span>Projet par défaut : <strong>{defaultProject.name}</strong> — les entités sans project_slug seront rattachées à ce projet.</span>
+        </div>
+      )}
+
+      {/* Header hint — client context */}
+      {contextLabel && (
+        <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl"
+          style={{ background: 'rgba(168,212,240,0.1)', border: '1px solid rgba(168,212,240,0.2)', color: '#5A9EC4' }}>
+          <span>👤</span>
+          <span><strong>{contextLabel}</strong> — les entités importées sans client_id seront automatiquement liées à ce client.</span>
         </div>
       )}
 

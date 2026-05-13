@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   Plus, Settings, LayoutDashboard, Kanban, FileText, Paperclip,
   Timer, Receipt, Trash2, Archive, Check, X, ExternalLink,
-  CheckSquare, Clock, StickyNote, Calendar, Upload,
+  CheckSquare, Clock, StickyNote, Calendar, Upload, Zap,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import ViewContainer from '@/views/ViewContainer'
@@ -12,6 +12,7 @@ import FilePreview from '@/components/files/FilePreview'
 import YouTubeThumbnail from '@/components/youtube/YouTubeThumbnail'
 import YouTubeEmbed from '@/components/youtube/YouTubeEmbed'
 import AddYouTubeForm from '@/components/youtube/AddYouTubeForm'
+import BulkImportInterface from '@/components/import/BulkImportInterface'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -605,6 +606,8 @@ function ClientDashboard({ client }) {
   const { state, dispatch } = useStore()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
+  const [importSuccess, setImportSuccess] = useState(null)
 
   const accent = client.accentColor || '#8B7CFF'
   const statusInfo = STATUS_LABELS[client.status] || STATUS_LABELS.prospect
@@ -638,9 +641,19 @@ function ClientDashboard({ client }) {
               {client.activityType && <span className="text-[10px] text-white/25">{client.activityType}</span>}
             </div>
           </div>
-          <button onClick={() => setSettingsOpen(true)} className="p-2 rounded-xl text-white/30 hover:text-white/70 hover:bg-white/8 transition-all flex-shrink-0">
-            <Settings size={14} />
-          </button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={() => { setImportSuccess(null); setImportOpen(true) }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all"
+              style={{ color: accent, background: accent + '15' }}
+            >
+              <Zap size={12} strokeWidth={2} />
+              Import
+            </button>
+            <button onClick={() => setSettingsOpen(true)} className="p-2 rounded-xl text-white/30 hover:text-white/70 hover:bg-white/8 transition-all">
+              <Settings size={14} />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -691,6 +704,53 @@ function ClientDashboard({ client }) {
       <Drawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} title="Paramètres du client">
         <ClientSettingsDrawer client={client} onClose={() => setSettingsOpen(false)} />
       </Drawer>
+
+      {/* Import bulk modal */}
+      {importOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setImportOpen(false)}>
+          <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-float)' }}
+            onClick={e => e.stopPropagation()}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+              style={{ borderBottom: '1px solid var(--border-soft)' }}>
+              <div>
+                <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                  Import bulk · {client.name}
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                  Les éléments importés seront automatiquement liés à ce client.
+                </p>
+              </div>
+              <button onClick={() => setImportOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-white/8 transition-colors"
+                style={{ color: 'var(--text-tertiary)' }}>
+                <X size={16} />
+              </button>
+            </div>
+            {/* Success banner */}
+            {importSuccess !== null && (
+              <div className="mx-6 mt-4 px-4 py-2 rounded-xl text-xs flex items-center gap-2"
+                style={{ background: 'rgba(168,230,189,0.1)', border: '1px solid rgba(168,230,189,0.25)', color: '#A8E6BD' }}>
+                <Check size={13} />
+                {importSuccess} élément{importSuccess > 1 ? 's' : ''} importé{importSuccess > 1 ? 's' : ''} pour <strong>{client.name}</strong>
+              </div>
+            )}
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <BulkImportInterface
+                defaultProjectSlug="ulycom"
+                defaultClientId={client.id}
+                contextLabel={`Client : ${client.name}`}
+                onImportSuccess={n => setImportSuccess(n)}
+                onCancel={() => setImportOpen(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

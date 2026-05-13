@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Trash2, Plus, Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { ImpactBadge, StatusBadge } from './TaskBadge'
-import { TAG_PALETTE, getTagColor } from '@/views/TrelloCardsView'
+import { TAG_PALETTE, getTagColor } from './taskColors'
 import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
 
 const nanoid = () => Math.random().toString(36).slice(2, 10)

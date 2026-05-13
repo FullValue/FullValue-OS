@@ -1,6 +1,6 @@
 import { ImpactBadge, Ship80Badge, DueDateBadge } from './TaskBadge'
 import { useStore } from '@/store/useStore'
-import { getTagColor, computeProgress } from '@/views/TrelloCardsView'
+import { getTagColor, computeProgress } from './taskColors'
 import { MessageSquare, Paperclip } from 'lucide-react'
 
 export default function TaskCard({ task, project, style, className = '', onClick, dragHandleProps = {}, compact = false }) {

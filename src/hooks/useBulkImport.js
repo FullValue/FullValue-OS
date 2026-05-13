@@ -54,7 +54,7 @@ export function useBulkImport() {
   const [importing, setImporting] = useState(false)
 
   function importBulk(data, options = {}) {
-    const { dryRun = false, excluded = new Set(), fallbackSlug = null } = options
+    const { dryRun = false, excluded = new Set(), fallbackSlug = null, fallbackClientId = null } = options
     setImporting(true)
 
     const errors = []
@@ -65,8 +65,9 @@ export function useBulkImport() {
     }
 
     function resolveClientId(clientId) {
-      if (!clientId) return null
-      const client = state.clients.find(c => c.id === clientId)
+      const id = clientId || fallbackClientId
+      if (!id) return null
+      const client = state.clients.find(c => c.id === id)
       return client ? client.id : null
     }
 

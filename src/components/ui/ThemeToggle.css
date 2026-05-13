@@ -1,0 +1,69 @@
+.ttg-input {
+  display: none;
+}
+
+.ttg-label {
+  height: 60px;
+  width: 120px;
+  background-color: #ffffff;
+  border-radius: 30px;
+  box-shadow:
+    inset 0 0 5px 4px rgba(255, 255, 255, 1),
+    inset 0 0 20px 1px rgba(0, 0, 0, 0.488),
+    10px 20px 30px rgba(0, 0, 0, 0.096),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.4s;
+}
+
+.ttg-label:hover {
+  transform: perspective(100px) rotateX(5deg) rotateY(-5deg);
+}
+
+.ttg-input:checked ~ .ttg-label:hover {
+  transform: perspective(100px) rotateX(-5deg) rotateY(5deg);
+}
+
+/* Sliding orb */
+.ttg-label::before {
+  position: absolute;
+  content: "";
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  background-color: #000;
+  background-image: linear-gradient(130deg, #757272 10%, #ffffff 11%, #726f6f 62%);
+  left: 10px;
+  z-index: 2;
+  box-shadow: 0 2px 1px rgba(0, 0, 0, 0.3), 10px 10px 10px rgba(0, 0, 0, 0.3);
+  transition: 0.4s;
+}
+
+.ttg-input:checked ~ .ttg-label::before {
+  left: 70px;
+  background-image: linear-gradient(315deg, #000000 0%, #414141 70%);
+  transition: 0.4s;
+}
+
+/* Sun icon — right side, visible in light mode */
+.ttg-sun {
+  position: absolute;
+  right: 14px;
+  z-index: 1;
+  pointer-events: none;
+  color: #f59e0b;
+  transition: opacity 0.3s;
+}
+
+/* Moon icon — left side, visible in dark mode */
+.ttg-moon {
+  position: absolute;
+  left: 14px;
+  z-index: 1;
+  pointer-events: none;
+  color: #8b7cff;
+  transition: opacity 0.3s;
+}

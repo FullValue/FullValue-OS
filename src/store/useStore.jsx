@@ -95,6 +95,9 @@ function reducer(state, action) {
     case 'UPDATE_PROJECT':
       return { ...state, projects: state.projects.map(p => p.id === action.payload.id ? { ...p, ...action.payload } : p) }
 
+    case 'REORDER_PROJECTS':
+      return { ...state, projects: action.payload }
+
     case 'ADD_PROJECT':
       return { ...state, projects: [...state.projects, { id: nanoid(), tier: state.projects.length + 1, northStar: '', northStarProgress: 0, ...action.payload }] }
 

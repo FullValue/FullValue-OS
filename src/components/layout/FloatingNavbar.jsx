@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, Inbox, Calendar, CheckSquare, Timer,
-  BookOpen, GraduationCap, Zap,
+  BookOpen, GraduationCap,
   Users, LayoutDashboard, ChevronDown, LogOut, Database, FileJson,
   PanelLeftClose, PanelLeftOpen, Pencil, Trash2, Check, X, Plus,
 } from 'lucide-react'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -24,6 +27,20 @@ const RESSOURCES = [
 ]
 
 const PROJECT_COLORS = ['#A8E6BD', '#8B7CFF', '#FFD66B', '#FFB088', '#A8D4F0', '#FFC1E0', '#98E2C6', '#FF9898']
+
+function SortableProjectItem({ id, children }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </div>
+  )
+}
 
 function NavLabel({ children, expanded }) {
   return (
@@ -162,6 +179,16 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
   const inboxCount = state.inbox.length
 
   // Project CRUD state
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+
+  function handleProjectDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return
+    const oldIdx = state.projects.findIndex(p => p.id === active.id)
+    const newIdx = state.projects.findIndex(p => p.id === over.id)
+    if (oldIdx < 0 || newIdx < 0) return
+    dispatch({ type: 'REORDER_PROJECTS', payload: arrayMove(state.projects, oldIdx, newIdx) })
+  }
+
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editEmoji, setEditEmoji] = useState('')
@@ -225,22 +252,6 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
         onMouseEnter={() => !sidebarLocked && setHovered(true)}
         onMouseLeave={() => !sidebarLocked && setHovered(false)}
       >
-        {/* Logo row */}
-        <div
-          className="flex items-center gap-3 mb-2"
-          style={{ padding: expanded ? '4px 8px 8px' : '4px 0 8px', justifyContent: expanded ? 'flex-start' : 'center', borderBottom: '1px solid var(--border-soft)' }}
-        >
-          <div
-            className="flex-shrink-0 flex items-center justify-center rounded-xl"
-            style={{ width: 32, height: 32, background: 'var(--violet-bg)' }}
-          >
-            <Zap size={16} style={{ color: 'var(--violet-deep)' }} strokeWidth={2} />
-          </div>
-          <NavLabel expanded={expanded}>
-            <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Le Cockpit</span>
-          </NavLabel>
-        </div>
-
         {/* PILOTAGE */}
         <SectionDivider label="Pilotage" expanded={expanded} />
         {PILOTAGE.map(({ id, label, Icon, badge, timer }) => (
@@ -286,6 +297,8 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
           <div className="flex-1 h-px" style={{ background: 'var(--border-soft)' }} />
         </div>
 
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
+        <SortableContext items={state.projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
         {state.projects.map(p => {
           const isActive = activePage === `projet_${p.id}`
           const isUlycom = p.id === 'p1'
@@ -294,7 +307,8 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
           const rowActive = isActive || (isUlycom && activePage === 'ulycom_clients')
 
           return (
-            <div key={p.id}>
+            <SortableProjectItem key={p.id} id={p.id}>
+            <div>
               {isEditing && expanded ? (
                 /* ── Inline edit form ── */
                 <div
@@ -412,8 +426,11 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                 </div>
               )}
             </div>
+            </SortableProjectItem>
           )
         })}
+        </SortableContext>
+        </DndContext>
 
         {/* Add project form */}
         {addingProject && expanded && (

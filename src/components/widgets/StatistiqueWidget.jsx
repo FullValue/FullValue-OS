@@ -80,7 +80,7 @@ function ProgressRing({ pct, size = 148 }) {
           width: size - 28,
           height: size - 28,
           background: 'var(--violet-bg)',
-          fontSize: size * 0.28,
+          fontSize: size * 0.44,
         }}
       >
         🧠
@@ -145,13 +145,6 @@ export default function StatistiqueWidget() {
         boxShadow: 'var(--shadow-card)',
       }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
-          Statistique
-        </h2>
-      </div>
-
       {/* Progress ring + greeting */}
       <div className="flex flex-col items-center gap-3">
         <ProgressRing pct={weekPct} size={148} />

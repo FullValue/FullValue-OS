@@ -7,13 +7,9 @@ const PRAYER_BLOCKS = [
   { label: 'Maghrib', startMin: 20 * 60 + 30,  durationMin: 20 },
   { label: 'Isha',    startMin: 21 * 60 + 30,  durationMin: 30 },
 ]
-const START = 5 * 60 + 30   // 5h30
-const END   = 22 * 60        // 22h
-const SPAN  = END - START
 
 function getNextPrayer(nowMin) {
-  const upcoming = PRAYER_BLOCKS.filter(p => p.startMin > nowMin)
-  return upcoming[0] || PRAYER_BLOCKS[0]
+  return PRAYER_BLOCKS.find(p => p.startMin > nowMin) || PRAYER_BLOCKS[0]
 }
 
 function formatHHMM(min) {
@@ -32,7 +28,6 @@ function formatTimeUntil(diff) {
 }
 
 function PrayerWidget({ nowMinutes }) {
-  const displayBlocks = PRAYER_BLOCKS
   const nextPrayer = getNextPrayer(nowMinutes)
   const diffMin = nextPrayer ? nextPrayer.startMin - nowMinutes : 0
 
@@ -45,86 +40,56 @@ function PrayerWidget({ nowMinutes }) {
         boxShadow: 'var(--shadow-card)',
       }}
     >
-      <h2 className="font-semibold text-base mb-4" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
-        Créneaux protégés 🕌
+      <h2 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+        Horaires de prière
       </h2>
 
-      {/* Timeline */}
-      <div
-        className="relative rounded-xl overflow-hidden mb-3"
-        style={{
-          height: 36,
-          background: 'var(--bg-card-soft)',
-          border: '1px solid var(--border-soft)',
-        }}
-      >
-        {displayBlocks.map(block => {
-          const left = Math.max(0, ((block.startMin - START) / SPAN) * 100)
-          const width = (block.durationMin / SPAN) * 100
+      <div className="flex flex-col gap-0.5">
+        {PRAYER_BLOCKS.map(block => {
+          const isNext = nextPrayer?.label === block.label
+          const isPast = nowMinutes > block.startMin + block.durationMin
+
           return (
             <div
               key={block.label}
-              className="absolute top-0 bottom-0 flex items-center justify-center"
+              className="flex items-center justify-between px-3 py-2 rounded-xl transition-colors"
               style={{
-                left: `${left}%`,
-                width: `${width}%`,
-                background: 'var(--pink-bg)',
-                borderLeft: '1px solid var(--pink-solid)',
-                borderRight: '1px solid var(--pink-solid)',
+                background: isNext ? 'var(--pink-bg)' : 'transparent',
+                border: `1px solid ${isNext ? 'var(--pink-solid)' : 'transparent'}`,
               }}
-              title={block.label}
             >
-              {block.durationMin >= 20 && (
-                <span className="text-[8px] font-medium" style={{ color: 'var(--pink-deep)' }}>{block.label}</span>
-              )}
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: isNext ? 'var(--pink-deep)' : isPast ? 'var(--border-medium)' : 'var(--border-strong)' }}
+                />
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: isNext ? 'var(--pink-deep)' : isPast ? 'var(--text-tertiary)' : 'var(--text-secondary)' }}
+                >
+                  {block.label}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isNext && diffMin > 0 && (
+                  <span
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: 'var(--pink-deep)', color: '#fff' }}
+                  >
+                    {formatTimeUntil(diffMin)}
+                  </span>
+                )}
+                <span
+                  className="font-mono text-sm tabular-nums"
+                  style={{ color: isNext ? 'var(--pink-deep)' : isPast ? 'var(--text-tertiary)' : 'var(--text-secondary)' }}
+                >
+                  {formatHHMM(block.startMin)}
+                </span>
+              </div>
             </div>
           )
         })}
-
-        {/* Now marker */}
-        {nowMinutes >= START && nowMinutes <= END && (
-          <div
-            className="absolute top-0 bottom-0 w-0.5 z-10"
-            style={{
-              left: `${((nowMinutes - START) / SPAN) * 100}%`,
-              background: 'var(--pink-deep)',
-            }}
-          >
-            <div
-              className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full"
-              style={{ background: 'var(--pink-deep)' }}
-            />
-          </div>
-        )}
-
-        {/* Hour labels */}
-        {[6, 12, 17, 21].map(h => {
-          const leftPct = ((h * 60 - START) / SPAN) * 100
-          return leftPct >= 0 && leftPct <= 100 ? (
-            <span
-              key={h}
-              className="absolute bottom-0.5 font-mono text-[8px]"
-              style={{ left: `${leftPct}%`, transform: 'translateX(-50%)', color: 'var(--text-tertiary)' }}
-            >
-              {h}h
-            </span>
-          ) : null
-        })}
-      </div>
-
-      {/* Next prayer info */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
-          {formatHHMM(nowMinutes)} · {nextPrayer?.label} à {nextPrayer ? formatHHMM(nextPrayer.startMin) : '—'}
-        </p>
-        {nextPrayer && diffMin > 0 && (
-          <span
-            className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}
-          >
-            dans {formatTimeUntil(diffMin)}
-          </span>
-        )}
       </div>
     </div>
   )
@@ -133,7 +98,7 @@ function PrayerWidget({ nowMinutes }) {
 export default function RightSidebar({ nowMinutes }) {
   return (
     <aside
-      className="hidden lg:block fixed top-6 bottom-6 right-6 overflow-y-auto"
+      className="hidden lg:block fixed top-14 bottom-6 right-6 overflow-y-auto"
       style={{ width: 300 }}
     >
       <div className="flex flex-col gap-4">

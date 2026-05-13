@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Trash2, Search, Zap, X } from 'lucide-react'
+import { Trash2, Zap, X } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import Drawer from '@/components/ui/Drawer'
+import GlowSearchBar from '@/components/ui/GlowSearchBar'
 
 const TYPE_ICONS = { task: '📋', idea: '💡', note: '📝' }
 
@@ -108,14 +109,8 @@ export default function Inbox({ onNavigate }) {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25" />
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher dans l'inbox..."
-          className="w-full bg-white/3 border border-white/6 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet/40"
-        />
+      <div className="mb-4">
+        <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher dans l'inbox..." />
       </div>
 
       {/* List */}

@@ -3,6 +3,7 @@ import { Plus, Trash2, Zap, Pin, Check } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import Badge from '../ui/Badge'
 import Drawer from '../ui/Drawer'
+import GlowSearchBar from '../ui/GlowSearchBar'
 
 const FILTERS = ['Tous', 'High impact', 'Aujourd\'hui', 'En retard']
 
@@ -127,6 +128,7 @@ export default function Taches() {
   const [inboxDrawer, setInboxDrawer] = useState(null)
   const [editingTitle, setEditingTitle] = useState(null)
   const [editTitle, setEditTitle] = useState('')
+  const [search, setSearch] = useState('')
 
   function handleCapture(e) {
     if (e.key === 'Enter' && captureText.trim()) {
@@ -145,6 +147,7 @@ export default function Taches() {
   if (filter === "Aujourd'hui") tasks = tasks.filter(t => t.today)
   if (filter === 'En retard') tasks = tasks.filter(t => isOverdue(t))
   if (projectFilter !== 'all') tasks = tasks.filter(t => t.projectId === projectFilter)
+  if (search) tasks = tasks.filter(t => t.title?.toLowerCase().includes(search.toLowerCase()))
 
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.today !== b.today) return a.today ? -1 : 1
@@ -208,6 +211,10 @@ export default function Taches() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mb-4">
+        <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher une tâche..." />
       </div>
 
       {/* Filters */}

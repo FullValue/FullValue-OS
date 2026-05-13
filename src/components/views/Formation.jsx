@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Plus, ExternalLink, Search, Play, FileText, BookOpen, Puzzle, Mic, X, Trash2, Plus as PlusIcon, Paperclip, ArrowLeft } from 'lucide-react'
+import { Plus, ExternalLink, Play, FileText, BookOpen, Puzzle, Mic, X, Trash2, Plus as PlusIcon, Paperclip, ArrowLeft } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import Drawer from '@/components/ui/Drawer'
 import FileUploader from '@/components/files/FileUploader'
+import GlowSearchBar from '@/components/ui/GlowSearchBar'
 import FilePreview from '@/components/files/FilePreview'
 import YouTubeEmbed from '@/components/youtube/YouTubeEmbed'
 import YouTubeThumbnail from '@/components/youtube/YouTubeThumbnail'
@@ -488,11 +489,7 @@ export default function Formation() {
       </div>
 
       <div className="flex flex-col gap-3 mb-5">
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher…"
-            className="w-full bg-white/3 border border-white/6 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet/40" />
-        </div>
+        <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher…" />
         <div className="flex gap-2 flex-wrap">
           <button onClick={() => setTypeFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${typeFilter === 'all' ? 'bg-white/10 text-white/90' : 'text-white/30 hover:text-white/60'}`}>Tous</button>
           {Object.entries(TYPE_CONFIG).filter(([k]) => k !== 'youtube').map(([k, v]) => (

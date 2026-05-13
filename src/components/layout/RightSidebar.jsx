@@ -1,3 +1,4 @@
+import { Sunrise, Sun, Sunset, Moon, CloudSun } from 'lucide-react'
 import StatistiqueWidget from '@/components/widgets/StatistiqueWidget'
 
 const PRAYER_BLOCKS = [
@@ -6,6 +7,15 @@ const PRAYER_BLOCKS = [
   { label: 'Asr',     startMin: 17 * 60,       durationMin: 30 },
   { label: 'Maghrib', startMin: 20 * 60 + 30,  durationMin: 20 },
   { label: 'Isha',    startMin: 21 * 60 + 30,  durationMin: 30 },
+]
+
+const PRAYER_STRIP = [
+  { label: 'Fajr',    startMin: 5 * 60 + 30,  Icon: Sunrise  },
+  { label: 'Shuruq',  startMin: 6 * 60 + 15,  Icon: Sun      },
+  { label: 'Dhuhr',   startMin: 13 * 60 + 15, Icon: Sun      },
+  { label: 'Asr',     startMin: 17 * 60,       Icon: CloudSun },
+  { label: 'Maghrib', startMin: 20 * 60 + 30,  Icon: Sunset   },
+  { label: 'Isha',    startMin: 21 * 60 + 30,  Icon: Moon     },
 ]
 
 function getNextPrayer(nowMin) {
@@ -188,27 +198,28 @@ function PrayerWidget({ nowMinutes }) {
         <text x="270" y="124" fontSize={8} fill="var(--text-tertiary)" fontFamily="JetBrains Mono, monospace" textAnchor="end">21h</text>
       </svg>
 
-      {/* ── Next prayer banner ── */}
-      {nextPrayer && (
-        <div
-          className="flex items-center justify-between px-4 py-3 rounded-2xl"
-          style={{ background: 'var(--pink-bg)', border: '1px solid var(--pink-solid)' }}
-        >
-          <div>
-            <p className="text-sm font-semibold" style={{ color: 'var(--pink-deep)' }}>
-              {nextPrayer.label}
-            </p>
-            {diffMin > 0 && (
-              <p className="text-[11px] mt-0.5" style={{ color: 'var(--pink-deep)', opacity: 0.7 }}>
-                dans {formatTimeUntil(diffMin)}
-              </p>
-            )}
-          </div>
-          <span className="font-mono text-base font-semibold tabular-nums" style={{ color: 'var(--pink-deep)' }}>
-            {formatHHMM(nextPrayer.startMin)}
-          </span>
-        </div>
-      )}
+      {/* ── All prayers strip ── */}
+      <div className="flex items-stretch gap-0.5 rounded-2xl p-1"
+        style={{ background: 'rgba(0,0,0,0.15)' }}>
+        {PRAYER_STRIP.map(p => {
+          const isNext = nextPrayer?.label === p.label
+          return (
+            <div key={p.label}
+              className="flex-1 flex flex-col items-center gap-1 py-2.5 px-0.5 rounded-xl"
+              style={isNext ? { background: 'var(--pink-bg)', border: '1px solid var(--pink-solid)' } : {}}>
+              <p.Icon size={12} style={{ color: isNext ? 'var(--pink-deep)' : 'var(--text-tertiary)' }} strokeWidth={isNext ? 2.5 : 1.5} />
+              <span className="text-[7px] uppercase font-semibold tracking-wide leading-none"
+                style={{ color: isNext ? 'var(--pink-deep)' : 'var(--text-tertiary)' }}>
+                {p.label}
+              </span>
+              <span className="font-mono text-[9px] font-semibold tabular-nums leading-none"
+                style={{ color: isNext ? 'var(--pink-deep)' : 'var(--text-secondary)' }}>
+                {formatHHMM(p.startMin)}
+              </span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

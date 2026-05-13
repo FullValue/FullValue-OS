@@ -368,7 +368,6 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                           >
                             {p.name}
                           </span>
-                          <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-tertiary)' }}>T{p.tier}</span>
                           {isUlycom && (
                             <ChevronDown size={11} style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-tertiary)', flexShrink: 0, transform: ulycomExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                           )}
@@ -435,29 +434,45 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
         {/* Add project form */}
         {addingProject && expanded && (
           <div
-            className="flex items-center gap-1.5 rounded-xl px-2 py-1.5"
+            className="rounded-xl overflow-hidden"
             style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}
           >
-            <input
-              value={newEmoji}
-              onChange={e => setNewEmoji(e.target.value)}
-              className="w-7 text-center bg-transparent text-base focus:outline-none"
-              maxLength={2}
-            />
-            <input
-              autoFocus
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleAddProject()
-                if (e.key === 'Escape') setAddingProject(false)
-              }}
-              placeholder="Nom du projet..."
-              className="flex-1 text-sm bg-transparent focus:outline-none min-w-0"
-              style={{ color: 'var(--text-primary)' }}
-            />
-            <button onClick={handleAddProject} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={12} /></button>
-            <button onClick={() => setAddingProject(false)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={12} /></button>
+            {/* Emoji quick-pick */}
+            <div className="flex flex-wrap gap-0.5 px-1.5 pt-1.5">
+              {['⚡','🚀','💡','🛍','📊','🎯','💼','🔥','🌟','🏆','💰','🎨','📱','🌐'].map(e => (
+                <button
+                  key={e}
+                  onClick={() => setNewEmoji(e)}
+                  className="text-base leading-none"
+                  style={{
+                    padding: '3px 4px',
+                    borderRadius: 6,
+                    background: newEmoji === e ? 'var(--violet-bg)' : 'transparent',
+                    border: newEmoji === e ? '1px solid var(--violet-solid)' : '1px solid transparent',
+                  }}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+            {/* Name row */}
+            <div className="flex items-center gap-1.5 px-2 py-1.5">
+              <span className="text-base flex-shrink-0">{newEmoji}</span>
+              <input
+                autoFocus
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleAddProject()
+                  if (e.key === 'Escape') setAddingProject(false)
+                }}
+                placeholder="Nom du projet..."
+                className="flex-1 text-sm bg-transparent focus:outline-none min-w-0"
+                style={{ color: 'var(--text-primary)' }}
+              />
+              <button onClick={handleAddProject} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={12} /></button>
+              <button onClick={() => setAddingProject(false)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={12} /></button>
+            </div>
           </div>
         )}
 

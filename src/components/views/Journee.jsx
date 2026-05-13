@@ -104,13 +104,18 @@ function DeadlinesCard({ tasks, projects, onNavigate }) {
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .slice(0, 5)
 
-  const urgentCount = withDue.filter(t => t.dueDate <= tomorrow).length
+  const urgentCount = withDue.filter(t => new Date(t.dueDate + 'T23:59:00') - Date.now() < 86400000).length
 
-  function dayLabel(iso) {
-    const d = new Date(iso + 'T12:00:00')
-    if (iso === today) return <span style={{ color: 'var(--pink-deep)', fontWeight: 600 }}>AUJ</span>
-    if (iso === tomorrow) return <span style={{ color: 'var(--red-deep)', fontWeight: 600 }}>{d.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase()}</span>
-    return <span style={{ color: 'var(--text-tertiary)' }}>{d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }).toUpperCase()}</span>
+  function timeLeft(iso) {
+    const diffMs = new Date(iso + 'T23:59:00') - Date.now()
+    if (diffMs < 0) return { label: 'passé', color: 'var(--red-deep)' }
+    const h = Math.floor(diffMs / 3600000)
+    const d = Math.floor(diffMs / 86400000)
+    if (diffMs < 3600000) return { label: '< 1h', color: 'var(--red-deep)' }
+    if (d < 1) return { label: `${h}h`, color: 'var(--red-deep)' }
+    if (d === 1) return { label: '1j', color: 'var(--pink-deep)' }
+    if (d <= 3) return { label: `${d}j`, color: 'var(--yellow-deep)' }
+    return { label: `${d}j`, color: 'var(--text-tertiary)' }
   }
 
   return (
@@ -138,6 +143,7 @@ function DeadlinesCard({ tasks, projects, onNavigate }) {
             const project = projects.find(p => p.id === task.projectId)
             const isToday = task.dueDate === today
             const isTomorrow = task.dueDate === tomorrow
+            const tl = timeLeft(task.dueDate)
             return (
               <div
                 key={task.id}
@@ -147,8 +153,8 @@ function DeadlinesCard({ tasks, projects, onNavigate }) {
                   border: `0.5px solid ${isToday ? 'var(--pink-solid)' : isTomorrow ? 'var(--red-solid)' : 'var(--border-soft)'}`,
                 }}
               >
-                <span className="font-mono text-[11px] w-12 flex-shrink-0">{dayLabel(task.dueDate)}</span>
-                <span className="flex-1 text-sm truncate" style={{ color: 'var(--text-primary)', textDecoration: task.status === 'done' ? 'line-through' : 'none' }}>{task.title}</span>
+                <span className="font-mono text-[11px] w-10 flex-shrink-0 font-semibold" style={{ color: tl.color }}>{tl.label}</span>
+                <span className="flex-1 text-sm truncate" style={{ color: 'var(--text-primary)' }}>{task.title}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {task.impact === 'high' && <Zap size={10} style={{ color: 'var(--yellow-deep)' }} />}
                   {task.ship80 && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}>80%</span>}

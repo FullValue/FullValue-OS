@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import {
   Plus, Settings, LayoutDashboard, Kanban, FileText, Paperclip,
   Timer, Receipt, Trash2, Archive, Check, X, ExternalLink,
-  CheckSquare, Clock, StickyNote, Calendar, Upload, Zap, Play, CalendarDays,
+  CheckSquare, Clock, StickyNote, Calendar, Upload, Zap, Play, CalendarDays, ChevronRight,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import ViewContainer from '@/views/ViewContainer'
@@ -202,6 +202,82 @@ function UrgentTaskRow({ task }) {
   )
 }
 
+// ─── Deadlines Panel ─────────────────────────────────────────────────────────
+
+function DeadlinesPanel({ tasks }) {
+  const { state } = useStore()
+  const now = new Date()
+  const DAY_ABBR = ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM']
+
+  const upcoming = [...tasks]
+    .filter(t => t.dueDate && t.status !== 'done')
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+    .slice(0, 7)
+
+  const urgentCount = upcoming.filter(t => Math.ceil((new Date(t.dueDate) - now) / 86400000) <= 1).length
+
+  return (
+    <div className="rounded-xl overflow-hidden h-full flex flex-col"
+      style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+      <div className="px-4 py-3 flex items-center justify-between flex-shrink-0"
+        style={{ borderBottom: '1px solid var(--c-border)' }}>
+        <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Prochaines deadlines</span>
+        <div className="flex items-center gap-2">
+          {urgentCount > 0 && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full"
+              style={{ background: 'rgba(220,38,38,0.15)', color: '#F87171' }}>
+              {urgentCount} urgente{urgentCount > 1 ? 's' : ''}
+            </span>
+          )}
+          <ChevronRight size={14} style={{ color: 'var(--text-tertiary)' }} />
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {upcoming.map(task => {
+          const due = new Date(task.dueDate)
+          const daysLeft = Math.ceil((due - now) / 86400000)
+          const isRed = daysLeft <= 1
+          const dayStr = DAY_ABBR[due.getDay()]
+          const dateNum = due.getDate()
+          const project = state.projects.find(p => p.id === task.projectId)
+          const dotColor = project?.color || '#8B7CFF'
+          return (
+            <div key={task.id} className="flex items-center gap-3 px-4 py-2.5"
+              style={{ borderBottom: '1px solid var(--c-border)' }}>
+              <div className="w-12 flex-shrink-0 flex items-center gap-1">
+                <span className="text-[11px] font-bold"
+                  style={{ color: isRed ? '#F87171' : 'var(--text-tertiary)' }}>
+                  {dayStr}.
+                </span>
+                {!isRed && (
+                  <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{dateNum}</span>
+                )}
+              </div>
+              <span className="flex-1 text-xs truncate"
+                style={{ color: isRed ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                {task.title}
+              </span>
+              {(task.urgency === 'urgent' || task.urgency === 'very-urgent') && (
+                <span className="text-sm flex-shrink-0">⚡</span>
+              )}
+              {task.ship80 && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md flex-shrink-0"
+                  style={{ background: 'rgba(139,124,255,0.18)', color: '#8B7CFF' }}>80%</span>
+              )}
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+            </div>
+          )
+        })}
+        {upcoming.length === 0 && (
+          <p className="px-4 py-8 text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
+            Aucune deadline à venir
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Dashboard Tab ────────────────────────────────────────────────────────────
 
 function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, clientInvoices, appointments, onTabChange, accent, onStartTask }) {
@@ -335,14 +411,19 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
         </div>
       </div>
 
-      {/* ── Stats ─────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <Widget icon="✓" label="Tâches" main={activeTasks.length} sub={`${doneTasks.length} terminées`} accent={accent} onClick={() => onTabChange('kanban')} />
-        <Widget icon="📎" label="Hub" main={docs.length} sub="documents" accent={accent} onClick={() => onTabChange('hub')} />
-        <Widget icon="⏱" label="Temps" main={formatDuration(weekTime)} sub="cette semaine" accent={accent} onClick={() => onTabChange('sessions')} />
-        <Widget icon="📝" label="Notes" main={notes.length} sub="notes" accent={accent} onClick={() => onTabChange('notes')} />
-        <Widget icon="📅" label="Prochains" main={upcomingRdv.length} sub="RDV 7 jours" accent={accent} onClick={() => onTabChange('sessions')} />
-        <Widget icon="💰" label="Facturation" main={formatMoney(pendingAmount)} sub="à émettre" accent={accent} onClick={() => onTabChange('facturation')} />
+      {/* ── Stats + Deadlines ─────────────────────────────────────────────── */}
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="grid grid-cols-2 gap-2.5 md:w-[50%] flex-shrink-0">
+          <Widget icon="✓" label="Tâches" main={activeTasks.length} sub={`${doneTasks.length} terminées`} accent={accent} onClick={() => onTabChange('kanban')} />
+          <Widget icon="📎" label="Hub" main={docs.length} sub="documents" accent={accent} onClick={() => onTabChange('hub')} />
+          <Widget icon="⏱" label="Temps" main={formatDuration(weekTime)} sub="cette semaine" accent={accent} onClick={() => onTabChange('sessions')} />
+          <Widget icon="📝" label="Notes" main={notes.length} sub="notes" accent={accent} onClick={() => onTabChange('notes')} />
+          <Widget icon="📅" label="Prochains" main={upcomingRdv.length} sub="RDV 7 jours" accent={accent} onClick={() => onTabChange('sessions')} />
+          <Widget icon="💰" label="Facturation" main={formatMoney(pendingAmount)} sub="à émettre" accent={accent} onClick={() => onTabChange('facturation')} />
+        </div>
+        <div className="flex-1">
+          <DeadlinesPanel tasks={tasks} />
+        </div>
       </div>
 
       {/* ── Tâches urgentes ───────────────────────────────────────────────── */}

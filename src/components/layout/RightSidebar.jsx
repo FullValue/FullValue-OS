@@ -133,7 +133,7 @@ function PrayerWidget({ nowMinutes }) {
 export default function RightSidebar({ nowMinutes }) {
   return (
     <aside
-      className="hidden lg:flex flex-col gap-4 fixed top-6 bottom-6 right-6"
+      className="hidden lg:flex flex-col gap-4 fixed top-6 bottom-6 right-6 overflow-y-auto"
       style={{ width: 300 }}
     >
       <StatistiqueWidget />

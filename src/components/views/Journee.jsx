@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import confetti from 'canvas-confetti'
 import {
   Play, AlertTriangle, Inbox, ChevronRight,
   TrendingUp, TrendingDown, Minus, Zap, GripVertical,
@@ -104,18 +105,13 @@ function DeadlinesCard({ tasks, projects, onNavigate }) {
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .slice(0, 5)
 
-  const urgentCount = withDue.filter(t => new Date(t.dueDate + 'T23:59:00') - Date.now() < 86400000).length
+  const urgentCount = withDue.filter(t => t.dueDate <= tomorrow).length
 
-  function timeLeft(iso) {
-    const diffMs = new Date(iso + 'T23:59:00') - Date.now()
-    if (diffMs < 0) return { label: 'passé', color: 'var(--red-deep)' }
-    const h = Math.floor(diffMs / 3600000)
-    const d = Math.floor(diffMs / 86400000)
-    if (diffMs < 3600000) return { label: '< 1h', color: 'var(--red-deep)' }
-    if (d < 1) return { label: `${h}h`, color: 'var(--red-deep)' }
-    if (d === 1) return { label: '1j', color: 'var(--pink-deep)' }
-    if (d <= 3) return { label: `${d}j`, color: 'var(--yellow-deep)' }
-    return { label: `${d}j`, color: 'var(--text-tertiary)' }
+  function dayLabel(iso) {
+    const d = new Date(iso + 'T12:00:00')
+    if (iso === today) return <span style={{ color: 'var(--pink-deep)', fontWeight: 600 }}>AUJ</span>
+    if (iso === tomorrow) return <span style={{ color: 'var(--red-deep)', fontWeight: 600 }}>{d.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase()}</span>
+    return <span style={{ color: 'var(--text-tertiary)' }}>{d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }).toUpperCase()}</span>
   }
 
   return (
@@ -143,7 +139,6 @@ function DeadlinesCard({ tasks, projects, onNavigate }) {
             const project = projects.find(p => p.id === task.projectId)
             const isToday = task.dueDate === today
             const isTomorrow = task.dueDate === tomorrow
-            const tl = timeLeft(task.dueDate)
             return (
               <div
                 key={task.id}
@@ -153,8 +148,8 @@ function DeadlinesCard({ tasks, projects, onNavigate }) {
                   border: `0.5px solid ${isToday ? 'var(--pink-solid)' : isTomorrow ? 'var(--red-solid)' : 'var(--border-soft)'}`,
                 }}
               >
-                <span className="font-mono text-[11px] w-10 flex-shrink-0 font-semibold" style={{ color: tl.color }}>{tl.label}</span>
-                <span className="flex-1 text-sm truncate" style={{ color: 'var(--text-primary)' }}>{task.title}</span>
+                <span className="font-mono text-[11px] w-12 flex-shrink-0">{dayLabel(task.dueDate)}</span>
+                <span className="flex-1 text-sm truncate" style={{ color: 'var(--text-primary)', textDecoration: task.status === 'done' ? 'line-through' : 'none' }}>{task.title}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {task.impact === 'high' && <Zap size={10} style={{ color: 'var(--yellow-deep)' }} />}
                   {task.ship80 && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}>80%</span>}
@@ -317,11 +312,34 @@ function StatsRow({ state, nowMinutes, onNavigate, dispatch }) {
 function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
   const [picking, setPicking] = useState(false)
   const [search, setSearch] = useState('')
+  const [showCelebration, setShowCelebration] = useState(false)
+  const prevNotDoneRef = useRef(null)
 
   const todayAll = tasks.filter(t => t.today)
   const todayNotDone = todayAll.filter(t => t.status !== 'done')
   const todayDone = todayAll.filter(t => t.status === 'done')
   const tooMany = todayNotDone.length > 5
+
+  useEffect(() => {
+    if (
+      todayAll.length > 0 &&
+      todayNotDone.length === 0 &&
+      prevNotDoneRef.current > 0
+    ) {
+      setShowCelebration(true)
+      const end = Date.now() + 3000
+      const colors = ['#a786ff', '#fd8bbc', '#eca184', '#f8deb1']
+      const frame = () => {
+        if (Date.now() > end) return
+        confetti({ particleCount: 2, angle: 60,  spread: 55, startVelocity: 60, origin: { x: 0, y: 0.5 }, colors })
+        confetti({ particleCount: 2, angle: 120, spread: 55, startVelocity: 60, origin: { x: 1, y: 0.5 }, colors })
+        requestAnimationFrame(frame)
+      }
+      frame()
+      setTimeout(() => setShowCelebration(false), 3000)
+    }
+    prevNotDoneRef.current = todayNotDone.length
+  }, [todayNotDone.length, todayAll.length])
 
   const available = tasks.filter(t => !t.today && t.status !== 'done')
   const filtered = search
@@ -339,6 +357,16 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
   ]
 
   return (
+    <div className="relative">
+    {showCelebration && (
+      <div
+        className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl"
+        style={{ background: 'rgba(10,8,20,0.82)', backdropFilter: 'blur(8px)' }}
+      >
+        <p className="text-3xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Mission accomplie</p>
+        <p className="text-4xl mt-2">🎉</p>
+      </div>
+    )}
     <WidgetCard
       title="Priorités du jour · 5 max"
       badge={
@@ -480,6 +508,7 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
         </div>
       )}
     </WidgetCard>
+    </div>
   )
 }
 

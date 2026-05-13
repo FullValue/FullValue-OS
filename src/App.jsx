@@ -144,7 +144,7 @@ function AppInner() {
 
   function renderPage() {
     if (projectPageMatch) {
-      return <ProjetPage projectId={projectPageMatch} onNavigate={setActivePage} />
+      return <ProjetPage projectId={projectPageMatch} onNavigate={setActivePage} onStartTask={goToSessionsWithTask} />
     }
     switch (activePage) {
       case 'journee':    return <Journee onStartTask={goToSessionsWithTask} onNavigate={setActivePage} />

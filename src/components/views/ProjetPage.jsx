@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowLeft, Clock, CheckSquare, BarChart2, Kanban, FileText, Calendar, Flag, Edit2, Check, Plus, Trash2, FileJson } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { ArrowLeft, Clock, CheckSquare, BarChart2, Kanban, FileText, Calendar, Flag, Edit2, Check, Plus, Trash2, FileJson, Play, CalendarDays } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import ViewContainer from '@/views/ViewContainer'
 import Drawer from '@/components/ui/Drawer'
@@ -107,7 +107,127 @@ function NorthStarBanner({ project }) {
   )
 }
 
-function DashboardTab({ project, tasks, sessions }) {
+// ─── Inline date editor ───────────────────────────────────────────────────────
+
+function InlineDateEditor({ value, onSave, placeholder, color }) {
+  const [editing, setEditing] = useState(false)
+  const inputRef = useRef(null)
+
+  useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="date"
+        defaultValue={value || ''}
+        onBlur={e => { onSave(e.target.value || null); setEditing(false) }}
+        onKeyDown={e => { if (e.key === 'Escape') setEditing(false) }}
+        className="bg-transparent text-xs font-mono focus:outline-none"
+        style={{ color: 'var(--text-secondary)' }}
+      />
+    )
+  }
+
+  if (!value) {
+    return (
+      <button onClick={() => setEditing(true)} className="text-[11px] transition-colors hover:opacity-70"
+        style={{ color: 'var(--text-tertiary)' }}>
+        {placeholder}
+      </button>
+    )
+  }
+
+  return (
+    <button onClick={() => setEditing(true)} className="text-[11px] font-mono transition-colors hover:opacity-70"
+      style={{ color: color || 'var(--text-secondary)' }}>
+      {new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+    </button>
+  )
+}
+
+// ─── Session task picker ──────────────────────────────────────────────────────
+
+function SessionTaskPicker({ project, tasks, onStart, onClose }) {
+  const active = tasks.filter(t => t.projectId === project.id && t.status !== 'done')
+  const URGENCY_ORDER = { critical: 0, 'very-urgent': 1, urgent: 2 }
+  const sorted = [...active].sort((a, b) => (URGENCY_ORDER[a.urgency] ?? 9) - (URGENCY_ORDER[b.urgency] ?? 9))
+
+  return (
+    <>
+      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className="absolute top-full left-0 mt-2 z-20 w-72 rounded-2xl overflow-hidden shadow-2xl"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--c-border)' }}>
+        <div className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--c-border)' }}>
+          <p className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)' }}>
+            Choisir une tâche
+          </p>
+        </div>
+        <div className="max-h-56 overflow-y-auto">
+          <button onClick={() => onStart(project.id, null)}
+            className="w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/5"
+            style={{ color: 'var(--text-tertiary)' }}>
+            — Sans tâche spécifique
+          </button>
+          {sorted.map(task => {
+            const icon = task.urgency === 'critical' ? '🚨' : task.urgency === 'very-urgent' ? '🔥' : task.urgency === 'urgent' ? '⚡' : null
+            return (
+              <button key={task.id} onClick={() => onStart(project.id, task.id)}
+                className="w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/5 flex items-center gap-2"
+                style={{ borderTop: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}>
+                {icon && <span className="flex-shrink-0">{icon}</span>}
+                <span className="truncate flex-1">{task.title}</span>
+                {task.status === 'inprogress' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: 'rgba(255,214,107,0.15)', color: '#FFD66B' }}>En cours</span>
+                )}
+              </button>
+            )
+          })}
+          {sorted.length === 0 && (
+            <p className="px-4 py-4 text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
+              Aucune tâche active
+            </p>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Urgent task row ──────────────────────────────────────────────────────────
+
+function UrgentTaskRow({ task }) {
+  const meta = {
+    critical:     { icon: '🚨', color: '#DC2626', label: 'Critique' },
+    'very-urgent':{ icon: '🔥', color: '#CC5500', label: 'Très urgent' },
+    urgent:       { icon: '⚡', color: '#B45309', label: 'Urgent' },
+  }[task.urgency] || {}
+
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
+      style={{ background: meta.color + '0C', border: `1px solid ${meta.color}25` }}>
+      <span className="text-sm flex-shrink-0">{meta.icon}</span>
+      <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{task.title}</span>
+      <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium"
+        style={{ background: meta.color + '20', color: meta.color }}>
+        {meta.label}
+      </span>
+      {task.dueDate && (
+        <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+          {new Date(task.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ─── Dashboard tab ────────────────────────────────────────────────────────────
+
+function DashboardTab({ project, tasks, sessions, onStartTask }) {
+  const { dispatch } = useStore()
+  const [showPicker, setShowPicker] = useState(false)
+
   const weekStart = getWeekStart()
   const projectTasks = tasks.filter(t => t.projectId === project.id)
   const activeTasks = projectTasks.filter(t => t.status !== 'done')
@@ -118,51 +238,159 @@ function DashboardTab({ project, tasks, sessions }) {
   const weekTime = weekSessions.reduce((sum, s) => sum + s.duration, 0)
   const overdueTasks = projectTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done')
 
+  const URGENCY_ORDER = { critical: 0, 'very-urgent': 1, urgent: 2 }
+  const urgentTasks = projectTasks
+    .filter(t => t.urgency && t.status !== 'done')
+    .sort((a, b) => (URGENCY_ORDER[a.urgency] ?? 9) - (URGENCY_ORDER[b.urgency] ?? 9))
+
+  // Days since signing
+  const daysSigned = project.startDate
+    ? Math.floor((new Date() - new Date(project.startDate)) / 86400000)
+    : null
+
+  // Deadline
+  const daysLeft = project.deadline
+    ? Math.ceil((new Date(project.deadline) - new Date()) / 86400000)
+    : null
+  const deadlineColor = daysLeft == null ? null : daysLeft < 0 ? '#F87171' : daysLeft <= 7 ? '#FFD66B' : project.color
+
+  function handleStartSession(projectId, taskId) {
+    setShowPicker(false)
+    onStartTask?.(projectId, taskId)
+  }
+
   return (
     <div className="p-4 space-y-4">
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-xl p-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <CheckSquare size={12} className="text-white/30" />
-            <span className="text-[10px] text-white/30 uppercase tracking-wider">Tâches actives</span>
+
+      {/* ── Hero card ─────────────────────────────────────────────────────── */}
+      <div className="rounded-2xl p-5" style={{ background: project.color + '0E', border: `1px solid ${project.color}28` }}>
+        <div className="flex items-start gap-4 mb-5">
+          {/* Left: identity */}
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+            style={{ background: project.color + '22' }}>
+            {project.emoji}
           </div>
-          <p className="font-mono text-2xl font-medium text-white">{activeTasks.length}</p>
-          <p className="text-[10px] text-white/25 mt-0.5">{doneTasks.length} terminées</p>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-bold leading-tight mb-1" style={{ color: project.color }}>
+              {project.name}
+            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              {daysSigned !== null ? (
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  Signé le{' '}
+                  <InlineDateEditor
+                    value={project.startDate}
+                    onSave={v => dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, startDate: v } })}
+                    placeholder="+ date signature"
+                    color={project.color}
+                  />
+                  {' '}·{' '}
+                  <span className="font-mono font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    {daysSigned}j
+                  </span>
+                </span>
+              ) : (
+                <InlineDateEditor
+                  value={project.startDate}
+                  onSave={v => dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, startDate: v } })}
+                  placeholder="+ date de signature"
+                  color={project.color}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Right: deadline */}
+          <div className="flex-shrink-0 text-right">
+            {daysLeft !== null ? (
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Deadline</span>
+                <span className="font-mono text-2xl font-bold leading-none" style={{ color: deadlineColor }}>
+                  {daysLeft < 0 ? `+${Math.abs(daysLeft)}j` : `J-${daysLeft}`}
+                </span>
+                <InlineDateEditor
+                  value={project.deadline}
+                  onSave={v => dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, deadline: v } })}
+                  placeholder=""
+                  color={deadlineColor}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-colors hover:bg-white/8"
+                style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(255,255,255,0.1)' }}
+                onClick={() => {
+                  const d = document.querySelector('[data-deadline-input]')
+                  d?.click()
+                }}>
+                <CalendarDays size={12} />
+                <InlineDateEditor
+                  value={project.deadline}
+                  onSave={v => dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, deadline: v } })}
+                  placeholder="Deadline remise"
+                  color={project.color}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="rounded-xl p-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Clock size={12} className="text-white/30" />
-            <span className="text-[10px] text-white/30 uppercase tracking-wider">Cette semaine</span>
-          </div>
-          <p className="font-mono text-2xl font-medium text-white">{formatDuration(weekTime)}</p>
-          <p className="text-[10px] text-white/25 mt-0.5">{weekSessions.length} session{weekSessions.length > 1 ? 's' : ''}</p>
-        </div>
-
-        <div className="rounded-xl p-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="text-[10px]">📌</span>
-            <span className="text-[10px] text-white/30 uppercase tracking-wider">Aujourd'hui</span>
-          </div>
-          <p className="font-mono text-2xl font-medium text-white">{todayTasks.length}</p>
-          <p className="text-[10px] text-white/25 mt-0.5">priorité du jour</p>
-        </div>
-
-        <div className="rounded-xl p-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="text-[10px]">🚀</span>
-            <span className="text-[10px] text-white/30 uppercase tracking-wider">Ship 80%</span>
-          </div>
-          <p className="font-mono text-2xl font-medium" style={{ color: '#FFC1E0' }}>{ship80Tasks.length}</p>
-          <p className="text-[10px] text-white/25 mt-0.5">à livrer vite</p>
+        {/* Actions */}
+        <div className="flex gap-2 relative">
+          <button
+            onClick={() => setShowPicker(v => !v)}
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-semibold transition-all hover:opacity-90"
+            style={{ background: project.color, color: '#0a0a0a' }}
+          >
+            <Play size={13} strokeWidth={2.5} />
+            Lancer session
+          </button>
+          {showPicker && (
+            <SessionTaskPicker
+              project={project}
+              tasks={tasks}
+              onStart={handleStartSession}
+              onClose={() => setShowPicker(false)}
+            />
+          )}
         </div>
       </div>
 
-      {/* Overdue alert */}
+      {/* ── Stats ─────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { Icon: CheckSquare, label: 'Tâches actives', value: activeTasks.length, sub: `${doneTasks.length} terminées`, color: null },
+          { Icon: Clock,       label: 'Cette semaine',  value: formatDuration(weekTime), sub: `${weekSessions.length} session${weekSessions.length > 1 ? 's' : ''}`, color: null },
+          { Icon: null,        label: "Aujourd'hui",    value: todayTasks.length, sub: 'priorité du jour', emoji: '📌', color: null },
+          { Icon: null,        label: 'Ship 80%',       value: ship80Tasks.length, sub: 'à livrer vite', emoji: '🚀', color: '#FFC1E0' },
+        ].map((s, i) => (
+          <div key={i} className="rounded-xl p-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+            <div className="flex items-center gap-1.5 mb-2">
+              {s.Icon ? <s.Icon size={12} className="text-white/30" /> : <span className="text-[10px]">{s.emoji}</span>}
+              <span className="text-[10px] text-white/30 uppercase tracking-wider">{s.label}</span>
+            </div>
+            <p className="font-mono text-2xl font-medium" style={{ color: s.color || 'var(--text-primary)' }}>{s.value}</p>
+            <p className="text-[10px] text-white/25 mt-0.5">{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Tâches urgentes ───────────────────────────────────────────────── */}
+      {urgentTasks.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: 'var(--text-tertiary)' }}>
+            Tâches urgentes · {urgentTasks.length}
+          </p>
+          <div className="flex flex-col gap-2">
+            {urgentTasks.map(task => <UrgentTaskRow key={task.id} task={task} />)}
+          </div>
+        </div>
+      )}
+
+      {/* ── Overdue alert ──────────────────────────────────────────────────── */}
       {overdueTasks.length > 0 && (
-        <div className="rounded-xl px-4 py-3 flex items-center gap-2" style={{ background: '#F87171' + '10', border: '1px solid ' + '#F87171' + '30' }}>
-          <span className="text-[12px]">⚠</span>
+        <div className="rounded-xl px-4 py-3 flex items-center gap-2"
+          style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)' }}>
+          <span className="text-sm">⚠</span>
           <span className="text-xs" style={{ color: '#F87171' }}>
             {overdueTasks.length} tâche{overdueTasks.length > 1 ? 's' : ''} en retard
           </span>
@@ -174,17 +402,20 @@ function DashboardTab({ project, tasks, sessions }) {
         </div>
       )}
 
-      {/* Recent sessions */}
+      {/* ── Sessions récentes ─────────────────────────────────────────────── */}
       {weekSessions.length > 0 && (
         <div>
-          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2">Sessions cette semaine</p>
+          <p className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: 'var(--text-tertiary)' }}>
+            Sessions cette semaine
+          </p>
           <div className="flex flex-col gap-2">
             {weekSessions.slice(0, 5).map(s => (
-              <div key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ background: 'var(--c-card)', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-xl"
+                style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: project.color }} />
-                <span className="flex-1 text-xs text-white/60 truncate">{s.note || '—'}</span>
-                <span className="font-mono text-[10px] text-white/30 flex-shrink-0">{formatDuration(s.duration)}</span>
-                <span className="font-mono text-[10px] text-white/20 flex-shrink-0">
+                <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{s.note || '—'}</span>
+                <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{formatDuration(s.duration)}</span>
+                <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'rgba(255,255,255,0.2)' }}>
                   {new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                 </span>
               </div>
@@ -355,7 +586,7 @@ function SessionsTab({ project, sessions }) {
   )
 }
 
-export default function ProjetPage({ projectId, onNavigate }) {
+export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
   const { state, dispatch } = useStore()
   const [activeTab, setActiveTab] = useState('kanban')
   const [importOpen, setImportOpen] = useState(false)
@@ -458,7 +689,7 @@ export default function ProjetPage({ projectId, onNavigate }) {
           </div>
         )}
         {activeTab === 'dashboard' && (
-          <DashboardTab project={project} tasks={state.tasks} sessions={state.sessions} />
+          <DashboardTab project={project} tasks={state.tasks} sessions={state.sessions} onStartTask={onStartTask} />
         )}
         {activeTab === 'notes' && <NotesTab project={project} />}
         {activeTab === 'sessions' && <SessionsTab project={project} sessions={state.sessions} />}

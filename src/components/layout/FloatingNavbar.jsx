@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, Inbox, Calendar, CheckSquare, Timer,
-  BookOpen, GraduationCap, Zap, Sun, Moon,
+  BookOpen, GraduationCap, Zap,
   Users, LayoutDashboard, ChevronDown, LogOut, Database, FileJson,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, Pencil, Trash2, Check, X, Plus,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -22,6 +22,8 @@ const RESSOURCES = [
   { id: 'hub-ressources', label: 'Hub Ressources', Icon: BookOpen },
   { id: 'formation',      label: 'Formation',       Icon: GraduationCap },
 ]
+
+const PROJECT_COLORS = ['#A8E6BD', '#8B7CFF', '#FFD66B', '#FFB088', '#A8D4F0', '#FFC1E0', '#98E2C6', '#FF9898']
 
 function NavLabel({ children, expanded }) {
   return (
@@ -56,12 +58,7 @@ function NavItem({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActi
     >
       <span
         className="relative flex-shrink-0 flex items-center justify-center rounded-full transition-all"
-        style={{
-          width: 32,
-          height: 32,
-          background: isActive ? 'transparent' : 'transparent',
-          color: isActive ? 'var(--active-text)' : 'var(--text-tertiary)',
-        }}
+        style={{ width: 32, height: 32, color: isActive ? 'var(--active-text)' : 'var(--text-tertiary)' }}
       >
         <Icon size={17} strokeWidth={isActive ? 2 : 1.6} />
         {badgeCount > 0 && (
@@ -157,12 +154,46 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount }) {
 
 // ─── Main floating navbar ─────────────────────────────────────────────────────
 
-export default function FloatingNavbar({ activePage, setActivePage, timerRunning, theme, onToggleTheme, sidebarLocked = false, onToggleSidebarLock }) {
-  const { state } = useStore()
+export default function FloatingNavbar({ activePage, setActivePage, timerRunning, sidebarLocked = false, onToggleSidebarLock }) {
+  const { state, dispatch } = useStore()
   const { user, signOut } = useAuth()
   const [hovered, setHovered] = useState(false)
   const expanded = sidebarLocked || hovered
   const inboxCount = state.inbox.length
+
+  // Project CRUD state
+  const [editingId, setEditingId] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editEmoji, setEditEmoji] = useState('')
+  const [addingProject, setAddingProject] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newEmoji, setNewEmoji] = useState('📁')
+
+  function startEdit(p) {
+    setEditingId(p.id)
+    setEditName(p.name)
+    setEditEmoji(p.emoji)
+  }
+
+  function saveEdit(id) {
+    if (!editName.trim()) return
+    dispatch({ type: 'UPDATE_PROJECT', payload: { id, name: editName.trim(), emoji: editEmoji.trim() || '📁' } })
+    setEditingId(null)
+  }
+
+  function handleDeleteProject(id) {
+    dispatch({ type: 'DELETE_PROJECT', payload: id })
+    if (activePage === `projet_${id}` || activePage === 'ulycom_clients') setActivePage('journee')
+  }
+
+  function handleAddProject() {
+    if (!newName.trim()) return
+    const color = PROJECT_COLORS[state.projects.length % PROJECT_COLORS.length]
+    dispatch({ type: 'ADD_PROJECT', payload: { name: newName.trim(), emoji: newEmoji.trim() || '📁', color } })
+    setNewName('')
+    setNewEmoji('📁')
+    setAddingProject(false)
+  }
 
   const userInitials = (user?.user_metadata?.full_name || user?.email || '?')
     .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -226,70 +257,138 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
           />
         ))}
 
-        {/* PROJETS */}
-        <SectionDivider label="Projets" expanded={expanded} />
+        {/* PROJETS — divider with + button */}
+        <div className="flex items-center gap-2 px-1 my-1" style={{ height: 20 }}>
+          <div className="flex-1 h-px" style={{ background: 'var(--border-soft)' }} />
+          <AnimatePresence>
+            {expanded && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1 }}
+                className="flex items-center gap-1.5"
+              >
+                <span className="text-[9px] uppercase tracking-widest font-semibold whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
+                  Projets
+                </span>
+                <button
+                  onClick={() => { setAddingProject(true); setNewName(''); setNewEmoji('📁') }}
+                  className="flex items-center justify-center w-4 h-4 rounded-full hover:opacity-70 transition-opacity"
+                  style={{ color: 'var(--text-tertiary)', background: 'var(--border-soft)' }}
+                  title="Ajouter un projet"
+                >
+                  <Plus size={9} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="flex-1 h-px" style={{ background: 'var(--border-soft)' }} />
+        </div>
+
         {state.projects.map(p => {
           const isActive = activePage === `projet_${p.id}`
           const isUlycom = p.id === 'p1'
           const showSub = isUlycom && ulycomExpanded && expanded
+          const isEditing = editingId === p.id
+          const rowActive = isActive || (isUlycom && activePage === 'ulycom_clients')
 
           return (
             <div key={p.id}>
-              <button
-                onClick={() => setActivePage(`projet_${p.id}`)}
-                title={!expanded ? `${p.emoji} ${p.name}` : undefined}
-                className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none"
-                style={{
-                  padding: expanded ? '7px 12px' : '7px 0',
-                  justifyContent: expanded ? 'flex-start' : 'center',
-                  borderRadius: 12,
-                  background: (isActive || (isUlycom && activePage === 'ulycom_clients')) ? 'var(--active-bg)' : 'transparent',
-                }}
-              >
-                <span
-                  className="flex-shrink-0 flex items-center justify-center"
-                  style={{ width: 32, height: 32 }}
+              {isEditing && expanded ? (
+                /* ── Inline edit form ── */
+                <div
+                  className="flex items-center gap-1.5 w-full rounded-xl px-2 py-1.5"
+                  style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}
                 >
-                  <span
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                  <input
+                    value={editEmoji}
+                    onChange={e => setEditEmoji(e.target.value)}
+                    className="w-7 text-center bg-transparent text-base focus:outline-none"
+                    maxLength={2}
+                  />
+                  <input
+                    autoFocus
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveEdit(p.id)
+                      if (e.key === 'Escape') setEditingId(null)
+                    }}
+                    placeholder="Nom..."
+                    className="flex-1 text-sm bg-transparent focus:outline-none min-w-0"
+                    style={{ color: 'var(--text-primary)' }}
+                  />
+                  <button onClick={() => saveEdit(p.id)} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={12} /></button>
+                  <button onClick={() => setEditingId(null)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={12} /></button>
+                </div>
+              ) : (
+                /* ── Normal row ── */
+                <div className="group relative">
+                  <button
+                    onClick={() => setActivePage(`projet_${p.id}`)}
+                    title={!expanded ? `${p.emoji} ${p.name}` : undefined}
+                    className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none"
                     style={{
-                      background: p.color + '22',
-                      color: p.color,
-                      border: `1.5px solid ${p.color}44`,
+                      padding: expanded ? '7px 12px' : '7px 0',
+                      justifyContent: expanded ? 'flex-start' : 'center',
+                      borderRadius: 12,
+                      background: rowActive ? 'var(--active-bg)' : 'transparent',
                     }}
                   >
-                    {p.emoji}
-                  </span>
-                </span>
-                <AnimatePresence>
-                  {expanded && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -6 }}
-                      transition={{ duration: 0.13 }}
-                      className="flex items-center gap-1 flex-1 min-w-0"
-                    >
-                      <span
-                        className="text-sm truncate"
-                        style={{
-                          color: (isActive || (isUlycom && activePage === 'ulycom_clients')) ? 'var(--active-text)' : 'var(--text-secondary)',
-                          fontWeight: isActive ? 500 : 400,
-                        }}
-                      >
-                        {p.name}
-                      </span>
-                      <span className="text-[9px] ml-auto" style={{ color: 'var(--text-tertiary)' }}>T{p.tier}</span>
-                      {isUlycom && (
-                        <ChevronDown size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0, transform: ulycomExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                    <span className="flex-shrink-0 flex items-center justify-center text-base" style={{ width: 32, height: 32 }}>
+                      {p.emoji}
+                    </span>
+                    <AnimatePresence>
+                      {expanded && (
+                        <motion.span
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -6 }}
+                          transition={{ duration: 0.13 }}
+                          className="flex items-center gap-1 flex-1 min-w-0"
+                        >
+                          <span
+                            className="text-sm truncate"
+                            style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-secondary)', fontWeight: rowActive ? 500 : 400 }}
+                          >
+                            {p.name}
+                          </span>
+                          <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-tertiary)' }}>T{p.tier}</span>
+                          {isUlycom && (
+                            <ChevronDown size={11} style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-tertiary)', flexShrink: 0, transform: ulycomExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                          )}
+                        </motion.span>
                       )}
-                    </motion.span>
+                    </AnimatePresence>
+                  </button>
+
+                  {/* Edit / delete — visible on hover */}
+                  {expanded && (
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+                      <button
+                        onClick={e => { e.stopPropagation(); startEdit(p) }}
+                        className="p-1 rounded-md"
+                        style={{ color: rowActive ? 'rgba(255,255,255,0.7)' : 'var(--text-tertiary)', background: rowActive ? 'rgba(255,255,255,0.12)' : 'var(--bg-card-soft)' }}
+                        title="Renommer"
+                      >
+                        <Pencil size={10} />
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDeleteProject(p.id) }}
+                        className="p-1 rounded-md"
+                        style={{ color: 'var(--red-deep)', background: 'var(--red-bg)' }}
+                        title="Supprimer"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
                   )}
-                </AnimatePresence>
-              </button>
+                </div>
+              )}
 
               {/* Ulycom sub-nav */}
-              {showSub && (
+              {showSub && !isEditing && (
                 <div className="ml-10 flex flex-col gap-0.5 mt-0.5">
                   {[
                     { id: 'projet_p1', label: 'Dashboard', Icon: LayoutDashboard },
@@ -316,6 +415,35 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
           )
         })}
 
+        {/* Add project form */}
+        {addingProject && expanded && (
+          <div
+            className="flex items-center gap-1.5 rounded-xl px-2 py-1.5"
+            style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}
+          >
+            <input
+              value={newEmoji}
+              onChange={e => setNewEmoji(e.target.value)}
+              className="w-7 text-center bg-transparent text-base focus:outline-none"
+              maxLength={2}
+            />
+            <input
+              autoFocus
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAddProject()
+                if (e.key === 'Escape') setAddingProject(false)
+              }}
+              placeholder="Nom du projet..."
+              className="flex-1 text-sm bg-transparent focus:outline-none min-w-0"
+              style={{ color: 'var(--text-primary)' }}
+            />
+            <button onClick={handleAddProject} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={12} /></button>
+            <button onClick={() => setAddingProject(false)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={12} /></button>
+          </div>
+        )}
+
         {/* RESSOURCES */}
         <SectionDivider label="Ressources" expanded={expanded} />
         {RESSOURCES.map(({ id, label, Icon }) => (
@@ -330,62 +458,27 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
           />
         ))}
 
-        {/* Theme toggle + user menu */}
+        {/* Bottom controls */}
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border-soft)' }}>
-          {/* Sidebar lock toggle */}
           <button
             onClick={onToggleSidebarLock}
             title={sidebarLocked ? 'Réduire la sidebar' : 'Épingler la sidebar ouverte'}
             className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none"
-            style={{
-              padding: expanded ? '7px 12px' : '7px 0',
-              justifyContent: expanded ? 'flex-start' : 'center',
-              borderRadius: 12,
-            }}
+            style={{ padding: expanded ? '7px 12px' : '7px 0', justifyContent: expanded ? 'flex-start' : 'center', borderRadius: 12 }}
           >
             <span className="flex-shrink-0 flex items-center justify-center" style={{ width: 32, height: 32, color: 'var(--text-tertiary)' }}>
-              {sidebarLocked
-                ? <PanelLeftClose size={17} strokeWidth={1.6} />
-                : <PanelLeftOpen size={17} strokeWidth={1.6} />}
+              {sidebarLocked ? <PanelLeftClose size={17} strokeWidth={1.6} /> : <PanelLeftOpen size={17} strokeWidth={1.6} />}
             </span>
             <NavLabel expanded={expanded}>
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                {sidebarLocked ? 'Réduire' : 'Épingler'}
-              </span>
+              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{sidebarLocked ? 'Réduire' : 'Épingler'}</span>
             </NavLabel>
           </button>
 
-          <button
-            onClick={onToggleTheme}
-            title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
-            className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none"
-            style={{
-              padding: expanded ? '7px 12px' : '7px 0',
-              justifyContent: expanded ? 'flex-start' : 'center',
-              borderRadius: 12,
-            }}
-          >
-            <span className="flex-shrink-0 flex items-center justify-center" style={{ width: 32, height: 32, color: 'var(--text-tertiary)' }}>
-              {theme === 'dark' ? <Sun size={17} strokeWidth={1.6} /> : <Moon size={17} strokeWidth={1.6} />}
-            </span>
-            <NavLabel expanded={expanded}>
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                {theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
-              </span>
-            </NavLabel>
-          </button>
-
-          {/* Migrate */}
           <button
             onClick={() => setActivePage('migrate')}
             title="Migration Supabase"
             className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none"
-            style={{
-              padding: expanded ? '7px 12px' : '7px 0',
-              justifyContent: expanded ? 'flex-start' : 'center',
-              borderRadius: 12,
-              background: activePage === 'migrate' ? 'var(--active-bg)' : 'transparent',
-            }}
+            style={{ padding: expanded ? '7px 12px' : '7px 0', justifyContent: expanded ? 'flex-start' : 'center', borderRadius: 12, background: activePage === 'migrate' ? 'var(--active-bg)' : 'transparent' }}
           >
             <span className="flex-shrink-0 flex items-center justify-center" style={{ width: 32, height: 32, color: 'var(--text-tertiary)' }}>
               <Database size={15} strokeWidth={1.6} />
@@ -395,13 +488,9 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
             </NavLabel>
           </button>
 
-          {/* User + signout */}
           <div
             className="flex items-center gap-3 w-full mt-1"
-            style={{
-              padding: expanded ? '7px 12px' : '7px 0',
-              justifyContent: expanded ? 'flex-start' : 'center',
-            }}
+            style={{ padding: expanded ? '7px 12px' : '7px 0', justifyContent: expanded ? 'flex-start' : 'center' }}
           >
             <span
               className="flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold"
@@ -418,9 +507,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                   transition={{ duration: 0.13 }}
                   className="flex items-center gap-2 flex-1 min-w-0"
                 >
-                  <span className="text-xs truncate flex-1" style={{ color: 'var(--text-tertiary)' }}>
-                    {user?.email}
-                  </span>
+                  <span className="text-xs truncate flex-1" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</span>
                   <button onClick={signOut} title="Se déconnecter">
                     <LogOut size={13} style={{ color: 'var(--text-tertiary)' }} />
                   </button>

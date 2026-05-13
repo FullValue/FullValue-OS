@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { Sun, Moon } from 'lucide-react'
 import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import FloatingNavbar from '@/components/layout/FloatingNavbar'
@@ -192,13 +193,33 @@ function AppInner() {
       className="min-h-screen min-h-dvh"
       style={{ background: 'var(--bg-page)' }}
     >
+      {/* Theme toggle — top right */}
+      <div className="fixed top-4 right-4 z-40">
+        <button
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-float)' }}
+        >
+          <Sun size={13} style={{ color: theme === 'light' ? 'var(--yellow-deep)' : 'var(--text-tertiary)', transition: 'color 0.2s' }} />
+          <div
+            className="relative w-9 h-5 rounded-full"
+            style={{ background: theme === 'dark' ? 'var(--violet-deep)' : 'var(--border-medium)', transition: 'background 0.2s' }}
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white"
+              style={{ transform: theme === 'dark' ? 'translateX(16px)' : 'translateX(0)', transition: 'transform 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}
+            />
+          </div>
+          <Moon size={13} style={{ color: theme === 'dark' ? 'var(--violet-deep)' : 'var(--text-tertiary)', transition: 'color 0.2s' }} />
+        </button>
+      </div>
+
       {/* Floating left navbar */}
       <FloatingNavbar
         activePage={activePage}
         setActivePage={setActivePage}
         timerRunning={timerRunning}
-        theme={theme}
-        onToggleTheme={toggleTheme}
         sidebarLocked={sidebarLocked}
         onToggleSidebarLock={handleToggleSidebarLock}
       />

@@ -95,6 +95,14 @@ function reducer(state, action) {
     case 'UPDATE_PROJECT':
       return { ...state, projects: state.projects.map(p => p.id === action.payload.id ? { ...p, ...action.payload } : p) }
 
+    case 'ADD_PROJECT':
+      return { ...state, projects: [...state.projects, { id: nanoid(), tier: state.projects.length + 1, northStar: '', northStarProgress: 0, ...action.payload }] }
+
+    case 'DELETE_PROJECT': {
+      const pid = action.payload
+      return { ...state, projects: state.projects.filter(p => p.id !== pid), tasks: state.tasks.filter(t => t.projectId !== pid), sessions: state.sessions.filter(s => s.projectId !== pid) }
+    }
+
     case 'LOG_SESSION':
       return { ...state, sessions: [{ ...action.payload, id: nanoid(), date: new Date().toISOString() }, ...state.sessions] }
 

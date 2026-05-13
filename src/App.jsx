@@ -3,6 +3,7 @@ import { Sun, Moon } from 'lucide-react'
 import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import FloatingNavbar from '@/components/layout/FloatingNavbar'
+import NoiseTexture from '@/components/ui/NoiseTexture'
 import RightSidebar from '@/components/layout/RightSidebar'
 import CommandModal from '@/components/CommandModal'
 import Journee from '@/components/views/Journee'
@@ -190,9 +191,10 @@ function AppInner() {
 
   return (
     <div
-      className="min-h-screen min-h-dvh"
-      style={{ background: 'var(--bg-page)' }}
+      className="relative min-h-screen min-h-dvh"
+      style={{ background: 'var(--bg-page)', isolation: 'isolate' }}
     >
+      {theme === 'dark' && <NoiseTexture />}
       {/* Theme toggle — top right */}
       <div className="fixed top-4 right-4 z-40">
         <button

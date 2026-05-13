@@ -23,6 +23,8 @@ function normalizeCardColor(color) {
 
 export const SLUG_TO_ID = {
   ulycom: 'p1',
+  ulycom_agency: 'p1',
+  'ulycom-agency': 'p1',
   yoovi: 'p2',
   'e-com': 'p3',
   ecom: 'p3',
@@ -30,9 +32,10 @@ export const SLUG_TO_ID = {
   ecommerce: 'p3',
   e_com: 'p3',
   saas: 'p4',
+  // ulycom_clients intentionally absent — resolves to null (client-only, no project)
 }
 
-export const ID_TO_SLUG = { p1: 'ulycom', p2: 'yoovi', p3: 'e-com', p4: 'saas' }
+export const ID_TO_SLUG = { p1: 'ulycom_agency', p2: 'yoovi', p3: 'e-com', p4: 'saas' }
 
 export function normalizeSlug(slug) {
   if (!slug) return null
@@ -61,7 +64,9 @@ export function useBulkImport() {
     let created = 0
 
     function resolveProjectId(entitySlug) {
-      return normalizeSlug(entitySlug) || normalizeSlug(data.project_slug) || normalizeSlug(fallbackSlug) || null
+      // When a fallback context is set, it always wins — ignore whatever the JSON says
+      if (fallbackSlug != null) return normalizeSlug(fallbackSlug)
+      return normalizeSlug(entitySlug) || normalizeSlug(data.project_slug) || null
     }
 
     function resolveClientId(clientId) {

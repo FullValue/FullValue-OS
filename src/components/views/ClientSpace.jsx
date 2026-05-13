@@ -1121,7 +1121,7 @@ function ClientDashboard({ client, onStartTask }) {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
               <BulkImportInterface
-                defaultProjectSlug="ulycom"
+                defaultProjectSlug="ulycom_clients"
                 defaultClientId={client.id}
                 contextLabel={`Client : ${client.name}`}
                 onImportSuccess={n => setImportSuccess(n)}

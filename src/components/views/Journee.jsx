@@ -26,18 +26,22 @@ function getWeekNumber(d) {
   return Math.ceil((((date - yearStart) / 86400000) + 1) / 7)
 }
 
-const PRAYER_BLOCKS = [
-  { label: 'Fajr',    startMin: 5 * 60 + 30,  durationMin: 30 },
-  { label: 'Dhuhr',   startMin: 13 * 60 + 15, durationMin: 30 },
-  { label: 'Asr',     startMin: 17 * 60,       durationMin: 30 },
-  { label: 'Maghrib', startMin: 20 * 60 + 30,  durationMin: 20 },
-  { label: 'Isha',    startMin: 21 * 60 + 30,  durationMin: 30 },
-  { label: 'Qiyâm',  startMin: 3 * 60 + 30,   durationMin: 90 },
-]
+function hhmmToMin(s) {
+  if (!s || typeof s !== 'string') return 0
+  const [h, m] = s.split(':').map(Number)
+  return (h || 0) * 60 + (m || 0)
+}
 
-function getNextPrayer(nowMin) {
-  const upcoming = PRAYER_BLOCKS.filter(p => p.startMin > nowMin && p.label !== 'Qiyâm')
-  return upcoming[0] || PRAYER_BLOCKS.find(p => p.label === 'Qiyâm')
+function getNextPrayer(nowMin, prayerTimes) {
+  const blocks = [
+    { label: 'Fajr',    startMin: hhmmToMin(prayerTimes?.fajr    || '05:30') },
+    { label: 'Dhuhr',   startMin: hhmmToMin(prayerTimes?.dhuhr   || '13:15') },
+    { label: 'Asr',     startMin: hhmmToMin(prayerTimes?.asr     || '17:00') },
+    { label: 'Maghrib', startMin: hhmmToMin(prayerTimes?.maghrib || '20:30') },
+    { label: 'Isha',    startMin: hhmmToMin(prayerTimes?.isha    || '21:30') },
+  ]
+  const upcoming = blocks.filter(p => p.startMin > nowMin)
+  return upcoming[0] || { label: 'Qiyâm', startMin: 3 * 60 + 30 }
 }
 
 function formatTimeUntil(diff) {
@@ -580,7 +584,7 @@ export default function Journee({ onStartTask, onNavigate }) {
   const weekSeconds = state.sessions.filter(s => new Date(s.date) >= weekStart).reduce((sum, s) => sum + s.duration, 0)
   const weekHours = (weekSeconds / 3600).toFixed(1)
 
-  const nextPrayer = getNextPrayer(nowMinutes)
+  const nextPrayer = getNextPrayer(nowMinutes, state.settings?.prayerTimes)
   const timeUntilPrayer = nextPrayer ? formatTimeUntil(nextPrayer.startMin - nowMinutes) : null
 
   // Drift alert

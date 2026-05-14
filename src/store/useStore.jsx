@@ -39,7 +39,19 @@ const INITIAL_STATE = {
   ],
   calendarEvents: [],
   inbox: [],
-  settings: { endOfWorkday: '20:00', dailyCapacityMinutes: 480 },
+  settings: {
+    endOfWorkday: '20:00',
+    dailyCapacityMinutes: 480,
+    prayerTimes: {
+      fajr:    '05:30',
+      shuruq:  '06:15',
+      dhuhr:   '13:15',
+      asr:     '17:00',
+      maghrib: '20:30',
+      isha:    '21:30',
+    },
+    prayerTimesUpdatedAt: null,
+  },
   clients: [],
   clientNotes: [],
   clientDocuments: [],
@@ -215,7 +227,7 @@ function loadState() {
           appointments: parsed.appointments || [],
           tagStyles: parsed.tagStyles || {},
           dailyReviews: parsed.dailyReviews || [],
-          settings: { dailyCapacityMinutes: 480, ...INITIAL_STATE.settings, ...(parsed.settings || {}) },
+          settings: { ...INITIAL_STATE.settings, ...(parsed.settings || {}), prayerTimes: { ...INITIAL_STATE.settings.prayerTimes, ...(parsed.settings?.prayerTimes || {}) } },
         }
       }
     }

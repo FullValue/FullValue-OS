@@ -2,13 +2,21 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 
-const PRAYER_BLOCKS = [
-  { label: 'Fajr', startMin: 5 * 60 + 30, durationMin: 30 },
-  { label: 'Dhuhr', startMin: 13 * 60 + 15, durationMin: 30 },
-  { label: 'Asr', startMin: 17 * 60, durationMin: 30 },
-  { label: 'Maghrib', startMin: 20 * 60 + 30, durationMin: 20 },
-  { label: 'Isha', startMin: 21 * 60 + 30, durationMin: 30 },
-]
+function hhmmToMin(s) {
+  if (!s || typeof s !== 'string') return 0
+  const [h, m] = s.split(':').map(Number)
+  return (h || 0) * 60 + (m || 0)
+}
+
+function buildPrayerBlocks(prayerTimes) {
+  return [
+    { label: 'Fajr',    startMin: hhmmToMin(prayerTimes?.fajr    || '05:30'), durationMin: 30 },
+    { label: 'Dhuhr',   startMin: hhmmToMin(prayerTimes?.dhuhr   || '13:15'), durationMin: 30 },
+    { label: 'Asr',     startMin: hhmmToMin(prayerTimes?.asr     || '17:00'), durationMin: 30 },
+    { label: 'Maghrib', startMin: hhmmToMin(prayerTimes?.maghrib || '20:30'), durationMin: 20 },
+    { label: 'Isha',    startMin: hhmmToMin(prayerTimes?.isha    || '21:30'), durationMin: 30 },
+  ]
+}
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
@@ -123,7 +131,7 @@ export default function Calendrier() {
     })
 
     // Prayer blocks
-    PRAYER_BLOCKS.forEach(p => {
+    buildPrayerBlocks(state.settings?.prayerTimes).forEach(p => {
       events.push({ id: `prayer_${p.label}_${iso}`, type: 'prayer', title: p.label, color: '#FFC1E0', startHour: p.startMin / 60, durationH: p.durationMin / 60 })
     })
 

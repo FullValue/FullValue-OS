@@ -1,25 +1,39 @@
-import { Sunrise, Sun, Sunset, Moon, CloudSun } from 'lucide-react'
+import { useState } from 'react'
+import { Sunrise, Sun, Sunset, Moon, CloudSun, Settings } from 'lucide-react'
 import StatistiqueWidget from '@/components/widgets/StatistiqueWidget'
+import PrayerTimesEditor from '@/components/PrayerTimesEditor'
+import { useStore } from '@/store/useStore'
 
-const PRAYER_BLOCKS = [
-  { label: 'Fajr',    startMin: 5 * 60 + 30,  durationMin: 30 },
-  { label: 'Dhuhr',   startMin: 13 * 60 + 15, durationMin: 30 },
-  { label: 'Asr',     startMin: 17 * 60,       durationMin: 30 },
-  { label: 'Maghrib', startMin: 20 * 60 + 30,  durationMin: 20 },
-  { label: 'Isha',    startMin: 21 * 60 + 30,  durationMin: 30 },
-]
+function hhmmToMin(s) {
+  if (!s || typeof s !== 'string') return 0
+  const [h, m] = s.split(':').map(Number)
+  return (h || 0) * 60 + (m || 0)
+}
 
-const PRAYER_STRIP = [
-  { label: 'Fajr',    startMin: 5 * 60 + 30,  Icon: Sunrise  },
-  { label: 'Shuruq',  startMin: 6 * 60 + 15,  Icon: Sun      },
-  { label: 'Dhuhr',   startMin: 13 * 60 + 15, Icon: Sun      },
-  { label: 'Asr',     startMin: 17 * 60,       Icon: CloudSun },
-  { label: 'Maghrib', startMin: 20 * 60 + 30,  Icon: Sunset   },
-  { label: 'Isha',    startMin: 21 * 60 + 30,  Icon: Moon     },
-]
+function buildPrayerBlocks(prayerTimes) {
+  return [
+    { label: 'Fajr',    startMin: hhmmToMin(prayerTimes?.fajr    || '05:30'), durationMin: 30 },
+    { label: 'Dhuhr',   startMin: hhmmToMin(prayerTimes?.dhuhr   || '13:15'), durationMin: 30 },
+    { label: 'Asr',     startMin: hhmmToMin(prayerTimes?.asr     || '17:00'), durationMin: 30 },
+    { label: 'Maghrib', startMin: hhmmToMin(prayerTimes?.maghrib || '20:30'), durationMin: 20 },
+    { label: 'Isha',    startMin: hhmmToMin(prayerTimes?.isha    || '21:30'), durationMin: 30 },
+  ]
+}
 
-function getNextPrayer(nowMin) {
-  return PRAYER_BLOCKS.find(p => p.startMin > nowMin) || PRAYER_BLOCKS[0]
+const STRIP_ICONS = { fajr: Sunrise, shuruq: Sun, dhuhr: Sun, asr: CloudSun, maghrib: Sunset, isha: Moon }
+const STRIP_LABELS = { fajr: 'Fajr', shuruq: 'Shuruq', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' }
+const STRIP_ORDER = ['fajr', 'shuruq', 'dhuhr', 'asr', 'maghrib', 'isha']
+
+function buildStrip(prayerTimes) {
+  return STRIP_ORDER.map(key => ({
+    label: STRIP_LABELS[key],
+    startMin: hhmmToMin(prayerTimes?.[key] || ''),
+    Icon: STRIP_ICONS[key],
+  }))
+}
+
+function getNextPrayer(nowMin, blocks) {
+  return blocks.find(p => p.startMin > nowMin) || blocks[0]
 }
 
 function formatHHMM(min) {
@@ -43,12 +57,9 @@ const P0 = { x: 10,  y: 108 }
 const P1 = { x: 140, y: -18 }
 const P2 = { x: 270, y: 108 }
 
-const FAJR_MIN = PRAYER_BLOCKS[0].startMin   // 330
-const ISHA_MIN  = PRAYER_BLOCKS[4].startMin  // 1290
-const DAY_SPAN  = ISHA_MIN - FAJR_MIN        // 960
-
-function tFromMin(min) {
-  return Math.max(0, Math.min(1, (min - FAJR_MIN) / DAY_SPAN))
+function tFromMin(min, fajrMin, ishaMin) {
+  const span = Math.max(1, ishaMin - fajrMin)
+  return Math.max(0, Math.min(1, (min - fajrMin) / span))
 }
 
 function bezierPt(t) {
@@ -69,17 +80,26 @@ const LABEL_CFG = {
 }
 
 function PrayerWidget({ nowMinutes }) {
-  const nextPrayer = getNextPrayer(nowMinutes)
+  const { state } = useStore()
+  const [editorOpen, setEditorOpen] = useState(false)
+  const prayerTimes = state.settings?.prayerTimes
+  const blocks = buildPrayerBlocks(prayerTimes)
+  const strip = buildStrip(prayerTimes)
+
+  const nextPrayer = getNextPrayer(nowMinutes, blocks)
   const diffMin = nextPrayer ? nextPrayer.startMin - nowMinutes : 0
 
-  const prayers = PRAYER_BLOCKS.map(b => ({
+  const FAJR_MIN = blocks[0].startMin
+  const ISHA_MIN = blocks[blocks.length - 1].startMin
+
+  const prayers = blocks.map(b => ({
     ...b,
-    pt:     bezierPt(tFromMin(b.startMin)),
+    pt:     bezierPt(tFromMin(b.startMin, FAJR_MIN, ISHA_MIN)),
     isNext: nextPrayer?.label === b.label,
     isPast: nowMinutes > b.startMin + b.durationMin,
   }))
 
-  const nowT   = tFromMin(nowMinutes)
+  const nowT   = tFromMin(nowMinutes, FAJR_MIN, ISHA_MIN)
   const nowPt  = bezierPt(nowT)
   const showNow = nowMinutes >= FAJR_MIN && nowMinutes <= ISHA_MIN + 90
 
@@ -88,12 +108,22 @@ function PrayerWidget({ nowMinutes }) {
       className="rounded-3xl p-5"
       style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border-soft)', boxShadow: 'var(--shadow-card)' }}
     >
-      <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
-        Horaires de prière
-      </p>
+      <div className="flex items-start justify-between mb-1">
+        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+          Horaires de prière
+        </p>
+        <button onClick={() => setEditorOpen(true)}
+          className="p-1 rounded-lg transition-colors hover:bg-white/5"
+          style={{ color: 'var(--text-tertiary)' }}
+          title="Modifier les horaires">
+          <Settings size={12} />
+        </button>
+      </div>
       <p className="text-[10px] font-mono mb-4" style={{ color: 'var(--text-tertiary)' }}>
         {formatHHMM(nowMinutes)} · aujourd'hui
       </p>
+
+      <PrayerTimesEditor isOpen={editorOpen} onClose={() => setEditorOpen(false)} />
 
       {/* ── Arc SVG ── */}
       <svg viewBox="0 0 280 132" width="100%" style={{ display: 'block', overflow: 'visible', marginBottom: 14 }}>
@@ -201,7 +231,7 @@ function PrayerWidget({ nowMinutes }) {
       {/* ── All prayers strip ── */}
       <div className="flex items-stretch gap-0.5 rounded-2xl p-1"
         style={{ background: 'rgba(0,0,0,0.15)' }}>
-        {PRAYER_STRIP.map(p => {
+        {strip.map(p => {
           const isNext = nextPrayer?.label === p.label
           return (
             <div key={p.label}

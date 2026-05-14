@@ -3,7 +3,8 @@ import { ChevronLeft, ChevronRight, X, Trash2, PanelRight, PanelRightClose } fro
 import { useStore } from '@/store/useStore'
 import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
 import BulkImportInterface from '@/components/import/BulkImportInterface'
-import { Zap } from 'lucide-react'
+import PlanMyDayModal from '@/components/PlanMyDayModal'
+import { Zap, Sparkles } from 'lucide-react'
 
 export const EVENT_TYPES = {
   meeting:        { label: 'Meeting',    emoji: '🤝', color: '#A8D4F0' },
@@ -428,6 +429,7 @@ export default function Calendrier() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [dragState, setDragState] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [planOpen, setPlanOpen] = useState(false)
   const [recapOpen, setRecapOpen] = useState(() => {
     try { return localStorage.getItem('cockpit:cal:recap') !== 'false' } catch { return true }
   })
@@ -710,6 +712,11 @@ export default function Calendrier() {
               {recapOpen ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
             </button>
           )}
+          <button onClick={() => setPlanOpen(true)}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all hover:opacity-90"
+            style={{ color: '#fff', background: 'var(--violet-deep)' }}>
+            <Sparkles size={11} /> Plan ma journée
+          </button>
           <button onClick={() => setImportOpen(true)}
             className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all"
             style={{ color: 'var(--violet-deep)', background: 'rgba(139,124,255,0.12)' }}>
@@ -1050,6 +1057,8 @@ export default function Calendrier() {
           </div>
         </div>
       )}
+
+      <PlanMyDayModal isOpen={planOpen} onClose={() => setPlanOpen(false)} />
 
       {/* Bulk import modal */}
       {importOpen && (

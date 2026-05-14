@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
 
 export const EVENT_TYPES = {
   meeting:        { label: 'Meeting',    emoji: '🤝', color: '#A8D4F0' },
@@ -61,8 +62,20 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
   const [type, setType]           = useState(initial?.eventType || 'meeting')
   const [notes, setNotes]         = useState(initial?.notes || '')
   const [emoji, setEmoji]         = useState(initial?.emoji || '')
+  const [imageUrl, setImageUrl]   = useState(initial?.imageUrl || '')
+  const [imagePath, setImagePath] = useState(initial?.imagePath || '')
+  const [imageName, setImageName] = useState(initial?.imageName || '')
 
   const isAppointment = type === 'client_meeting'
+
+  function handleImageChange(val) {
+    if (!val) { setImageUrl(''); setImagePath(''); setImageName(''); return }
+    if (val.type === 'upload') {
+      setImageUrl(val.signedUrl || ''); setImagePath(val.filePath); setImageName(val.fileName || '')
+    } else if (val.type === 'url') {
+      setImageUrl(val.url || ''); setImagePath(''); setImageName('')
+    }
+  }
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -78,6 +91,9 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
       eventType: type,
       emoji: emoji || EVENT_TYPES[type]?.emoji || '',
       notes: notes.trim() || '',
+      imageUrl: imageUrl || null,
+      imagePath: imagePath || null,
+      imageName: imageName || null,
     })
   }
 
@@ -161,6 +177,21 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
             ))}
           </select>
         </div>
+      </div>
+
+      <div>
+        <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Image (optionnel)</label>
+        <ImageOrFileInput
+          bucket="task-attachments"
+          pathPrefix={`event_${initial?.id || 'new'}`}
+          acceptedTypes="images"
+          value={
+            imagePath ? { type: 'upload', filePath: imagePath, fileName: imageName, signedUrl: imageUrl }
+            : imageUrl ? { type: 'url', url: imageUrl }
+            : null
+          }
+          onChange={handleImageChange}
+        />
       </div>
 
       <div>
@@ -424,6 +455,7 @@ export default function Calendrier() {
         startHour: sh + sm / 60, durationH: (eh + em / 60) - (sh + sm / 60),
         label: project?.name,
         kindLabel: typeCfg.label,
+        imageUrl: e.imageUrl || null,
       })
     })
 
@@ -549,7 +581,7 @@ export default function Calendrier() {
                     return (
                       <div
                         key={ev.id}
-                        className={`absolute left-0.5 right-0.5 rounded px-1.5 overflow-hidden transition-opacity ${isDraggable ? 'cursor-grab' : 'cursor-pointer'} ${isBeingDragged ? 'z-30 shadow-2xl' : ''}`}
+                        className={`absolute left-0.5 right-0.5 rounded overflow-hidden transition-opacity ${isDraggable ? 'cursor-grab' : 'cursor-pointer'} ${isBeingDragged ? 'z-30 shadow-2xl' : ''}`}
                         style={{
                           top: `${top}px`,
                           height: `${dragHeight}px`,
@@ -565,12 +597,24 @@ export default function Calendrier() {
                         onClick={!isDraggable ? () => setSelectedEvent(ev) : undefined}
                         title={ev.title}
                       >
+                        {/* Image background */}
+                        {ev.imageUrl && (
+                          <div className="absolute inset-0 pointer-events-none"
+                            style={{
+                              backgroundImage: `url(${ev.imageUrl})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                              opacity: 0.35,
+                            }} />
+                        )}
+                        <div className="relative px-1.5">
                         {dragHeight >= 14 && (
                           <span className="text-[9px] font-medium leading-tight flex items-center gap-1 pt-0.5 truncate" style={{ color: ev.color }}>
                             <span className="text-[10px] flex-shrink-0">{ev.emoji}</span>
                             <span className="truncate">{ev.title}</span>
                           </span>
                         )}
+                        </div>
                         {/* Resize handle */}
                         {isDraggable && dragHeight >= 24 && (
                           <div

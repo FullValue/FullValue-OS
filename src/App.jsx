@@ -6,6 +6,8 @@ import FloatingNavbar from '@/components/layout/FloatingNavbar'
 import RightSidebar from '@/components/layout/RightSidebar'
 import '@/components/ui/ThemeToggle.css'
 import CommandModal from '@/components/CommandModal'
+import StickyTimer from '@/components/ui/StickyTimer'
+import FocusMode from '@/components/ui/FocusMode'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
 import ProjetPage from '@/components/views/ProjetPage'
@@ -54,6 +56,7 @@ function AuthGate() {
 function AppInner() {
   const [activePage, setActivePage] = useState('journee')
   const [cmdOpen, setCmdOpen] = useState(false)
+  const [focusOpen, setFocusOpen] = useState(false)
 
   // Theme — light mode is the new default
   const [theme, setTheme] = useState(() => localStorage.getItem('cockpit_theme') || 'light')
@@ -236,6 +239,31 @@ function AppInner() {
       </main>
 
       <CommandModal isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
+
+      <StickyTimer
+        elapsed={elapsed}
+        timerRunning={timerRunning}
+        timerPaused={timerPaused}
+        timerProject={timerProject}
+        timerTask={timerTask}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        onStop={stopTimer}
+        onOpenFocus={() => setFocusOpen(true)}
+      />
+
+      <FocusMode
+        isOpen={focusOpen}
+        onClose={() => setFocusOpen(false)}
+        elapsed={elapsed}
+        timerRunning={timerRunning}
+        timerPaused={timerPaused}
+        timerProject={timerProject}
+        timerTask={timerTask}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        onStop={stopTimer}
+      />
     </div>
   )
 }

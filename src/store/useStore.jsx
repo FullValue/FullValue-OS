@@ -39,12 +39,13 @@ const INITIAL_STATE = {
   ],
   calendarEvents: [],
   inbox: [],
-  settings: { endOfWorkday: '20:00' },
+  settings: { endOfWorkday: '20:00', dailyCapacityMinutes: 480 },
   clients: [],
   clientNotes: [],
   clientDocuments: [],
   clientInvoices: [],
   appointments: [],
+  dailyReviews: [],
 }
 
 function reducer(state, action) {
@@ -180,6 +181,11 @@ function reducer(state, action) {
     case 'DELETE_APPOINTMENT':
       return { ...state, appointments: state.appointments.filter(a => a.id !== action.payload) }
 
+    case 'ADD_DAILY_REVIEW':
+      return { ...state, dailyReviews: [...state.dailyReviews, { ...action.payload, id: nanoid(), createdAt: new Date().toISOString() }] }
+    case 'SKIP_DAILY_REVIEW':
+      return { ...state, dailyReviews: [...state.dailyReviews, { id: nanoid(), date: action.payload.date, skipped: true, createdAt: new Date().toISOString() }] }
+
     case 'HYDRATE_STATE':
       // Replace entire state with data loaded from Supabase (post-migration)
       return { ...action.payload, _version: STATE_VERSION }
@@ -208,6 +214,8 @@ function loadState() {
           clientInvoices: parsed.clientInvoices || [],
           appointments: parsed.appointments || [],
           tagStyles: parsed.tagStyles || {},
+          dailyReviews: parsed.dailyReviews || [],
+          settings: { dailyCapacityMinutes: 480, ...INITIAL_STATE.settings, ...(parsed.settings || {}) },
         }
       }
     }

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
+import BulkImportInterface from '@/components/import/BulkImportInterface'
+import { Zap } from 'lucide-react'
 
 export const EVENT_TYPES = {
   meeting:        { label: 'Meeting',    emoji: '🤝', color: '#A8D4F0' },
@@ -267,6 +269,7 @@ export default function Calendrier() {
   const [addingOnDate, setAddingOnDate] = useState(null)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [dragState, setDragState] = useState(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const gridRef = useRef(null)
   const weekDays = getWeekDays(referenceDate)
@@ -497,6 +500,11 @@ export default function Calendrier() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all"
+            style={{ color: 'var(--violet-deep)', background: 'rgba(139,124,255,0.12)' }}>
+            <Zap size={11} /> Import
+          </button>
           <button onClick={goToday} className="text-xs bg-white/5 hover:bg-white/10 text-white/60 px-3 py-1.5 rounded-lg transition-colors">Aujourd'hui</button>
           <button onClick={prevWeek} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"><ChevronLeft size={16} /></button>
           <span className="font-mono text-sm text-white/60 min-w-[120px] text-center">
@@ -755,6 +763,24 @@ export default function Calendrier() {
             ) : (
               <ReadOnlyEventCard event={selectedEvent} onClose={() => setSelectedEvent(null)} />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Bulk import modal */}
+      {importOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setImportOpen(false)} />
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-6"
+            style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+            <button onClick={() => setImportOpen(false)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70 z-10">
+              <X size={14} />
+            </button>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Import bulk — événements calendrier</h2>
+            <BulkImportInterface
+              onImportSuccess={() => setImportOpen(false)}
+              onCancel={() => setImportOpen(false)}
+            />
           </div>
         </div>
       )}

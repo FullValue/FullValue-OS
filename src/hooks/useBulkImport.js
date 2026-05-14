@@ -49,6 +49,7 @@ export function countEntities(data, excluded = new Set()) {
   count += data.appointments?.filter(a => !excluded.has(`appointment:${a.title}`)).length ?? 0
   count += data.resources?.filter(r => !excluded.has(`resource:${r.name}`)).length ?? 0
   count += data.inbox_items?.filter(i => !excluded.has(`inbox:${i.content.substring(0, 30)}`)).length ?? 0
+  count += data.calendar_events?.filter(e => !excluded.has(`event:${e.title}`)).length ?? 0
   return count
 }
 
@@ -219,6 +220,54 @@ export function useBulkImport() {
             tag: res.category || 'Général',
           },
         })
+        created++
+      } catch (e) {
+        errors.push({ entity: key, reason: e.message })
+      }
+    }
+
+    // ── Calendar events ────────────────────────────────────────────────────
+    const EVENT_TYPE_EMOJI = { meeting: '🤝', focus: '🎯', admin: '📋', personnel: '🌿', client_meeting: '👤' }
+    for (const ev of data.calendar_events ?? []) {
+      const key = `event:${ev.title}`
+      if (excluded.has(key)) continue
+      try {
+        const clientId = resolveClientId(ev.client_id)
+        const eventType = clientId ? (ev.event_type || 'client_meeting') : (ev.event_type || 'meeting')
+        if (clientId && eventType === 'client_meeting') {
+          // Route to appointment for client meetings
+          const [sh, sm] = ev.start_time.split(':').map(Number)
+          const [eh, em] = ev.end_time.split(':').map(Number)
+          const durationSec = ((eh * 60 + em) - (sh * 60 + sm)) * 60
+          dispatch({
+            type: 'ADD_APPOINTMENT',
+            payload: {
+              title: ev.title,
+              date: ev.date,
+              time: ev.start_time,
+              duration: durationSec,
+              projectId: resolveProjectId(ev.project_slug),
+              clientId,
+              note: ev.notes || '',
+            },
+          })
+        } else {
+          dispatch({
+            type: 'ADD_CALENDAR_EVENT',
+            payload: {
+              title: ev.title,
+              date: ev.date,
+              startTime: ev.start_time,
+              endTime: ev.end_time,
+              eventType,
+              emoji: ev.emoji || EVENT_TYPE_EMOJI[eventType] || '🤝',
+              notes: ev.notes || '',
+              imageUrl: ev.image_url || null,
+              projectId: resolveProjectId(ev.project_slug),
+              clientId: clientId || null,
+            },
+          })
+        }
         created++
       } catch (e) {
         errors.push({ entity: key, reason: e.message })

@@ -62,6 +62,19 @@ export const InboxItemImportSchema = z.object({
   content: z.string().min(1),
 })
 
+export const CalendarEventImportSchema = z.object({
+  title: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  start_time: z.string().regex(/^\d{2}:\d{2}$/),
+  end_time: z.string().regex(/^\d{2}:\d{2}$/),
+  event_type: z.enum(['meeting', 'focus', 'admin', 'personnel', 'client_meeting']).optional().default('meeting'),
+  emoji: z.string().max(4).optional(),
+  notes: z.string().optional(),
+  image_url: z.string().url().optional(),
+  project_slug: projectSlugSchema,
+  client_id: z.string().optional(),
+})
+
 export const BulkImportSchema = z.object({
   project_slug: projectSlugSchema,
   tasks: z.array(TaskImportSchema).optional().default([]),
@@ -69,13 +82,15 @@ export const BulkImportSchema = z.object({
   appointments: z.array(AppointmentImportSchema).optional().default([]),
   resources: z.array(ResourceImportSchema).optional().default([]),
   inbox_items: z.array(InboxItemImportSchema).optional().default([]),
+  calendar_events: z.array(CalendarEventImportSchema).optional().default([]),
 }).refine(
   (data) =>
     (data.tasks?.length ?? 0) +
     (data.notes?.length ?? 0) +
     (data.appointments?.length ?? 0) +
     (data.resources?.length ?? 0) +
-    (data.inbox_items?.length ?? 0) > 0,
+    (data.inbox_items?.length ?? 0) +
+    (data.calendar_events?.length ?? 0) > 0,
   { message: "Au moins une entité doit être présente dans l'import" }
 )
 

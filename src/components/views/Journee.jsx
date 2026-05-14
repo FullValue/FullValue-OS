@@ -14,6 +14,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { PrayerWidget } from '@/components/layout/RightSidebar'
+import CapacityWidget from '@/components/widgets/CapacityWidget'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -514,7 +515,7 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
 
 // ── Drag & drop widget wrapper ────────────────────────────────────────────────
 
-const DEFAULT_WIDGET_ORDER = ['hero', 'stats', 'priorities']
+const DEFAULT_WIDGET_ORDER = ['hero', 'capacity', 'stats', 'priorities']
 const LAYOUT_KEY = 'cockpit:dashboard:layout:journee'
 
 function SortableWidget({ id, children }) {
@@ -551,7 +552,10 @@ export default function Journee({ onStartTask, onNavigate }) {
   const [widgetOrder, setWidgetOrder] = useState(() => {
     try {
       const saved = localStorage.getItem(LAYOUT_KEY)
-      return saved ? JSON.parse(saved) : DEFAULT_WIDGET_ORDER
+      if (!saved) return DEFAULT_WIDGET_ORDER
+      const parsed = JSON.parse(saved)
+      const missing = DEFAULT_WIDGET_ORDER.filter(id => !parsed.includes(id))
+      return missing.length ? [...parsed.slice(0, 1), ...missing, ...parsed.slice(1)] : parsed
     } catch { return DEFAULT_WIDGET_ORDER }
   })
 
@@ -618,6 +622,8 @@ export default function Journee({ onStartTask, onNavigate }) {
             <MomentumCard projects={state.projects} tasks={state.tasks} />
           </div>
         )
+      case 'capacity':
+        return <CapacityWidget />
       case 'stats':
         return (
           <StatsRow

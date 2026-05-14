@@ -1,6 +1,16 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+
+export const EVENT_TYPES = {
+  meeting:        { label: 'Meeting',    emoji: '🤝', color: '#A8D4F0' },
+  focus:          { label: 'Deep work',  emoji: '🎯', color: '#8B7CFF' },
+  admin:          { label: 'Admin',      emoji: '📋', color: '#FFD66B' },
+  personnel:      { label: 'Personnel',  emoji: '🌿', color: '#A8E6BD' },
+  client_meeting: { label: 'RDV client', emoji: '👤', color: '#FFC1E0' },
+}
+
+const TYPE_ORDER = ['meeting', 'focus', 'admin', 'personnel', 'client_meeting']
 
 function hhmmToMin(s) {
   if (!s || typeof s !== 'string') return 0
@@ -41,48 +51,169 @@ function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
-function AddEventForm({ date, projects, onSubmit, onClose }) {
-  const [title, setTitle] = useState('')
-  const [startTime, setStartTime] = useState('09:00')
-  const [endTime, setEndTime] = useState('10:00')
-  const [projectId, setProjectId] = useState('')
+function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDelete }) {
+  const isEdit = !!initial
+  const [title, setTitle]         = useState(initial?.title || '')
+  const [startTime, setStartTime] = useState(initial?.startTime || '09:00')
+  const [endTime, setEndTime]     = useState(initial?.endTime || '10:00')
+  const [projectId, setProjectId] = useState(initial?.projectId || '')
+  const [clientId, setClientId]   = useState(initial?.clientId || '')
+  const [type, setType]           = useState(initial?.eventType || 'meeting')
+  const [notes, setNotes]         = useState(initial?.notes || '')
+  const [emoji, setEmoji]         = useState(initial?.emoji || '')
+
+  const isAppointment = type === 'client_meeting'
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!title.trim()) return
-    onSubmit({ title: title.trim(), date: date.toISOString().slice(0, 10), startTime, endTime, projectId: projectId || null, type: 'manual' })
+    const dateStr = (initial?.date) || date.toISOString().slice(0, 10)
+    onSubmit({
+      title: title.trim(),
+      date: dateStr,
+      startTime,
+      endTime,
+      projectId: projectId || null,
+      clientId: clientId || null,
+      eventType: type,
+      emoji: emoji || EVENT_TYPES[type]?.emoji || '',
+      notes: notes.trim() || '',
+    })
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-4">
-      <h3 className="text-white text-sm font-semibold mb-1">Nouvel événement — {date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
-      <input
-        autoFocus value={title} onChange={e => setTitle(e.target.value)}
-        placeholder="Titre de l'événement"
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet/40"
-      />
+      <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+        {isEdit ? 'Modifier l\'événement' : `Nouvel événement`}
+        <span className="ml-2 font-normal text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          {(initial?.date ? new Date(initial.date + 'T12:00:00') : date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+        </span>
+      </h3>
+
+      {/* Type selector */}
+      <div>
+        <label className="text-[10px] uppercase tracking-wider font-semibold mb-1.5 block" style={{ color: 'var(--text-tertiary)' }}>Type</label>
+        <div className="grid grid-cols-5 gap-1.5">
+          {TYPE_ORDER.map(t => {
+            const cfg = EVENT_TYPES[t]
+            const active = type === t
+            return (
+              <button key={t} type="button" onClick={() => setType(t)}
+                className="flex flex-col items-center gap-0.5 py-2 rounded-lg transition-all"
+                style={active
+                  ? { background: cfg.color + '22', border: `1px solid ${cfg.color}50`, color: cfg.color }
+                  : { background: 'rgba(255,255,255,0.03)', border: '1px solid var(--c-border)', color: 'var(--text-tertiary)' }}>
+                <span className="text-base leading-none">{cfg.emoji}</span>
+                <span className="text-[9px] leading-none">{cfg.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="flex items-stretch gap-2">
+        <input value={emoji} onChange={e => setEmoji(e.target.value.slice(0, 2))}
+          placeholder={EVENT_TYPES[type]?.emoji || '🤝'}
+          className="w-12 text-center text-base rounded-xl px-2 focus:outline-none"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }}
+          title="Emoji custom (optionnel)" />
+        <input autoFocus value={title} onChange={e => setTitle(e.target.value)}
+          placeholder="Titre…"
+          className="flex-1 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-white/40 text-xs mb-1 block">Début</label>
-          <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none font-mono" />
+          <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Début</label>
+          <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
+            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none font-mono"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
         </div>
         <div>
-          <label className="text-white/40 text-xs mb-1 block">Fin</label>
-          <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none font-mono" />
+          <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Fin</label>
+          <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)}
+            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none font-mono"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
         </div>
       </div>
-      <div>
-        <label className="text-white/40 text-xs mb-1 block">Projet (optionnel)</label>
-        <select value={projectId} onChange={e => setProjectId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-          <option value="" style={{ background: '#1A1A20' }}>— Aucun projet —</option>
-          {projects.map(p => <option key={p.id} value={p.id} style={{ background: '#1A1A20' }}>{p.emoji} {p.name}</option>)}
-        </select>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Projet</label>
+          <select value={projectId} onChange={e => setProjectId(e.target.value)}
+            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }}>
+            <option value="" style={{ background: '#1A1A20' }}>— Aucun —</option>
+            {projects.map(p => <option key={p.id} value={p.id} style={{ background: '#1A1A20' }}>{p.emoji} {p.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>
+            Client {isAppointment && <span style={{ color: '#F87171' }}>*</span>}
+          </label>
+          <select value={clientId} onChange={e => setClientId(e.target.value)}
+            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }}>
+            <option value="" style={{ background: '#1A1A20' }}>— Aucun —</option>
+            {clients.filter(c => c.status !== 'archived').map(c => (
+              <option key={c.id} value={c.id} style={{ background: '#1A1A20' }}>{c.shortName || c.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
-      <div className="flex gap-2 mt-1">
-        <button type="submit" className="flex-1 bg-violet hover:bg-violet/90 text-white py-2.5 rounded-xl text-sm font-medium transition-colors">Ajouter</button>
-        <button type="button" onClick={onClose} className="flex-1 bg-white/5 hover:bg-white/8 text-white/50 py-2.5 rounded-xl text-sm transition-colors">Annuler</button>
+
+      <div>
+        <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Notes</label>
+        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+          placeholder="Notes (optionnel)…"
+          className="w-full rounded-xl px-3 py-2 text-xs focus:outline-none resize-none"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
+      </div>
+
+      <div className="flex items-center gap-2 mt-1">
+        {isEdit && onDelete && (
+          <button type="button" onClick={onDelete}
+            className="p-2.5 rounded-xl transition-colors"
+            style={{ background: 'rgba(248,113,113,0.12)', color: '#F87171' }}
+            title="Supprimer">
+            <Trash2 size={13} />
+          </button>
+        )}
+        <button type="button" onClick={onClose}
+          className="px-4 py-2.5 rounded-xl text-sm transition-colors"
+          style={{ color: 'var(--text-tertiary)' }}>
+          Annuler
+        </button>
+        <button type="submit"
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
+          style={{ background: 'var(--violet-deep)', color: '#fff' }}>
+          {isEdit ? 'Enregistrer' : 'Ajouter'}
+        </button>
       </div>
     </form>
+  )
+}
+
+function ReadOnlyEventCard({ event, onClose }) {
+  return (
+    <div className="p-5">
+      <div className="flex items-start gap-2 mb-3">
+        <span className="text-xl">{event.emoji || '📅'}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: 'var(--text-tertiary)' }}>
+            {event.kindLabel}
+          </p>
+          <h3 className="font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>{event.title}</h3>
+          {event.label && <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>{event.label}</p>}
+        </div>
+      </div>
+      <button onClick={onClose}
+        className="w-full py-2 rounded-xl text-xs transition-colors"
+        style={{ color: 'var(--text-tertiary)', background: 'rgba(255,255,255,0.03)' }}>
+        Fermer
+      </button>
+    </div>
   )
 }
 
@@ -115,11 +246,16 @@ export default function Calendrier() {
     const iso = date.toISOString().slice(0, 10)
     const events = []
 
-    // Tasks with due date
+    // Tasks with due date — all-day style, top of column
     state.tasks.filter(t => t.dueDate === iso && t.status !== 'done').forEach(t => {
       const project = getProject(t.projectId)
       if (project && !visibleProjects.has(t.projectId)) return
-      events.push({ id: `task_${t.id}`, type: 'task', title: t.title, color: project?.color || '#8B7CFF', startHour: 9, durationH: 0.5, label: project?.name })
+      events.push({
+        id: `task_${t.id}`, source: 'task', title: t.title, emoji: '📌',
+        color: project?.color || '#8B7CFF',
+        startHour: 9, durationH: 0.5, label: project?.name,
+        kindLabel: 'Tâche · deadline',
+      })
     })
 
     // Sessions
@@ -127,20 +263,54 @@ export default function Calendrier() {
       const project = getProject(s.projectId)
       if (project && !visibleProjects.has(s.projectId)) return
       const startH = new Date(s.date).getHours()
-      events.push({ id: `session_${s.id}`, type: 'session', title: s.note || 'Session', color: project?.color || '#8B7CFF', startHour: startH, durationH: s.duration / 3600, label: project?.name })
+      events.push({
+        id: `session_${s.id}`, source: 'session', title: s.note || 'Session', emoji: '⏱',
+        color: project?.color || '#8B7CFF',
+        startHour: startH, durationH: s.duration / 3600, label: project?.name,
+        kindLabel: 'Session',
+      })
     })
 
     // Prayer blocks
     buildPrayerBlocks(state.settings?.prayerTimes).forEach(p => {
-      events.push({ id: `prayer_${p.label}_${iso}`, type: 'prayer', title: p.label, color: '#FFC1E0', startHour: p.startMin / 60, durationH: p.durationMin / 60 })
+      events.push({
+        id: `prayer_${p.label}_${iso}`, source: 'prayer', title: p.label, emoji: '🕌',
+        color: '#FFC1E0',
+        startHour: p.startMin / 60, durationH: p.durationMin / 60,
+        kindLabel: 'Prière',
+      })
     })
 
-    // Manual events
+    // Manual calendar events
     state.calendarEvents.filter(e => e.date === iso).forEach(e => {
       const project = e.projectId ? getProject(e.projectId) : null
+      const typeCfg = EVENT_TYPES[e.eventType || 'meeting'] || EVENT_TYPES.meeting
       const [sh, sm] = e.startTime.split(':').map(Number)
       const [eh, em] = e.endTime.split(':').map(Number)
-      events.push({ id: `manual_${e.id}`, type: 'manual', title: e.title, color: project?.color || '#A8D4F0', startHour: sh + sm / 60, durationH: (eh + em / 60) - (sh + sm / 60) })
+      events.push({
+        id: `manual_${e.id}`, source: 'manual', raw: e,
+        title: e.title, emoji: e.emoji || typeCfg.emoji,
+        color: project?.color || typeCfg.color,
+        startHour: sh + sm / 60, durationH: (eh + em / 60) - (sh + sm / 60),
+        label: project?.name,
+        kindLabel: typeCfg.label,
+      })
+    })
+
+    // Appointments (RDV clients)
+    state.appointments.filter(a => a.date === iso).forEach(a => {
+      const client = state.clients.find(c => c.id === a.clientId)
+      const project = a.projectId ? getProject(a.projectId) : null
+      const [sh, sm] = (a.time || '09:00').split(':').map(Number)
+      const durationH = a.duration ? (a.duration / 3600) : 1
+      events.push({
+        id: `apt_${a.id}`, source: 'appointment', raw: a,
+        title: a.title, emoji: '👤',
+        color: client?.accentColor || '#FFC1E0',
+        startHour: sh + sm / 60, durationH,
+        label: client?.shortName || client?.name,
+        kindLabel: 'RDV client',
+      })
     })
 
     return events
@@ -213,7 +383,7 @@ export default function Calendrier() {
                 <div
                   className={`h-10 flex flex-col items-center justify-center border-b cursor-pointer hover:bg-white/2 transition-colors ${isToday ? '' : ''}`}
                   style={{ borderColor: 'rgba(255,255,255,0.05)' }}
-                  onClick={() => setAddingOnDate(day)}
+                  onClick={() => setAddingOnDate({ date: day, startTime: '09:00', endTime: '10:00' })}
                 >
                   <span className="text-[10px] text-white/30 uppercase">{DAYS_FR[day.getDay()]}</span>
                   <span className={`font-mono text-sm font-semibold ${isToday ? 'text-violet' : 'text-white/60'}`}>{day.getDate()}</span>
@@ -221,16 +391,23 @@ export default function Calendrier() {
 
                 {/* Events area */}
                 <div className="relative" style={{ height: `${HOUR_SPAN * 56}px` }}>
-                  {/* Hour lines */}
+                  {/* Hour lines — clickable to create event at that hour */}
                   {hourLabels.map(h => (
-                    <div key={h} className="absolute w-full" style={{ top: `${(h - START_HOUR) * 56}px`, borderTop: '1px solid rgba(255,255,255,0.03)', height: '56px' }} />
+                    <div key={h}
+                      className="absolute w-full cursor-pointer hover:bg-white/3 transition-colors"
+                      style={{ top: `${(h - START_HOUR) * 56}px`, borderTop: '1px solid rgba(255,255,255,0.03)', height: '56px' }}
+                      onClick={e => {
+                        if (e.target !== e.currentTarget) return
+                        const endH = Math.min(END_HOUR, h + 1)
+                        setAddingOnDate({ date: day, startTime: `${String(h).padStart(2,'0')}:00`, endTime: `${String(endH).padStart(2,'0')}:00` })
+                      }} />
                   ))}
 
                   {/* Events */}
                   {events.map(ev => {
                     const top = Math.max(0, (ev.startHour - START_HOUR) * 56)
                     const height = Math.max(20, Math.min(ev.durationH * 56, HOUR_SPAN * 56 - top))
-                    const isPrayer = ev.type === 'prayer'
+                    const isPrayer = ev.source === 'prayer'
                     return (
                       <div
                         key={ev.id}
@@ -238,16 +415,17 @@ export default function Calendrier() {
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
-                          background: isPrayer ? `rgba(255,193,224,0.1)` : `${ev.color}22`,
+                          background: isPrayer ? `rgba(255,193,224,0.08)` : `${ev.color}22`,
                           borderLeft: `2px solid ${ev.color}`,
-                          opacity: isPrayer ? 0.7 : 1,
+                          opacity: isPrayer ? 0.6 : 1,
                         }}
-                        onClick={() => !isPrayer && setSelectedEvent(ev)}
+                        onClick={() => setSelectedEvent(ev)}
                         title={ev.title}
                       >
                         {height >= 14 && (
-                          <span className="text-[9px] font-medium leading-tight block pt-0.5 truncate" style={{ color: ev.color }}>
-                            {ev.title}
+                          <span className="text-[9px] font-medium leading-tight flex items-center gap-1 pt-0.5 truncate" style={{ color: ev.color }}>
+                            <span className="text-[10px] flex-shrink-0">{ev.emoji}</span>
+                            <span className="truncate">{ev.title}</span>
                           </span>
                         )}
                       </div>
@@ -275,18 +453,39 @@ export default function Calendrier() {
         </div>
       </div>
 
-      {/* Add event form inline */}
+      {/* Add event modal */}
       {addingOnDate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddingOnDate(null)} />
-          <div className="relative w-full max-w-sm rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-            <button onClick={() => setAddingOnDate(null)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70"><X size={14} /></button>
-            <AddEventForm
-              date={addingOnDate}
+          <div className="relative w-full max-w-md rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+            <button onClick={() => setAddingOnDate(null)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70 z-10"><X size={14} /></button>
+            <EventForm
+              date={addingOnDate.date}
+              initial={addingOnDate.startTime ? { startTime: addingOnDate.startTime, endTime: addingOnDate.endTime } : null}
               projects={state.projects}
+              clients={state.clients}
               onClose={() => setAddingOnDate(null)}
               onSubmit={payload => {
-                dispatch({ type: 'ADD_CALENDAR_EVENT', payload })
+                if (payload.eventType === 'client_meeting' && payload.clientId) {
+                  // Create an appointment instead of a calendar event
+                  const [sh, sm] = payload.startTime.split(':').map(Number)
+                  const [eh, em] = payload.endTime.split(':').map(Number)
+                  const durationSec = ((eh * 60 + em) - (sh * 60 + sm)) * 60
+                  dispatch({
+                    type: 'ADD_APPOINTMENT',
+                    payload: {
+                      title: payload.title,
+                      date: payload.date,
+                      time: payload.startTime,
+                      duration: durationSec,
+                      projectId: payload.projectId,
+                      clientId: payload.clientId,
+                      note: payload.notes,
+                    },
+                  })
+                } else {
+                  dispatch({ type: 'ADD_CALENDAR_EVENT', payload })
+                }
                 setAddingOnDate(null)
               }}
             />
@@ -294,15 +493,73 @@ export default function Calendrier() {
         </div>
       )}
 
-      {/* Event detail */}
+      {/* Event detail / edit modal */}
       {selectedEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)} />
-          <div className="relative w-full max-w-sm rounded-2xl p-5" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)', borderLeft: `3px solid ${selectedEvent.color}` }}>
-            <button onClick={() => setSelectedEvent(null)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70"><X size={14} /></button>
-            <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">{selectedEvent.type === 'task' ? 'Tâche deadline' : selectedEvent.type === 'session' ? 'Session' : 'Événement'}</p>
-            <h3 className="text-white font-semibold mb-2">{selectedEvent.title}</h3>
-            {selectedEvent.label && <p className="text-sm text-white/40">{selectedEvent.label}</p>}
+          <div className="relative w-full max-w-md rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)', borderLeft: `3px solid ${selectedEvent.color}` }}>
+            <button onClick={() => setSelectedEvent(null)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70 z-10"><X size={14} /></button>
+            {selectedEvent.source === 'manual' ? (
+              <EventForm
+                initial={{ ...selectedEvent.raw, emoji: selectedEvent.raw.emoji, eventType: selectedEvent.raw.eventType || 'meeting' }}
+                projects={state.projects}
+                clients={state.clients}
+                onClose={() => setSelectedEvent(null)}
+                onSubmit={payload => {
+                  dispatch({ type: 'UPDATE_CALENDAR_EVENT', payload: { id: selectedEvent.raw.id, ...payload } })
+                  setSelectedEvent(null)
+                }}
+                onDelete={() => {
+                  dispatch({ type: 'DELETE_CALENDAR_EVENT', payload: selectedEvent.raw.id })
+                  setSelectedEvent(null)
+                }}
+              />
+            ) : selectedEvent.source === 'appointment' ? (
+              <EventForm
+                initial={{
+                  title: selectedEvent.raw.title,
+                  date: selectedEvent.raw.date,
+                  startTime: selectedEvent.raw.time,
+                  endTime: (() => {
+                    const [sh, sm] = (selectedEvent.raw.time || '09:00').split(':').map(Number)
+                    const total = sh * 60 + sm + Math.round((selectedEvent.raw.duration || 3600) / 60)
+                    return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`
+                  })(),
+                  projectId: selectedEvent.raw.projectId,
+                  clientId: selectedEvent.raw.clientId,
+                  eventType: 'client_meeting',
+                  notes: selectedEvent.raw.note,
+                }}
+                projects={state.projects}
+                clients={state.clients}
+                onClose={() => setSelectedEvent(null)}
+                onSubmit={payload => {
+                  const [sh, sm] = payload.startTime.split(':').map(Number)
+                  const [eh, em] = payload.endTime.split(':').map(Number)
+                  const durationSec = ((eh * 60 + em) - (sh * 60 + sm)) * 60
+                  dispatch({
+                    type: 'UPDATE_APPOINTMENT',
+                    payload: {
+                      id: selectedEvent.raw.id,
+                      title: payload.title,
+                      date: payload.date,
+                      time: payload.startTime,
+                      duration: durationSec,
+                      projectId: payload.projectId,
+                      clientId: payload.clientId,
+                      note: payload.notes,
+                    },
+                  })
+                  setSelectedEvent(null)
+                }}
+                onDelete={() => {
+                  dispatch({ type: 'DELETE_APPOINTMENT', payload: selectedEvent.raw.id })
+                  setSelectedEvent(null)
+                }}
+              />
+            ) : (
+              <ReadOnlyEventCard event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+            )}
           </div>
         </div>
       )}

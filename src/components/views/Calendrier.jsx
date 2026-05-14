@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 
@@ -217,6 +217,17 @@ function ReadOnlyEventCard({ event, onClose }) {
   )
 }
 
+const HOUR_PX = 56
+
+function snap15(hour) {
+  return Math.round(hour * 4) / 4
+}
+
+function hourToHHMM(h) {
+  const total = Math.round(h * 60)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 export default function Calendrier() {
   const { state, dispatch } = useStore()
   const [referenceDate, setReferenceDate] = useState(new Date())
@@ -224,8 +235,127 @@ export default function Calendrier() {
   const [visibleProjects, setVisibleProjects] = useState(new Set(state.projects.map(p => p.id)))
   const [addingOnDate, setAddingOnDate] = useState(null)
   const [selectedEvent, setSelectedEvent] = useState(null)
+  const [dragState, setDragState] = useState(null)
 
+  const gridRef = useRef(null)
   const weekDays = getWeekDays(referenceDate)
+
+  // ─── Drag/resize handling ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!dragState) return
+
+    function onMove(e) {
+      const dx = e.clientX - dragState.origMouseX
+      const dy = e.clientY - dragState.origMouseY
+      setDragState(s => s && ({
+        ...s,
+        deltaX: dx,
+        deltaY: dy,
+        hasMoved: s.hasMoved || Math.abs(dx) > 4 || Math.abs(dy) > 4,
+      }))
+    }
+
+    function onUp(e) {
+      const ds = dragState
+      if (!ds.hasMoved) {
+        // It was a click → open detail
+        setSelectedEvent(ds.event)
+      } else {
+        // Commit changes
+        if (ds.type === 'move') {
+          const newStartHour = snap15(Math.max(0, Math.min(24 - ds.origDurationH, ds.origStartHour + ds.deltaY / HOUR_PX)))
+          const newDayIdx = getDayIdxAtX(e.clientX)
+          const targetDay = (newDayIdx != null) ? weekDays[newDayIdx] : weekDays[ds.origDayIdx]
+          const newDate = targetDay.toISOString().slice(0, 10)
+          const endHour = newStartHour + ds.origDurationH
+          commitMove(ds, newDate, newStartHour, endHour)
+        } else if (ds.type === 'resize') {
+          const newDuration = Math.max(0.25, snap15(ds.origDurationH + ds.deltaY / HOUR_PX))
+          const endHour = ds.origStartHour + newDuration
+          commitResize(ds, ds.origStartHour, endHour)
+        }
+      }
+      setDragState(null)
+    }
+
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+    return () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dragState])
+
+  function getDayIdxAtX(x) {
+    if (!gridRef.current) return null
+    const rect = gridRef.current.getBoundingClientRect()
+    const gutterW = 56
+    const relX = x - rect.left - gutterW
+    if (relX < 0 || relX > rect.width - gutterW) return null
+    const colW = (rect.width - gutterW) / 7
+    return Math.max(0, Math.min(6, Math.floor(relX / colW)))
+  }
+
+  function startDrag(e, event, dayIdx, type) {
+    if (event.source !== 'manual' && event.source !== 'appointment') return
+    e.preventDefault()
+    e.stopPropagation()
+    setDragState({
+      event, type,
+      origMouseX: e.clientX, origMouseY: e.clientY,
+      origStartHour: event.startHour,
+      origDurationH: event.durationH,
+      origDayIdx: dayIdx,
+      deltaX: 0, deltaY: 0,
+      hasMoved: false,
+    })
+  }
+
+  function commitMove(ds, newDate, newStartHour, endHour) {
+    if (ds.event.source === 'manual') {
+      dispatch({
+        type: 'UPDATE_CALENDAR_EVENT',
+        payload: {
+          id: ds.event.raw.id,
+          date: newDate,
+          startTime: hourToHHMM(newStartHour),
+          endTime: hourToHHMM(endHour),
+        },
+      })
+    } else if (ds.event.source === 'appointment') {
+      dispatch({
+        type: 'UPDATE_APPOINTMENT',
+        payload: {
+          id: ds.event.raw.id,
+          date: newDate,
+          time: hourToHHMM(newStartHour),
+          duration: Math.round((endHour - newStartHour) * 3600),
+        },
+      })
+    }
+  }
+
+  function commitResize(ds, startHour, endHour) {
+    if (ds.event.source === 'manual') {
+      dispatch({
+        type: 'UPDATE_CALENDAR_EVENT',
+        payload: {
+          id: ds.event.raw.id,
+          startTime: hourToHHMM(startHour),
+          endTime: hourToHHMM(endHour),
+        },
+      })
+    } else if (ds.event.source === 'appointment') {
+      dispatch({
+        type: 'UPDATE_APPOINTMENT',
+        payload: {
+          id: ds.event.raw.id,
+          duration: Math.round((endHour - startHour) * 3600),
+        },
+      })
+    }
+  }
 
   function prevWeek() { const d = new Date(referenceDate); d.setDate(d.getDate() - 7); setReferenceDate(d) }
   function nextWeek() { const d = new Date(referenceDate); d.setDate(d.getDate() + 7); setReferenceDate(d) }
@@ -363,7 +493,7 @@ export default function Calendrier() {
 
       {/* Calendar grid */}
       <div className="flex-1 overflow-auto rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-        <div className="flex" style={{ minWidth: '700px' }}>
+        <div ref={gridRef} className="flex" style={{ minWidth: '700px' }}>
           {/* Time gutter */}
           <div className="w-14 flex-shrink-0 pt-10" style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
             {hourLabels.map(h => (
@@ -405,28 +535,49 @@ export default function Calendrier() {
 
                   {/* Events */}
                   {events.map(ev => {
-                    const top = Math.max(0, (ev.startHour - START_HOUR) * 56)
-                    const height = Math.max(20, Math.min(ev.durationH * 56, HOUR_SPAN * 56 - top))
+                    const top = Math.max(0, (ev.startHour - START_HOUR) * HOUR_PX)
+                    const baseHeight = Math.max(20, Math.min(ev.durationH * HOUR_PX, HOUR_SPAN * HOUR_PX - top))
                     const isPrayer = ev.source === 'prayer'
+                    const isDraggable = ev.source === 'manual' || ev.source === 'appointment'
+                    const isBeingDragged = dragState?.event?.id === ev.id && dragState?.hasMoved
+                    const dragTransform = isBeingDragged && dragState.type === 'move'
+                      ? `translate(${dragState.deltaX}px, ${dragState.deltaY}px)`
+                      : null
+                    const dragHeight = isBeingDragged && dragState.type === 'resize'
+                      ? Math.max(20, baseHeight + dragState.deltaY)
+                      : baseHeight
                     return (
                       <div
                         key={ev.id}
-                        className="absolute left-0.5 right-0.5 rounded px-1.5 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                        className={`absolute left-0.5 right-0.5 rounded px-1.5 overflow-hidden transition-opacity ${isDraggable ? 'cursor-grab' : 'cursor-pointer'} ${isBeingDragged ? 'z-30 shadow-2xl' : ''}`}
                         style={{
                           top: `${top}px`,
-                          height: `${height}px`,
+                          height: `${dragHeight}px`,
                           background: isPrayer ? `rgba(255,193,224,0.08)` : `${ev.color}22`,
                           borderLeft: `2px solid ${ev.color}`,
                           opacity: isPrayer ? 0.6 : 1,
+                          transform: dragTransform,
+                          userSelect: 'none',
                         }}
-                        onClick={() => setSelectedEvent(ev)}
+                        onMouseDown={isDraggable
+                          ? (e) => startDrag(e, ev, di, 'move')
+                          : undefined}
+                        onClick={!isDraggable ? () => setSelectedEvent(ev) : undefined}
                         title={ev.title}
                       >
-                        {height >= 14 && (
+                        {dragHeight >= 14 && (
                           <span className="text-[9px] font-medium leading-tight flex items-center gap-1 pt-0.5 truncate" style={{ color: ev.color }}>
                             <span className="text-[10px] flex-shrink-0">{ev.emoji}</span>
                             <span className="truncate">{ev.title}</span>
                           </span>
+                        )}
+                        {/* Resize handle */}
+                        {isDraggable && dragHeight >= 24 && (
+                          <div
+                            className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize flex items-center justify-center hover:bg-white/10"
+                            onMouseDown={(e) => startDrag(e, ev, di, 'resize')}>
+                            <div className="w-6 h-0.5 rounded-full" style={{ background: ev.color, opacity: 0.5 }} />
+                          </div>
                         )}
                       </div>
                     )

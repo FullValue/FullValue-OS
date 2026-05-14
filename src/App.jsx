@@ -8,6 +8,8 @@ import '@/components/ui/ThemeToggle.css'
 import CommandModal from '@/components/CommandModal'
 import StickyTimer from '@/components/ui/StickyTimer'
 import FocusMode from '@/components/ui/FocusMode'
+import DailyClosingModal from '@/components/DailyClosingModal'
+import { useStore } from '@/store/useStore'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
 import ProjetPage from '@/components/views/ProjetPage'
@@ -54,9 +56,11 @@ function AuthGate() {
 }
 
 function AppInner() {
+  const { state } = useStore()
   const [activePage, setActivePage] = useState('journee')
   const [cmdOpen, setCmdOpen] = useState(false)
   const [focusOpen, setFocusOpen] = useState(false)
+  const [closingOpen, setClosingOpen] = useState(false)
 
   // Theme — light mode is the new default
   const [theme, setTheme] = useState(() => localStorage.getItem('cockpit_theme') || 'light')
@@ -83,6 +87,27 @@ function AppInner() {
   const intervalRef = useRef(null)
   const elapsedRef = useRef(0)
   const startTimeRef = useRef(null)
+
+  // Daily closing auto-trigger: at endOfWorkday, if no review for today, open modal once
+  useEffect(() => {
+    function check() {
+      const todayStr = (() => {
+        const d = new Date()
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      })()
+      const alreadyDone = state.dailyReviews?.some(r => r.date === todayStr)
+      if (alreadyDone) return
+      const endStr = state.settings?.endOfWorkday || '20:00'
+      const [eh, em] = endStr.split(':').map(Number)
+      const now = new Date()
+      const nowMin = now.getHours() * 60 + now.getMinutes()
+      const endMin = eh * 60 + em
+      if (nowMin >= endMin) setClosingOpen(true)
+    }
+    check()
+    const t = setInterval(check, 60000)
+    return () => clearInterval(t)
+  }, [state.dailyReviews, state.settings])
 
   // Global ⌘+K
   useEffect(() => {
@@ -264,6 +289,8 @@ function AppInner() {
         onResume={resumeTimer}
         onStop={stopTimer}
       />
+
+      <DailyClosingModal isOpen={closingOpen} onClose={() => setClosingOpen(false)} />
     </div>
   )
 }

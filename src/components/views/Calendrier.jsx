@@ -50,6 +50,20 @@ function getWeekDays(referenceDate) {
   })
 }
 
+function getMonthGridDays(referenceDate) {
+  // 6 weeks (42 days) starting Monday of the week containing the 1st of the month
+  const first = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1)
+  const dow = first.getDay()
+  const offsetToMonday = dow === 0 ? -6 : 1 - dow
+  const start = new Date(first)
+  start.setDate(first.getDate() + offsetToMonday)
+  return Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    return d
+  })
+}
+
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
@@ -391,9 +405,38 @@ export default function Calendrier() {
     }
   }
 
-  function prevWeek() { const d = new Date(referenceDate); d.setDate(d.getDate() - 7); setReferenceDate(d) }
-  function nextWeek() { const d = new Date(referenceDate); d.setDate(d.getDate() + 7); setReferenceDate(d) }
+  function prevPeriod() {
+    const d = new Date(referenceDate)
+    if (view === 'month') d.setMonth(d.getMonth() - 1)
+    else d.setDate(d.getDate() - 7)
+    setReferenceDate(d)
+  }
+  function nextPeriod() {
+    const d = new Date(referenceDate)
+    if (view === 'month') d.setMonth(d.getMonth() + 1)
+    else d.setDate(d.getDate() + 7)
+    setReferenceDate(d)
+  }
   function goToday() { setReferenceDate(new Date()) }
+
+  // Compute daily occupancy in hours (for heatmap in month view)
+  function getDayOccupancy(date) {
+    const iso = date.toISOString().slice(0, 10)
+    let h = 0, count = 0
+    state.calendarEvents.filter(e => e.date === iso).forEach(e => {
+      const [sh, sm] = e.startTime.split(':').map(Number)
+      const [eh, em] = e.endTime.split(':').map(Number)
+      h += (eh + em/60) - (sh + sm/60); count++
+    })
+    state.appointments.filter(a => a.date === iso).forEach(a => {
+      h += (a.duration || 3600) / 3600; count++
+    })
+    state.sessions.filter(s => s.date.slice(0, 10) === iso).forEach(s => {
+      h += s.duration / 3600; count++
+    })
+    const deadlines = state.tasks.filter(t => t.dueDate === iso && t.status !== 'done').length
+    return { hours: h, eventCount: count, deadlineCount: deadlines }
+  }
 
   function toggleProject(id) {
     setVisibleProjects(prev => {
@@ -491,9 +534,13 @@ export default function Calendrier() {
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-semibold text-white">Calendrier</h1>
           <div className="flex gap-1 bg-white/5 rounded-xl p-1">
-            {['week'].map(v => (
-              <button key={v} onClick={() => setView(v)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${view === v ? 'bg-violet/20 text-violet' : 'text-white/40 hover:text-white/70'}`}>
-                Semaine
+            {[
+              { id: 'week', label: 'Semaine' },
+              { id: 'month', label: 'Mois' },
+            ].map(v => (
+              <button key={v.id} onClick={() => setView(v.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${view === v.id ? 'bg-violet/20 text-violet' : 'text-white/40 hover:text-white/70'}`}>
+                {v.label}
               </button>
             ))}
           </div>
@@ -506,11 +553,13 @@ export default function Calendrier() {
             <Zap size={11} /> Import
           </button>
           <button onClick={goToday} className="text-xs bg-white/5 hover:bg-white/10 text-white/60 px-3 py-1.5 rounded-lg transition-colors">Aujourd'hui</button>
-          <button onClick={prevWeek} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"><ChevronLeft size={16} /></button>
-          <span className="font-mono text-sm text-white/60 min-w-[120px] text-center">
-            {weekDays[0].getDate()} {MONTHS_FR[weekDays[0].getMonth()]} — {weekDays[6].getDate()} {MONTHS_FR[weekDays[6].getMonth()]}
+          <button onClick={prevPeriod} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"><ChevronLeft size={16} /></button>
+          <span className="font-mono text-sm text-white/60 min-w-[140px] text-center">
+            {view === 'month'
+              ? `${MONTHS_FR[referenceDate.getMonth()]} ${referenceDate.getFullYear()}`
+              : `${weekDays[0].getDate()} ${MONTHS_FR[weekDays[0].getMonth()]} — ${weekDays[6].getDate()} ${MONTHS_FR[weekDays[6].getMonth()]}`}
           </span>
-          <button onClick={nextWeek} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"><ChevronRight size={16} /></button>
+          <button onClick={nextPeriod} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"><ChevronRight size={16} /></button>
         </div>
       </div>
 
@@ -532,6 +581,74 @@ export default function Calendrier() {
       </div>
 
       {/* Calendar grid */}
+      {view === 'month' ? (
+        <div className="flex-1 overflow-auto rounded-2xl p-3"
+          style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+          {(() => {
+            const days = getMonthGridDays(referenceDate)
+            const month = referenceDate.getMonth()
+            // Find max hours for scale
+            const dayData = days.map(d => ({ date: d, ...getDayOccupancy(d) }))
+            const maxHours = Math.max(8, ...dayData.map(x => x.hours))
+            return (
+              <>
+                {/* Day-of-week header */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'].map(d => (
+                    <div key={d} className="text-center text-[10px] font-semibold tracking-wider"
+                      style={{ color: 'var(--text-tertiary)' }}>{d}</div>
+                  ))}
+                </div>
+                {/* Day cells */}
+                <div className="grid grid-cols-7 gap-1">
+                  {dayData.map((d, i) => {
+                    const inMonth = d.date.getMonth() === month
+                    const isToday = isSameDay(d.date, today)
+                    const intensity = Math.min(1, d.hours / maxHours)
+                    return (
+                      <button key={i}
+                        onClick={() => { setReferenceDate(d.date); setView('week') }}
+                        className="aspect-square rounded-xl p-2 text-left transition-all hover:scale-[1.03] flex flex-col"
+                        style={{
+                          background: isToday
+                            ? 'rgba(139,124,255,0.18)'
+                            : `rgba(139,124,255,${0.04 + intensity * 0.22})`,
+                          border: isToday
+                            ? '1px solid var(--violet-deep)'
+                            : `1px solid rgba(255,255,255,${0.04 + intensity * 0.08})`,
+                          opacity: inMonth ? 1 : 0.35,
+                        }}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-mono text-sm font-semibold"
+                            style={{ color: isToday ? 'var(--violet-deep)' : 'var(--text-secondary)' }}>
+                            {d.date.getDate()}
+                          </span>
+                          {d.deadlineCount > 0 && (
+                            <span className="text-[9px] px-1 rounded font-semibold"
+                              style={{ background: 'rgba(248,113,113,0.18)', color: '#F87171' }}>
+                              {d.deadlineCount}
+                            </span>
+                          )}
+                        </div>
+                        {d.hours > 0 && (
+                          <p className="font-mono text-[10px] mt-auto" style={{ color: 'var(--text-tertiary)' }}>
+                            {d.hours.toFixed(1)}h
+                          </p>
+                        )}
+                        {d.eventCount > 0 && (
+                          <p className="text-[9px]" style={{ color: 'var(--text-tertiary)' }}>
+                            {d.eventCount} event{d.eventCount > 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )
+          })()}
+        </div>
+      ) : (
       <div className="flex-1 overflow-auto rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
         <div ref={gridRef} className="flex" style={{ minWidth: '700px' }}>
           {/* Time gutter */}
@@ -655,6 +772,7 @@ export default function Calendrier() {
           })}
         </div>
       </div>
+      )}
 
       {/* Add event modal */}
       {addingOnDate && (

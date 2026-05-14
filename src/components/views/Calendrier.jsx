@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Trash2, PanelRight, PanelRightClose } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
 import BulkImportInterface from '@/components/import/BulkImportInterface'
@@ -14,6 +14,150 @@ export const EVENT_TYPES = {
 }
 
 const TYPE_ORDER = ['meeting', 'focus', 'admin', 'personnel', 'client_meeting']
+
+function WeekRecapSidebar({ weekDays, state, getProject }) {
+  const weekIsoSet = new Set(weekDays.map(d => d.toISOString().slice(0, 10)))
+
+  // Aggregate hours by project across all sources
+  const byProject = new Map()
+  let totalHours = 0
+  let appointmentCount = 0
+  let deadlineCount = 0
+  let eventCount = 0
+  let sessionsHours = 0
+
+  function addToProject(projectId, hours) {
+    const cur = byProject.get(projectId || '_none') || 0
+    byProject.set(projectId || '_none', cur + hours)
+    totalHours += hours
+  }
+
+  state.calendarEvents.forEach(e => {
+    if (!weekIsoSet.has(e.date)) return
+    const [sh, sm] = e.startTime.split(':').map(Number)
+    const [eh, em] = e.endTime.split(':').map(Number)
+    const h = (eh + em/60) - (sh + sm/60)
+    addToProject(e.projectId, h)
+    eventCount++
+  })
+  state.appointments.forEach(a => {
+    if (!weekIsoSet.has(a.date)) return
+    const h = (a.duration || 3600) / 3600
+    addToProject(a.projectId, h)
+    appointmentCount++
+  })
+  state.sessions.forEach(s => {
+    const iso = s.date.slice(0, 10)
+    if (!weekIsoSet.has(iso)) return
+    const h = s.duration / 3600
+    addToProject(s.projectId, h)
+    sessionsHours += h
+  })
+  state.tasks.forEach(t => {
+    if (t.dueDate && weekIsoSet.has(t.dueDate) && t.status !== 'done') deadlineCount++
+  })
+
+  // Capacity = daily * 5 working days
+  const dailyCap = (state.settings?.dailyCapacityMinutes || 480) / 60
+  const weekCap = dailyCap * 5
+  const usedPct = Math.min(100, (totalHours / weekCap) * 100)
+  const overload = totalHours > weekCap
+
+  // Project breakdown sorted descending
+  const breakdown = Array.from(byProject.entries())
+    .map(([id, hours]) => ({ id, hours, project: id === '_none' ? null : getProject(id) }))
+    .sort((a, b) => b.hours - a.hours)
+  const maxProjectHours = breakdown[0]?.hours || 1
+
+  return (
+    <div className="w-64 flex-shrink-0 overflow-y-auto rounded-2xl p-4 space-y-4"
+      style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+
+      <div>
+        <p className="text-[10px] uppercase tracking-wider font-semibold mb-2"
+          style={{ color: 'var(--text-tertiary)' }}>Cette semaine</p>
+
+        <div className="flex items-baseline gap-1.5 mb-2">
+          <span className="font-mono text-2xl font-bold"
+            style={{ color: overload ? '#F87171' : 'var(--text-primary)' }}>
+            {totalHours.toFixed(1)}h
+          </span>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            / {weekCap.toFixed(0)}h
+          </span>
+        </div>
+
+        <div className="h-2 rounded-full overflow-hidden mb-1"
+          style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="h-full transition-all"
+            style={{
+              width: `${usedPct}%`,
+              background: overload ? '#F87171' : usedPct > 80 ? '#FFD66B' : 'var(--violet-deep)',
+            }} />
+        </div>
+        <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+          {overload ? `+${(totalHours - weekCap).toFixed(1)}h au-delà` : `${(weekCap - totalHours).toFixed(1)}h restantes`}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <SidebarStat label="Events" value={eventCount} />
+        <SidebarStat label="RDV" value={appointmentCount} />
+        <SidebarStat label="Deadlines" value={deadlineCount} color={deadlineCount > 0 ? '#F87171' : undefined} />
+      </div>
+
+      <div>
+        <p className="text-[10px] uppercase tracking-wider font-semibold mb-2"
+          style={{ color: 'var(--text-tertiary)' }}>Par projet</p>
+        {breakdown.length === 0 ? (
+          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>—</p>
+        ) : (
+          <div className="space-y-1.5">
+            {breakdown.map(b => {
+              const color = b.project?.color || '#5C5A58'
+              const label = b.project?.name || 'Sans projet'
+              return (
+                <div key={b.id}>
+                  <div className="flex items-center justify-between text-[11px] mb-0.5">
+                    <span style={{ color: 'var(--text-secondary)' }} className="truncate flex-1">
+                      {b.project?.emoji} {label}
+                    </span>
+                    <span className="font-mono tabular-nums ml-2" style={{ color: 'var(--text-tertiary)' }}>
+                      {b.hours.toFixed(1)}h
+                    </span>
+                  </div>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                    <div className="h-full" style={{ width: `${(b.hours / maxProjectHours) * 100}%`, background: color }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="pt-2" style={{ borderTop: '1px solid var(--c-border)' }}>
+        <p className="text-[10px] uppercase tracking-wider font-semibold mb-1"
+          style={{ color: 'var(--text-tertiary)' }}>Sessions loggées</p>
+        <p className="font-mono text-sm" style={{ color: 'var(--text-secondary)' }}>
+          {sessionsHours.toFixed(1)}h
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function SidebarStat({ label, value, color }) {
+  return (
+    <div className="rounded-xl p-2 text-center"
+      style={{ background: 'rgba(255,255,255,0.03)' }}>
+      <p className="font-mono text-lg font-semibold leading-none mb-1"
+        style={{ color: color || 'var(--text-secondary)' }}>{value}</p>
+      <p className="text-[9px] uppercase tracking-wider"
+        style={{ color: 'var(--text-tertiary)' }}>{label}</p>
+    </div>
+  )
+}
 
 function hhmmToMin(s) {
   if (!s || typeof s !== 'string') return 0
@@ -284,6 +428,17 @@ export default function Calendrier() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [dragState, setDragState] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [recapOpen, setRecapOpen] = useState(() => {
+    try { return localStorage.getItem('cockpit:cal:recap') !== 'false' } catch { return true }
+  })
+
+  function toggleRecap() {
+    setRecapOpen(v => {
+      const next = !v
+      try { localStorage.setItem('cockpit:cal:recap', String(next)) } catch {}
+      return next
+    })
+  }
 
   const gridRef = useRef(null)
   const weekDays = getWeekDays(referenceDate)
@@ -547,6 +702,14 @@ export default function Calendrier() {
         </div>
 
         <div className="flex items-center gap-2">
+          {view === 'week' && (
+            <button onClick={toggleRecap}
+              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              style={{ color: recapOpen ? 'var(--violet-deep)' : 'var(--text-tertiary)' }}
+              title={recapOpen ? 'Masquer le récap' : 'Afficher le récap'}>
+              {recapOpen ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
+            </button>
+          )}
           <button onClick={() => setImportOpen(true)}
             className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all"
             style={{ color: 'var(--violet-deep)', background: 'rgba(139,124,255,0.12)' }}>
@@ -649,6 +812,7 @@ export default function Calendrier() {
           })()}
         </div>
       ) : (
+      <div className="flex-1 flex gap-3 overflow-hidden">
       <div className="flex-1 overflow-auto rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
         <div ref={gridRef} className="flex" style={{ minWidth: '700px' }}>
           {/* Time gutter */}
@@ -771,6 +935,8 @@ export default function Calendrier() {
             )
           })}
         </div>
+      </div>
+      {recapOpen && <WeekRecapSidebar weekDays={weekDays} state={state} getProject={getProject} />}
       </div>
       )}
 

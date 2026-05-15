@@ -440,7 +440,7 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
             placeholder={`Colle ton JSON ici...\n\n{\n  "tasks": [\n    { "title": "Ma première tâche" }\n  ]\n}`}
             className="w-full rounded-2xl text-xs leading-relaxed resize-none focus:outline-none focus:ring-2"
             style={{
-              minHeight: 340,
+              minHeight: 'clamp(200px, 40vh, 340px)',
               background: 'var(--bg-input, rgba(0,0,0,0.12))',
               border: '1px solid var(--border-soft)',
               color: 'var(--text-secondary)',
@@ -513,39 +513,42 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
       )}
 
       {/* Footer */}
-      <div className="flex items-center gap-3 pt-1">
-        <label className="flex items-center gap-2 text-xs cursor-pointer select-none" style={{ color: 'var(--text-tertiary)' }}>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1">
+        <label className="flex items-center gap-2 text-xs cursor-pointer select-none w-full sm:w-auto" style={{ color: 'var(--text-tertiary)' }}>
           <input
             type="checkbox"
             checked={dryRun}
             onChange={e => setDryRun(e.target.checked)}
             style={{ accentColor: 'var(--violet-deep)' }}
           />
-          Mode dry-run (simuler sans créer)
+          <span className="hidden sm:inline">Mode dry-run (simuler sans créer)</span>
+          <span className="sm:hidden">Dry-run (simulation)</span>
         </label>
 
-        <div className="flex-1" />
+        <div className="hidden sm:block flex-1" />
 
-        {rawJson && (
-          <button onClick={handleReset} className="text-xs px-3 py-2 rounded-xl transition-colors"
-            style={{ color: 'var(--text-tertiary)', background: 'transparent' }}>
-            Réinitialiser
+        <div className="flex items-center gap-2 ml-auto flex-wrap">
+          {rawJson && (
+            <button onClick={handleReset} className="text-xs px-3 py-2 rounded-xl transition-colors"
+              style={{ color: 'var(--text-tertiary)', background: 'transparent' }}>
+              Réinitialiser
+            </button>
+          )}
+          {onCancel && (
+            <button onClick={onCancel} className="text-xs px-4 py-2 rounded-xl transition-colors"
+              style={{ background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-secondary)' }}>
+              Annuler
+            </button>
+          )}
+          <button
+            onClick={handleImport}
+            disabled={!canImport}
+            className="text-xs px-4 py-2 rounded-xl font-medium transition-all disabled:opacity-40"
+            style={{ background: 'var(--violet-deep)', color: '#fff' }}
+          >
+            {importing ? 'Import…' : dryRun ? `Simuler ${totalToCreate}` : `Importer ${totalToCreate}`}
           </button>
-        )}
-        {onCancel && (
-          <button onClick={onCancel} className="text-xs px-4 py-2 rounded-xl transition-colors"
-            style={{ background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-secondary)' }}>
-            Annuler
-          </button>
-        )}
-        <button
-          onClick={handleImport}
-          disabled={!canImport}
-          className="text-xs px-4 py-2 rounded-xl font-medium transition-all disabled:opacity-40"
-          style={{ background: 'var(--violet-deep)', color: '#fff' }}
-        >
-          {importing ? 'Import en cours…' : dryRun ? `Simuler ${totalToCreate} élément${totalToCreate > 1 ? 's' : ''}` : `Importer ${totalToCreate} élément${totalToCreate > 1 ? 's' : ''}`}
-        </button>
+        </div>
       </div>
 
       {showSchema && <SchemaModal onClose={() => setShowSchema(false)} />}

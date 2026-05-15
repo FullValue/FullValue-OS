@@ -1064,7 +1064,7 @@ export default function Calendrier() {
       {importOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setImportOpen(false)} />
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-6"
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
             <button onClick={() => setImportOpen(false)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70 z-10">
               <X size={14} />

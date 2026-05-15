@@ -14,6 +14,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { PrayerWidget } from '@/components/layout/RightSidebar'
+import StatistiqueWidget from '@/components/widgets/StatistiqueWidget'
 import CapacityWidget from '@/components/widgets/CapacityWidget'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -700,8 +701,9 @@ export default function Journee({ onStartTask, onNavigate }) {
         </SortableContext>
       </DndContext>
 
-      {/* Prayer widget — mobile only (on desktop it's in RightSidebar) */}
-      <div className="lg:hidden">
+      {/* Sidebar widgets — mobile only (on desktop they live in RightSidebar) */}
+      <div className="lg:hidden space-y-4">
+        <StatistiqueWidget />
         <PrayerWidget nowMinutes={nowMinutes} />
       </div>
 

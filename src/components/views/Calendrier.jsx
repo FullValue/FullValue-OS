@@ -71,7 +71,7 @@ function WeekRecapSidebar({ weekDays, state, getProject }) {
   const maxProjectHours = breakdown[0]?.hours || 1
 
   return (
-    <div className="w-64 flex-shrink-0 overflow-y-auto rounded-2xl p-4 space-y-4"
+    <div className="w-full lg:w-64 flex-shrink-0 overflow-y-auto rounded-2xl p-4 space-y-4"
       style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
 
       <div>
@@ -300,7 +300,7 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Début</label>
           <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
@@ -315,7 +315,7 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Projet</label>
           <select value={projectId} onChange={e => setProjectId(e.target.value)}
@@ -685,11 +685,11 @@ export default function Calendrier() {
   const today = new Date()
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden px-4 py-6">
+    <div className="flex flex-col h-screen max-h-screen overflow-hidden px-3 sm:px-4 py-4 sm:py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-white">Calendrier</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <h1 className="text-lg sm:text-xl font-semibold text-white">Calendrier</h1>
           <div className="flex gap-1 bg-white/5 rounded-xl p-1">
             {[
               { id: 'week', label: 'Semaine' },
@@ -703,7 +703,7 @@ export default function Calendrier() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {view === 'week' && (
             <button onClick={toggleRecap}
               className="p-2 rounded-lg hover:bg-white/5 transition-colors"
@@ -715,14 +715,14 @@ export default function Calendrier() {
           <button onClick={() => setPlanOpen(true)}
             className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all hover:opacity-90"
             style={{ color: '#fff', background: 'var(--violet-deep)' }}>
-            <Sparkles size={11} /> Plan ma journée
+            <Sparkles size={11} /> <span className="hidden sm:inline">Plan ma journée</span><span className="sm:hidden">Plan</span>
           </button>
           <button onClick={() => setImportOpen(true)}
             className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all"
             style={{ color: 'var(--violet-deep)', background: 'rgba(139,124,255,0.12)' }}>
             <Zap size={11} /> Import
           </button>
-          <button onClick={goToday} className="text-xs bg-white/5 hover:bg-white/10 text-white/60 px-3 py-1.5 rounded-lg transition-colors">Aujourd'hui</button>
+          <button onClick={goToday} className="text-xs bg-white/5 hover:bg-white/10 text-white/60 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors"><span className="hidden sm:inline">Aujourd'hui</span><span className="sm:hidden">Aujd</span></button>
           <button onClick={prevPeriod} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"><ChevronLeft size={16} /></button>
           <span className="font-mono text-sm text-white/60 min-w-[140px] text-center">
             {view === 'month'
@@ -819,9 +819,9 @@ export default function Calendrier() {
           })()}
         </div>
       ) : (
-      <div className="flex-1 flex gap-3 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 overflow-hidden">
       <div className="flex-1 overflow-auto rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-        <div ref={gridRef} className="flex" style={{ minWidth: '700px' }}>
+        <div ref={gridRef} className="flex sm:min-w-[700px]">
           {/* Time gutter */}
           <div className="w-14 flex-shrink-0 pt-10" style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
             {hourLabels.map(h => (

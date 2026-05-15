@@ -4,7 +4,7 @@ import {
   Home, Inbox, Calendar, CheckSquare, Timer,
   BookOpen, GraduationCap,
   Users, LayoutDashboard, ChevronDown, LogOut, Database, FileJson,
-  PanelLeftClose, PanelLeftOpen, Pencil, Trash2, Check, X, Plus,
+  PanelLeftClose, PanelLeftOpen, Pencil, Trash2, Check, X, Plus, Menu,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
@@ -122,13 +122,12 @@ function SectionDivider({ label, expanded }) {
 
 // ─── Mobile bottom bar ────────────────────────────────────────────────────────
 
-function MobileNav({ activePage, setActivePage, timerRunning, inboxCount }) {
+function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpenMenu }) {
   const MOBILE_ITEMS = [
-    { id: 'journee',    label: 'Journée',  Icon: Home },
-    { id: 'inbox',      label: 'Inbox',    Icon: Inbox, badge: true },
-    { id: 'taches',     label: 'Tâches',   Icon: CheckSquare },
-    { id: 'sessions',   label: 'Sessions', Icon: Timer, timer: true },
-    { id: 'calendrier', label: 'Agenda',   Icon: Calendar },
+    { id: 'journee', label: 'Journée',  Icon: Home },
+    { id: 'inbox',   label: 'Inbox',    Icon: Inbox, badge: true },
+    { id: 'taches',  label: 'Tâches',   Icon: CheckSquare },
+    { id: 'sessions',label: 'Sessions', Icon: Timer, timer: true },
   ]
 
   return (
@@ -165,7 +164,135 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount }) {
           </button>
         )
       })}
+      <button
+        onClick={onOpenMenu}
+        className="flex-1 flex flex-col items-center gap-1 py-2.5 transition-colors relative"
+        style={{ color: 'var(--text-tertiary)' }}
+      >
+        <Menu size={20} strokeWidth={1.5} />
+        <span className="text-[10px] font-medium">Plus</span>
+      </button>
     </nav>
+  )
+}
+
+// ─── Mobile menu drawer (full nav mirror) ─────────────────────────────────────
+
+function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects, user, userInitials, onSignOut, inboxCount, timerRunning }) {
+  if (!isOpen) return null
+
+  function handlePick(id) {
+    setActivePage(id)
+    onClose()
+  }
+
+  const SECTIONS = [
+    {
+      label: 'Pilotage',
+      items: [
+        { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
+        { id: 'import',     label: 'Import bulk', Icon: FileJson },
+      ],
+    },
+    {
+      label: 'Ressources',
+      items: RESSOURCES,
+    },
+  ]
+
+  return (
+    <div className="sm:hidden fixed inset-0 z-[51] flex flex-col animate-fadeIn"
+      style={{ background: 'var(--bg-surface)' }}>
+
+      {/* Header */}
+      <div className="px-5 py-4 flex items-center justify-between flex-shrink-0"
+        style={{ borderBottom: '1px solid var(--c-border)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold"
+            style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}>
+            {userInitials}
+          </div>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Menu</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</p>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5"
+          style={{ color: 'var(--text-tertiary)' }}>
+          <X size={18} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-4 pb-24 space-y-5">
+
+        {SECTIONS.map(section => (
+          <div key={section.label}>
+            <p className="text-[10px] uppercase tracking-widest font-semibold mb-2 px-2"
+              style={{ color: 'var(--text-tertiary)' }}>{section.label}</p>
+            <div className="flex flex-col gap-1">
+              {section.items.map(item => {
+                const isActive = activePage === item.id
+                return (
+                  <button key={item.id} onClick={() => handlePick(item.id)}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-left"
+                    style={{
+                      background: isActive ? 'var(--active-bg)' : 'transparent',
+                      color: isActive ? 'var(--active-text)' : 'var(--text-secondary)',
+                    }}>
+                    <item.Icon size={18} strokeWidth={isActive ? 2 : 1.6} />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Projets */}
+        <div>
+          <p className="text-[10px] uppercase tracking-widest font-semibold mb-2 px-2"
+            style={{ color: 'var(--text-tertiary)' }}>Projets</p>
+          <div className="flex flex-col gap-1">
+            {projects.map(p => {
+              const isActive = activePage === `projet_${p.id}` || (p.id === 'p1' && activePage === 'ulycom_clients')
+              return (
+                <button key={p.id} onClick={() => handlePick(`projet_${p.id}`)}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-left"
+                  style={{
+                    background: isActive ? p.color + '15' : 'transparent',
+                    color: isActive ? p.color : 'var(--text-secondary)',
+                  }}>
+                  <span className="text-lg">{p.emoji}</span>
+                  <span className="text-sm font-medium flex-1 truncate">{p.name}</span>
+                  {p.id === 'p1' && (
+                    <button onClick={(e) => { e.stopPropagation(); handlePick('ulycom_clients') }}
+                      className="text-[10px] px-2 py-1 rounded-lg transition-colors"
+                      style={{
+                        background: activePage === 'ulycom_clients' ? p.color + '25' : 'rgba(255,255,255,0.05)',
+                        color: activePage === 'ulycom_clients' ? p.color : 'var(--text-tertiary)',
+                      }}>
+                      Clients
+                    </button>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Compte */}
+        <div>
+          <p className="text-[10px] uppercase tracking-widest font-semibold mb-2 px-2"
+            style={{ color: 'var(--text-tertiary)' }}>Compte</p>
+          <button onClick={onSignOut}
+            className="flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-left w-full"
+            style={{ color: '#F87171' }}>
+            <LogOut size={18} strokeWidth={1.6} />
+            <span className="text-sm font-medium">Déconnexion</span>
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -176,6 +303,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
   const { user, signOut } = useAuth()
   const [hovered, setHovered] = useState(false)
   const [addingProject, setAddingProject] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const expanded = sidebarLocked || hovered || addingProject
   const inboxCount = state.inbox.length
 
@@ -541,6 +669,19 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
         setActivePage={setActivePage}
         timerRunning={timerRunning}
         inboxCount={inboxCount}
+        onOpenMenu={() => setMobileMenuOpen(true)}
+      />
+      <MobileMenuDrawer
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        activePage={activePage}
+        setActivePage={setActivePage}
+        projects={state.projects}
+        user={user}
+        userInitials={userInitials}
+        onSignOut={() => { signOut(); setMobileMenuOpen(false) }}
+        inboxCount={inboxCount}
+        timerRunning={timerRunning}
       />
     </>
   )

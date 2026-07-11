@@ -4,8 +4,33 @@ import { useStore } from '../../store/useStore'
 import Badge from '../ui/Badge'
 import Drawer from '../ui/Drawer'
 import GlowSearchBar from '../ui/GlowSearchBar'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
+import { EmptyState } from '@/components/ui/empty-state'
+import { toast, toastUndo } from '@/lib/toast'
 
 const FILTERS = ['Tous', 'High impact', 'Aujourd\'hui', 'En retard']
+
+function ToggleChip({ active, onClick, children, tone = 'violet' }) {
+  const tones = {
+    violet: 'bg-[var(--violet-bg)] text-[var(--violet-deep)] ring-1 ring-[var(--violet-solid)]',
+    green: 'bg-[var(--green-bg)] text-[var(--green-deep)] ring-1 ring-[var(--green-solid)]',
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-xl py-2 text-xs font-medium transition-all active:scale-[0.98] ${
+        active ? tones[tone] : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.08)]'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
 
 function TaskForm({ initial = {}, onSubmit, onClose, projects }) {
   const [title, setTitle] = useState(initial.title || '')
@@ -25,95 +50,71 @@ function TaskForm({ initial = {}, onSubmit, onClose, projects }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label className="text-white/50 text-xs mb-1 block">Titre *</label>
-        <input
+        <Label>Titre *</Label>
+        <Input
           autoFocus
           value={title}
           onChange={e => setTitle(e.target.value)}
-          placeholder="Description de la tâche..."
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-accent/50"
+          placeholder="Description de la tâche…"
         />
       </div>
 
       <div>
-        <label className="text-white/50 text-xs mb-1 block">Projet</label>
-        <select
-          value={projectId}
-          onChange={e => setProjectId(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-        >
+        <Label>Projet</Label>
+        <NativeSelect value={projectId} onChange={e => setProjectId(e.target.value)}>
           {projects.map(p => (
-            <option key={p.id} value={p.id} style={{ background: '#161B22' }}>{p.name}</option>
+            <option key={p.id} value={p.id}>{p.emoji} {p.name}</option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="text-white/50 text-xs mb-1 block">Impact</label>
+          <Label>Impact</Label>
           <div className="flex gap-2">
             {['high', 'low'].map(v => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setImpact(v)}
-                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${impact === v ? 'bg-accent/25 text-accent border border-accent/40' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
-              >
-                {v === 'high' ? '⚡ High' : '· Low'}
-              </button>
+              <ToggleChip key={v} active={impact === v} onClick={() => setImpact(v)}>
+                {v === 'high' ? '⚡ Fort' : '· Faible'}
+              </ToggleChip>
             ))}
           </div>
         </div>
         <div>
-          <label className="text-white/50 text-xs mb-2 block">Ship80</label>
-          <button
-            type="button"
-            onClick={() => setShip80(!ship80)}
-            className={`w-full py-2 rounded-lg text-xs font-medium transition-colors ${ship80 ? 'bg-emerald/20 text-emerald border border-emerald/30' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
-          >
+          <Label>Ship 80</Label>
+          <ToggleChip tone="green" active={ship80} onClick={() => setShip80(!ship80)}>
             🚀 {ship80 ? 'Oui' : 'Non'}
-          </button>
+          </ToggleChip>
         </div>
         <div>
-          <label className="text-white/50 text-xs mb-2 block">Aujourd'hui</label>
-          <button
-            type="button"
-            onClick={() => setToday(!today)}
-            className={`w-full py-2 rounded-lg text-xs font-medium transition-colors ${today ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
-          >
+          <Label>Aujourd'hui</Label>
+          <ToggleChip active={today} onClick={() => setToday(!today)}>
             📌 {today ? 'Oui' : 'Non'}
-          </button>
+          </ToggleChip>
         </div>
       </div>
 
       <div>
-        <label className="text-white/50 text-xs mb-1 block">Date limite</label>
-        <input
-          type="date"
-          value={dueDate}
-          onChange={e => setDueDate(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-        />
+        <Label>Date limite</Label>
+        <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
       </div>
 
       <div>
-        <label className="text-white/50 text-xs mb-1 block">Notes</label>
-        <textarea
+        <Label>Notes</Label>
+        <Textarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
-          placeholder="Notes optionnelles..."
+          placeholder="Notes optionnelles…"
           rows={3}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none"
         />
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" className="flex-1 bg-accent hover:bg-accent/90 text-white py-2.5 rounded-lg text-sm font-medium transition-colors">
+        <Button type="submit" className="flex-1">
           {initial.id ? 'Mettre à jour' : 'Créer'}
-        </button>
-        <button type="button" onClick={onClose} className="flex-1 bg-white/5 hover:bg-white/10 text-white/60 py-2.5 rounded-lg text-sm transition-colors">
+        </Button>
+        <Button type="button" variant="subtle" className="flex-1" onClick={onClose}>
           Annuler
-        </button>
+        </Button>
       </div>
     </form>
   )
@@ -132,7 +133,8 @@ export default function Taches() {
 
   function handleCapture(e) {
     if (e.key === 'Enter' && captureText.trim()) {
-      dispatch({ type: 'ADD_INBOX', payload: captureText.trim() })
+      dispatch({ type: 'ADD_INBOX', payload: { text: captureText.trim() } })
+      toast.success('Ajouté à l’Inbox')
       setCaptureText('')
     }
   }
@@ -140,6 +142,13 @@ export default function Taches() {
   function isOverdue(task) {
     if (!task.dueDate) return false
     return new Date(task.dueDate) < new Date() && task.status !== 'done'
+  }
+
+  function deleteTask(task) {
+    dispatch({ type: 'DELETE_TASK', payload: task.id })
+    toastUndo('Tâche supprimée', () =>
+      dispatch({ type: 'RESTORE_ITEMS', payload: { tasks: [task] } })
+    )
   }
 
   let tasks = state.tasks
@@ -172,37 +181,35 @@ export default function Taches() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-8">
       {/* Capture */}
       <div className="mb-6">
         <div className="relative">
-          <Plus size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <Plus size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <input
             value={captureText}
             onChange={e => setCaptureText(e.target.value)}
             onKeyDown={handleCapture}
-            placeholder="Capturer une idée ou tâche... (Entrée pour ajouter)"
-            className="w-full bg-white/3 border border-white/5 hover:border-white/10 rounded-xl pl-9 pr-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-transparent transition-colors"
+            placeholder="Capturer une idée ou tâche…  (Entrée pour ajouter)"
+            className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] py-3.5 pl-9 pr-4 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] shadow-[var(--shadow-card)] transition-all hover:border-[var(--border-medium)] focus:border-[var(--violet-deep)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
           />
         </div>
 
         {/* Inbox */}
         {state.inbox.length > 0 && (
-          <div className="mt-3 bg-amber/5 border border-amber/15 rounded-xl p-4">
-            <p className="text-amber text-xs font-medium mb-2">📥 Inbox ({state.inbox.length} à trier)</p>
+          <div className="mt-3 rounded-xl border border-[var(--yellow-solid)] bg-[var(--yellow-bg)] p-4">
+            <p className="mb-2 text-xs font-medium text-[var(--yellow-deep)]">📥 Inbox ({state.inbox.length} à trier)</p>
             <div className="flex flex-col gap-2">
               {state.inbox.map(item => (
                 <div key={item.id} className="flex items-center gap-3">
-                  <span className="flex-1 text-white/70 text-sm">{item.text}</span>
+                  <span className="flex-1 text-sm text-[var(--text-secondary)]">{item.text}</span>
+                  <Button size="xs" variant="subtle" onClick={() => setInboxDrawer(item)}>Trier →</Button>
                   <button
-                    onClick={() => setInboxDrawer(item)}
-                    className="text-xs bg-accent/15 hover:bg-accent/25 text-accent px-2 py-1 rounded-lg transition-colors"
-                  >
-                    Trier →
-                  </button>
-                  <button
-                    onClick={() => dispatch({ type: 'REMOVE_INBOX', payload: item.id })}
-                    className="text-white/20 hover:text-red-400 transition-colors"
+                    onClick={() => {
+                      dispatch({ type: 'REMOVE_INBOX', payload: item.id })
+                      toastUndo('Capture supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { inbox: [item] } }))
+                    }}
+                    className="text-[var(--text-tertiary)] transition-colors hover:text-[var(--red-deep)]"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -214,48 +221,54 @@ export default function Taches() {
       </div>
 
       <div className="mb-4">
-        <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher une tâche..." />
+        <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher une tâche…" />
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === f ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-white/5 text-white/40 hover:bg-white/8 hover:text-white/60'}`}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all active:scale-[0.98] ${
+              filter === f
+                ? 'bg-[var(--active-bg)] text-[var(--active-text)]'
+                : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.09)] hover:text-[var(--text-secondary)]'
+            }`}
           >
             {f}
           </button>
         ))}
-        <select
-          value={projectFilter}
-          onChange={e => setProjectFilter(e.target.value)}
-          className="ml-auto bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white/50 focus:outline-none"
-        >
-          <option value="all" style={{ background: '#161B22' }}>Tous les projets</option>
-          {state.projects.map(p => (
-            <option key={p.id} value={p.id} style={{ background: '#161B22' }}>{p.name}</option>
-          ))}
-        </select>
+        <div className="ml-auto w-auto">
+          <NativeSelect
+            value={projectFilter}
+            onChange={e => setProjectFilter(e.target.value)}
+            className="h-8 text-xs"
+          >
+            <option value="all">Tous les projets</option>
+            {state.projects.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </NativeSelect>
+        </div>
       </div>
 
       {/* Header row */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-white/30 text-xs">{sortedTasks.length} tâche{sortedTasks.length > 1 ? 's' : ''}</span>
-        <button
-          onClick={() => setNewTaskDrawer(true)}
-          className="flex items-center gap-1.5 text-xs bg-accent/15 hover:bg-accent/25 text-accent px-3 py-1.5 rounded-lg transition-colors"
-        >
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs text-[var(--text-tertiary)] tabular">{sortedTasks.length} tâche{sortedTasks.length > 1 ? 's' : ''}</span>
+        <Button size="sm" variant="subtle" onClick={() => setNewTaskDrawer(true)}>
           <Plus size={12} /> Nouvelle tâche
-        </button>
+        </Button>
       </div>
 
       {/* Task list */}
       {sortedTasks.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-white/30 text-sm">Aucune tâche — capture ta première idée ci-dessus</p>
-        </div>
+        <EmptyState
+          icon={Check}
+          title={search || filter !== 'Tous' || projectFilter !== 'all' ? 'Aucune tâche ne correspond' : 'Aucune tâche'}
+          description={search || filter !== 'Tous' || projectFilter !== 'all' ? 'Ajuste tes filtres ou ta recherche.' : 'Capture ta première idée dans le champ ci-dessus, ou crée une tâche.'}
+          action={<Button size="sm" onClick={() => setNewTaskDrawer(true)}><Plus size={13} /> Nouvelle tâche</Button>}
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {sortedTasks.map(task => {
@@ -265,24 +278,25 @@ export default function Taches() {
             return (
               <div
                 key={task.id}
-                className={`group flex items-start gap-3 p-3 rounded-xl border transition-all ${
+                className={`group flex items-start gap-3 rounded-xl border p-3 transition-all ${
                   done
-                    ? 'bg-white/1 border-white/3 opacity-50'
+                    ? 'border-[var(--border-soft)] bg-[var(--bg-card-soft)] opacity-55'
                     : overdue
-                    ? 'bg-amber/3 border-amber/15'
-                    : 'bg-white/3 border-white/5 hover:border-white/10'
+                    ? 'border-[var(--orange-solid)] bg-[var(--orange-bg)]'
+                    : 'border-[var(--border-soft)] bg-[var(--bg-card)] shadow-[var(--shadow-card)] hover:-translate-y-px hover:shadow-[var(--shadow-card-hover)]'
                 }`}
               >
                 {/* Checkbox */}
                 <button
                   onClick={() => dispatch({ type: 'TOGGLE_TASK_DONE', payload: task.id })}
-                  className={`mt-0.5 flex-shrink-0 transition-colors ${done ? 'text-emerald' : 'text-white/20 hover:text-emerald'}`}
+                  className={`mt-0.5 flex-shrink-0 transition-colors ${done ? 'text-[var(--green-deep)]' : 'text-[var(--text-tertiary)] hover:text-[var(--green-deep)]'}`}
+                  aria-label={done ? 'Marquer non terminée' : 'Marquer terminée'}
                 >
-                  {done ? <Check size={16} /> : <div className="w-4 h-4 rounded border border-white/20 hover:border-emerald" />}
+                  {done ? <Check size={16} /> : <div className="h-4 w-4 rounded border border-[var(--border-strong)] transition-colors hover:border-[var(--green-deep)]" />}
                 </button>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   {editingTitle === task.id ? (
                     <input
                       autoFocus
@@ -290,20 +304,20 @@ export default function Taches() {
                       onChange={e => setEditTitle(e.target.value)}
                       onBlur={() => commitEditTitle(task.id)}
                       onKeyDown={e => { if (e.key === 'Enter') commitEditTitle(task.id); if (e.key === 'Escape') setEditingTitle(null) }}
-                      className="w-full bg-white/10 border border-white/20 rounded px-2 py-0.5 text-sm text-white focus:outline-none"
+                      className="w-full rounded-md border border-[var(--violet-deep)] bg-[var(--bg-input)] px-2 py-0.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
                     />
                   ) : (
                     <p
-                      className={`text-sm cursor-pointer ${done ? 'line-through text-white/30' : 'text-white/85'}`}
+                      className={`cursor-pointer text-sm ${done ? 'text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)]'}`}
                       onClick={() => !done && startEditTitle(task)}
                     >
                       {task.title}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     {project && <Badge color={project.color} name={project.name} />}
                     {task.dueDate && (
-                      <span className={`text-[10px] font-mono ${overdue ? 'text-amber' : 'text-white/30'}`}>
+                      <span className={`font-mono text-[10px] tabular ${overdue ? 'text-[var(--orange-deep)]' : 'text-[var(--text-tertiary)]'}`}>
                         {overdue ? '⚠ ' : ''}{new Date(task.dueDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                       </span>
                     )}
@@ -311,26 +325,26 @@ export default function Taches() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex flex-shrink-0 items-center gap-1">
                   <button
                     onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, impact: task.impact === 'high' ? 'low' : 'high' } })}
-                    className={`p-1.5 rounded transition-colors ${task.impact === 'high' ? 'text-amber' : 'text-white/20 hover:text-amber'}`}
+                    className={`rounded p-1.5 transition-colors ${task.impact === 'high' ? 'text-[var(--orange-deep)]' : 'text-[var(--text-tertiary)] hover:text-[var(--orange-deep)]'}`}
                     title="Impact"
                   >
                     <Zap size={13} />
                   </button>
                   <button
                     onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, ship80: !task.ship80 } })}
-                    className={`p-1.5 rounded transition-colors text-sm ${task.ship80 ? 'opacity-100' : 'opacity-20 hover:opacity-60'}`}
-                    title="Ship80"
+                    className={`rounded p-1.5 text-sm transition-opacity ${task.ship80 ? 'opacity-100' : 'opacity-25 hover:opacity-60'}`}
+                    title="Ship 80"
                   >
                     🚀
                   </button>
                   {task.ship80 && !done && !task.ship80Delivered && (
                     <button
                       onClick={() => dispatch({ type: 'SHIP80_DELIVER', payload: task.id })}
-                      className="text-[10px] px-2 py-1 rounded-lg font-medium transition-colors"
-                      style={{ background: '#FFC1E018', color: '#FFC1E0', border: '1px solid #FFC1E030' }}
+                      className="rounded-lg px-2 py-1 text-[10px] font-medium transition-colors"
+                      style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}
                       title="Livrer en mode 80%"
                     >
                       Livrer&nbsp;80%
@@ -338,14 +352,14 @@ export default function Taches() {
                   )}
                   <button
                     onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, today: !task.today } })}
-                    className={`p-1.5 rounded transition-colors ${task.today ? 'text-accent' : 'text-white/20 hover:text-accent'}`}
+                    className={`rounded p-1.5 transition-colors ${task.today ? 'text-[var(--violet-deep)]' : 'text-[var(--text-tertiary)] hover:text-[var(--violet-deep)]'}`}
                     title="Aujourd'hui"
                   >
                     <Pin size={13} />
                   </button>
                   <button
-                    onClick={() => dispatch({ type: 'DELETE_TASK', payload: task.id })}
-                    className="p-1.5 rounded text-white/10 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    onClick={() => deleteTask(task)}
+                    className="rounded p-1.5 text-[var(--text-tertiary)] opacity-0 transition-all hover:text-[var(--red-deep)] group-hover:opacity-100"
                     title="Supprimer"
                   >
                     <Trash2 size={13} />
@@ -364,6 +378,7 @@ export default function Taches() {
           onClose={() => setNewTaskDrawer(false)}
           onSubmit={payload => {
             dispatch({ type: 'ADD_TASK', payload })
+            toast.success('Tâche créée')
             setNewTaskDrawer(false)
           }}
         />
@@ -373,8 +388,8 @@ export default function Taches() {
       <Drawer isOpen={!!inboxDrawer} onClose={() => setInboxDrawer(null)} title="Trier la capture">
         {inboxDrawer && (
           <div className="flex flex-col gap-4">
-            <div className="bg-amber/5 border border-amber/15 rounded-lg p-3">
-              <p className="text-white/70 text-sm">{inboxDrawer.text}</p>
+            <div className="rounded-lg border border-[var(--yellow-solid)] bg-[var(--yellow-bg)] p-3">
+              <p className="text-sm text-[var(--text-secondary)]">{inboxDrawer.text}</p>
             </div>
             <TaskForm
               initial={{ title: inboxDrawer.text, today: false }}
@@ -383,6 +398,7 @@ export default function Taches() {
               onSubmit={payload => {
                 dispatch({ type: 'ADD_TASK', payload })
                 dispatch({ type: 'REMOVE_INBOX', payload: inboxDrawer.id })
+                toast.success('Convertie en tâche')
                 setInboxDrawer(null)
               }}
             />

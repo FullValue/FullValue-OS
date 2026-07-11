@@ -1,6 +1,11 @@
 import { useState, useMemo } from 'react'
-import { ChevronUp, ChevronDown, Trash2, CheckSquare, Square } from 'lucide-react'
+import { ChevronUp, ChevronDown, Trash2, X, ClipboardList } from 'lucide-react'
 import { ImpactBadge, StatusBadge, DueDateBadge, TagBadge } from './shared/TaskBadge'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { EmptyState } from '@/components/ui/empty-state'
+import { useStore } from '@/store/useStore'
+import { toastUndo } from '@/lib/toast'
 import TaskDetailModal from './shared/TaskDetailModal'
 
 const COLUMNS = [
@@ -39,6 +44,7 @@ function sortTasks(tasks, sortKey, sortDir, projects) {
 }
 
 export default function ListView({ tasks = [], projects = [], onTaskUpdate, onTaskDelete }) {
+  const { dispatch } = useStore()
   const [sortKey, setSortKey] = useState('status')
   const [sortDir, setSortDir] = useState('asc')
   const [compact, setCompact] = useState(false)
@@ -65,8 +71,15 @@ export default function ListView({ tasks = [], projects = [], onTaskUpdate, onTa
   }
 
   function bulkDelete() {
+    const snaps = [...selected].map(id => tasks.find(t => t.id === id)).filter(Boolean)
     selected.forEach(id => onTaskDelete?.(id))
     setSelected(new Set())
+    if (snaps.length) {
+      const plural = snaps.length > 1 ? 's' : ''
+      toastUndo(`${snaps.length} tâche${plural} supprimée${plural}`, () =>
+        dispatch({ type: 'RESTORE_ITEMS', payload: { tasks: snaps } })
+      )
+    }
   }
 
   function bulkStatus(status) {
@@ -84,46 +97,44 @@ export default function ListView({ tasks = [], projects = [], onTaskUpdate, onTa
     <>
       {/* Density toggle + bulk bar */}
       <div className="flex items-center gap-2 mb-2">
-        <button
+        <Button
+          variant={compact ? 'secondary' : 'subtle'}
+          size="xs"
           onClick={() => setCompact(c => !c)}
-          className="text-[11px] px-2.5 py-1 rounded-lg transition-colors"
-          style={compact ? { background: 'rgba(139,124,255,0.18)', color: '#8B7CFF' } : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}
         >
           Compact
-        </button>
+        </Button>
 
         {selected.size > 0 && (
-          <div className="flex items-center gap-2 ml-auto px-3 py-1 rounded-lg" style={{ background: 'rgba(139,124,255,0.12)', border: '1px solid rgba(139,124,255,0.25)' }}>
-            <span className="text-[11px] text-white/60">{selected.size} sélectionnée{selected.size > 1 ? 's' : ''}</span>
-            <button onClick={() => bulkStatus('done')} className="text-[11px] text-green/70 hover:text-green transition-colors">Livré</button>
-            <button onClick={() => bulkStatus('inprogress')} className="text-[11px] text-yellow/70 hover:text-yellow transition-colors">En cours</button>
-            <button onClick={bulkDelete} className="text-[11px] text-red/70 hover:text-red transition-colors flex items-center gap-1"><Trash2 size={11} /> Supprimer</button>
-            <button onClick={() => setSelected(new Set())} className="text-[11px] text-white/30 hover:text-white/60 transition-colors">✕</button>
+          <div className="flex items-center gap-1 ml-auto pl-3 pr-1 py-1 rounded-xl bg-[var(--violet-bg)] border border-[var(--border-soft)]">
+            <span className="tabular text-[11px] font-medium text-[var(--text-secondary)]">{selected.size} sélectionnée{selected.size > 1 ? 's' : ''}</span>
+            <Button variant="ghost" size="xs" onClick={() => bulkStatus('done')} className="text-[var(--green-deep)] hover:text-[var(--green-deep)]">Livré</Button>
+            <Button variant="ghost" size="xs" onClick={() => bulkStatus('inprogress')} className="text-[var(--yellow-deep)] hover:text-[var(--yellow-deep)]">En cours</Button>
+            <Button variant="ghost" size="xs" onClick={bulkDelete} className="text-[var(--red-deep)] hover:text-[var(--red-deep)]"><Trash2 size={11} /> Supprimer</Button>
+            <Button variant="ghost" size="icon-sm" onClick={() => setSelected(new Set())} aria-label="Effacer la sélection" className="h-6 w-6"><X size={12} /></Button>
           </div>
         )}
       </div>
 
       {/* Table */}
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
+      <div className="rounded-2xl overflow-hidden bg-[var(--bg-card)] border border-[var(--border-soft)] shadow-[var(--shadow-card)]">
         {/* Header */}
         <div
-          className="grid text-[10px] uppercase tracking-wider text-white/30 font-semibold px-3"
-          style={{
-            gridTemplateColumns: colTemplate,
-            background: 'rgba(255,255,255,0.03)',
-            borderBottom: '1px solid var(--c-border)',
-            paddingTop: 8,
-            paddingBottom: 8,
-          }}
+          className="grid items-center text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)] font-semibold px-3 py-2 bg-[rgba(var(--ink),0.03)] border-b border-[var(--border-soft)]"
+          style={{ gridTemplateColumns: colTemplate }}
         >
-          <button onClick={toggleAll} className="flex items-center justify-center text-white/25 hover:text-white/60 transition-colors">
-            {allSelected ? <CheckSquare size={13} /> : <Square size={13} />}
-          </button>
+          <div className="flex items-center justify-center">
+            <Checkbox
+              checked={allSelected ? true : selected.size > 0 ? 'indeterminate' : false}
+              onCheckedChange={toggleAll}
+              aria-label="Tout sélectionner"
+            />
+          </div>
           {COLUMNS.map(col => (
             <button
               key={col.key}
               onClick={() => toggleSort(col.key)}
-              className="flex items-center gap-1 hover:text-white/60 transition-colors text-left"
+              className="flex items-center gap-1 hover:text-[var(--text-secondary)] transition-colors text-left"
             >
               {col.label}
               {sortKey === col.key ? (
@@ -135,7 +146,12 @@ export default function ListView({ tasks = [], projects = [], onTaskUpdate, onTa
 
         {/* Rows */}
         {sorted.length === 0 ? (
-          <div className="py-12 text-center text-xs text-white/25">Aucune tâche</div>
+          <EmptyState
+            compact
+            icon={ClipboardList}
+            title="Aucune tâche"
+            description="Les tâches de ce contexte apparaîtront ici."
+          />
         ) : (
           sorted.map((task, i) => {
             const project = projects.find(p => p.id === task.projectId)
@@ -143,34 +159,34 @@ export default function ListView({ tasks = [], projects = [], onTaskUpdate, onTa
             return (
               <div
                 key={task.id}
-                className={`grid items-center px-3 cursor-pointer transition-colors group ${rowPy}`}
+                className={`grid items-center px-3 cursor-pointer transition-colors group ${rowPy} ${isSelected ? 'bg-[var(--violet-bg)]' : 'hover:bg-[rgba(var(--ink),0.03)]'}`}
                 style={{
                   gridTemplateColumns: colTemplate,
-                  background: isSelected ? 'rgba(139,124,255,0.06)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
-                  borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  borderBottom: i < sorted.length - 1 ? '1px solid var(--border-soft)' : 'none',
                 }}
                 onClick={() => setDetailTask(task)}
               >
                 {/* Checkbox */}
-                <button
-                  onClick={e => { e.stopPropagation(); toggleSelect(task.id) }}
-                  className="flex items-center justify-center text-white/20 hover:text-white/60 transition-colors"
-                >
-                  {isSelected ? <CheckSquare size={13} className="text-violet" /> : <Square size={13} />}
-                </button>
+                <span className="flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleSelect(task.id)}
+                    aria-label="Sélectionner la tâche"
+                  />
+                </span>
 
                 {/* Status */}
                 <div><StatusBadge status={task.status} /></div>
 
                 {/* Title */}
-                <div className={`text-xs font-medium truncate pr-2 ${task.status === 'done' ? 'line-through text-white/30' : 'text-white/80'}`}>
+                <div className={`text-xs font-medium truncate pr-2 ${task.status === 'done' ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
                   {task.title}
                 </div>
 
                 {/* Project */}
                 <div>
                   {project ? (
-                    <span className="flex items-center gap-1.5 text-[11px] text-white/50 truncate">
+                    <span className="flex items-center gap-1.5 text-[11px] text-[var(--text-secondary)] truncate">
                       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: project.color }} />
                       <span className="truncate">{project.name}</span>
                     </span>
@@ -186,7 +202,7 @@ export default function ListView({ tasks = [], projects = [], onTaskUpdate, onTa
                 </div>
 
                 {/* Due date */}
-                <div><DueDateBadge dueDate={task.dueDate} /></div>
+                <div className="tabular"><DueDateBadge dueDate={task.dueDate} /></div>
               </div>
             )
           })

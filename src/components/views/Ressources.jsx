@@ -55,7 +55,7 @@ function ResourceForm({ onSubmit, onClose, projects, initial = {} }) {
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
           >
             {projects.map(p => (
-              <option key={p.id} value={p.id} style={{ background: '#161B22' }}>{p.name}</option>
+              <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
         </div>

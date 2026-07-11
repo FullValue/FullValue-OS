@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarRange } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import TaskDetailModal from './shared/TaskDetailModal'
 
 const ZOOM_OPTIONS = [
@@ -66,26 +68,28 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
     <>
       {/* Toolbar */}
       <div className="flex items-center gap-2 mb-3">
-        <button
+        <Button
+          variant="subtle"
+          size="sm"
           onClick={() => setStartDate(() => { const d = new Date(); d.setDate(d.getDate() - 2); return d })}
-          className="text-[11px] px-2.5 py-1.5 rounded-lg transition-colors"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.50)' }}
         >
           Aujourd'hui
-        </button>
-        <button onClick={() => shiftPeriod(-1)} className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white/70 transition-colors"><ChevronLeft size={14} /></button>
-        <button onClick={() => shiftPeriod(1)} className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white/70 transition-colors"><ChevronRight size={14} /></button>
-        <span className="text-xs text-white/50">{formatDate(startDate)} – {formatDate(addDays(startDate, days - 1))}</span>
+        </Button>
+        <Button variant="ghost" size="icon-sm" onClick={() => shiftPeriod(-1)} aria-label="Période précédente"><ChevronLeft size={14} /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={() => shiftPeriod(1)} aria-label="Période suivante"><ChevronRight size={14} /></Button>
+        <span className="tabular text-xs text-[var(--text-secondary)]">{formatDate(startDate)} – {formatDate(addDays(startDate, days - 1))}</span>
 
-        <div className="ml-auto flex gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.20)' }}>
+        <div className="ml-auto inline-flex gap-0.5 rounded-xl bg-[rgba(var(--ink),0.05)] p-1">
           {ZOOM_OPTIONS.map(z => (
             <button
               key={z.id}
               onClick={() => setZoom(z.id)}
-              className="text-[11px] px-2.5 py-1 rounded-md transition-all"
-              style={zoom === z.id
-                ? { background: 'var(--c-card)', color: 'rgba(255,255,255,0.85)' }
-                : { color: 'rgba(255,255,255,0.30)' }}
+              className={
+                'text-[11px] font-medium px-2.5 py-1 rounded-lg transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ' +
+                (zoom === z.id
+                  ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')
+              }
             >
               {z.label}
             </button>
@@ -93,13 +97,13 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
         </div>
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
+      <div className="rounded-2xl overflow-hidden bg-[var(--bg-card)] border border-[var(--border-soft)] shadow-[var(--shadow-card)]">
         <div className="overflow-x-auto">
           <div style={{ minWidth: 560 }}>
             {/* Header row */}
-            <div className="flex" style={{ borderBottom: '1px solid var(--c-border)' }}>
+            <div className="flex" style={{ borderBottom: '1px solid var(--border-soft)' }}>
               {/* Task name column */}
-              <div className="flex-shrink-0 w-48 px-3 py-2 text-[10px] uppercase tracking-wider text-white/25 font-semibold" style={{ borderRight: '1px solid var(--c-border)' }}>
+              <div className="flex-shrink-0 w-48 px-3 py-2 text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)] font-semibold" style={{ borderRight: '1px solid var(--border-soft)' }}>
                 Tâche
               </div>
               {/* Date cells */}
@@ -114,12 +118,12 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
                       className="flex-shrink-0 text-center border-r"
                       style={{
                         width: cellW,
-                        borderColor: 'rgba(255,255,255,0.04)',
-                        background: isWeekend ? 'rgba(255,255,255,0.015)' : 'transparent',
+                        borderColor: 'var(--border-soft)',
+                        background: isWeekend ? 'rgba(var(--ink),0.025)' : 'transparent',
                       }}
                     >
                       {showLabel && (
-                        <span className={`text-[9px] ${isToday ? 'text-violet font-bold' : 'text-white/20'}`}>
+                        <span className={`tabular text-[9px] ${isToday ? 'text-[var(--violet-deep)] font-bold' : 'text-[var(--text-tertiary)]'}`}>
                           {cellW >= 28 ? d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'numeric' }) : d.getDate()}
                         </span>
                       )}
@@ -130,7 +134,7 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
                 {todayOffset >= 0 && todayOffset <= totalW && (
                   <div
                     className="absolute top-0 bottom-0 w-px pointer-events-none"
-                    style={{ left: todayOffset, background: '#8B7CFF', opacity: 0.6 }}
+                    style={{ left: todayOffset, background: 'var(--violet-deep)', opacity: 0.6 }}
                   />
                 )}
               </div>
@@ -138,7 +142,12 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
 
             {/* Task rows */}
             {ganttTasks.length === 0 && noDates.length === 0 ? (
-              <div className="py-12 text-center text-xs text-white/25">Aucune tâche avec des dates</div>
+              <EmptyState
+                compact
+                icon={CalendarRange}
+                title="Aucune tâche datée"
+                description="Ajoute une date de début ou d'échéance pour voir les tâches ici."
+              />
             ) : (
               <>
                 {ganttTasks.map((task, ri) => {
@@ -151,17 +160,17 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
                     <div
                       key={task.id}
                       className="flex items-center"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', minHeight: 40 }}
+                      style={{ borderBottom: '1px solid var(--border-soft)', minHeight: 40 }}
                     >
                       {/* Label */}
                       <div
-                        className="flex-shrink-0 w-48 px-3 py-2 cursor-pointer hover:bg-white/3 transition-colors"
-                        style={{ borderRight: '1px solid var(--c-border)' }}
+                        className="flex-shrink-0 w-48 px-3 py-2 cursor-pointer hover:bg-[rgba(var(--ink),0.03)] transition-colors"
+                        style={{ borderRight: '1px solid var(--border-soft)' }}
                         onClick={() => setDetailTask(task)}
                       >
                         <div className="flex items-center gap-1.5">
                           {project && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: project.color }} />}
-                          <span className={`text-xs truncate ${isDone ? 'line-through text-white/30' : 'text-white/75'}`}>{task.title}</span>
+                          <span className={`text-xs truncate ${isDone ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-secondary)]'}`}>{task.title}</span>
                         </div>
                       </div>
 
@@ -184,7 +193,7 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
                         )}
                         {/* Today line */}
                         {todayOffset >= 0 && todayOffset <= totalW && (
-                          <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: todayOffset, background: '#8B7CFF', opacity: 0.25 }} />
+                          <div className="absolute top-0 bottom-0 w-px pointer-events-none" style={{ left: todayOffset, background: 'var(--violet-deep)', opacity: 0.25 }} />
                         )}
                       </div>
                     </div>
@@ -194,7 +203,7 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
                 {/* Tasks without dates */}
                 {noDates.length > 0 && (
                   <>
-                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-white/20 font-semibold" style={{ background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--c-border)' }}>
+                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)] font-semibold" style={{ background: 'rgba(var(--ink),0.03)', borderTop: '1px solid var(--border-soft)' }}>
                       Sans dates ({noDates.length})
                     </div>
                     {noDates.map(task => {
@@ -203,20 +212,20 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
                         <div
                           key={task.id}
                           className="flex items-center"
-                          style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', minHeight: 36 }}
+                          style={{ borderBottom: '1px solid var(--border-soft)', minHeight: 36 }}
                         >
                           <div
-                            className="flex-shrink-0 w-48 px-3 py-1.5 cursor-pointer hover:bg-white/3 transition-colors"
-                            style={{ borderRight: '1px solid var(--c-border)' }}
+                            className="flex-shrink-0 w-48 px-3 py-1.5 cursor-pointer hover:bg-[rgba(var(--ink),0.03)] transition-colors"
+                            style={{ borderRight: '1px solid var(--border-soft)' }}
                             onClick={() => setDetailTask(task)}
                           >
                             <div className="flex items-center gap-1.5">
                               {project && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: project.color }} />}
-                              <span className="text-xs truncate text-white/40">{task.title}</span>
+                              <span className="text-xs truncate text-[var(--text-tertiary)]">{task.title}</span>
                             </div>
                           </div>
                           <div className="flex-1 px-3">
-                            <span className="text-[10px] text-white/20">— aucune date définie</span>
+                            <span className="text-[10px] text-[var(--text-tertiary)]">— aucune date définie</span>
                           </div>
                         </div>
                       )

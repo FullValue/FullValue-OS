@@ -17,31 +17,35 @@ export default function TaskCard({ task, project, style, className = '', onClick
     <div
       onClick={onClick}
       style={{
-        background: 'var(--c-card)',
-        border: `1px solid ${isOverdue ? '#F8717130' : 'var(--c-border)'}`,
-        borderRadius: 10,
-        padding: compact ? '8px 10px' : '10px 12px',
+        background: 'var(--bg-card)',
+        border: `1px solid ${isOverdue ? 'var(--red-solid)' : 'var(--border-soft)'}`,
+        borderRadius: 12,
+        padding: compact ? '9px 11px' : '11px 13px',
         cursor: onClick ? 'pointer' : 'default',
         opacity: isDone ? 0.55 : 1,
         overflow: 'hidden',
+        boxShadow: 'var(--shadow-card)',
         ...style,
       }}
-      className={`group transition-all hover:border-white/15 ${className}`}
+      className={`group transition-all duration-150 hover:-translate-y-px hover:shadow-[var(--shadow-card-hover)] ${className}`}
       {...dragHandleProps}
     >
       {/* Header row */}
       <div className="flex items-start gap-2">
         {project && (
-          <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: project.color }} />
+          <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full" style={{ background: project.color }} />
         )}
-        <p className={`flex-1 text-[13px] font-medium leading-snug ${isDone ? 'line-through text-white/35' : 'text-white/85'}`} style={{ display: '-webkit-box', WebkitLineClamp: compact ? 2 : 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <p
+          className={`flex-1 text-[13px] font-medium leading-snug ${isDone ? 'text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)]'}`}
+          style={{ display: '-webkit-box', WebkitLineClamp: compact ? 2 : 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+        >
           {task.title}
         </p>
       </div>
 
       {/* Badges row */}
       {!compact && (
-        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <ImpactBadge impact={task.impact} />
           {task.ship80 && !task.ship80Delivered && <Ship80Badge />}
           {(task.tags || []).slice(0, 2).map(tag => {
@@ -49,7 +53,7 @@ export default function TaskCard({ task, project, style, className = '', onClick
             return (
               <span
                 key={tag}
-                style={{ background: col.bg, color: col.text, fontSize: 10, padding: '1px 6px', borderRadius: 4, fontWeight: 500 }}
+                style={{ background: col.bg, color: col.text, fontSize: 10, padding: '1px 6px', borderRadius: 5, fontWeight: 500 }}
               >
                 {tag}
               </span>
@@ -57,12 +61,12 @@ export default function TaskCard({ task, project, style, className = '', onClick
           })}
           <div className="ml-auto flex items-center gap-2">
             {commentsCount > 0 && (
-              <span className="flex items-center gap-0.5 text-[10px] text-white/35">
+              <span className="flex items-center gap-0.5 text-[10px] text-[var(--text-tertiary)]">
                 <MessageSquare size={10} />{commentsCount}
               </span>
             )}
             {attachmentsCount > 0 && (
-              <span className="flex items-center gap-0.5 text-[10px] text-white/35">
+              <span className="flex items-center gap-0.5 text-[10px] text-[var(--text-tertiary)]">
                 <Paperclip size={10} />{attachmentsCount}
               </span>
             )}
@@ -73,8 +77,8 @@ export default function TaskCard({ task, project, style, className = '', onClick
 
       {/* Progress bar */}
       {!compact && hasProgress && (
-        <div style={{ height: 2, background: 'var(--c-border)', borderRadius: 1, marginTop: 8, marginBottom: -2, marginLeft: -12, marginRight: -12 }}>
-          <div style={{ height: '100%', width: `${progress}%`, background: progress >= 80 ? '#A8E6BD' : progress >= 40 ? '#8B7CFF' : '#FFD66B', borderRadius: 1, transition: 'width 0.3s' }} />
+        <div style={{ height: 3, background: 'rgba(var(--ink),0.08)', borderRadius: 2, marginTop: 8, marginBottom: -2, marginLeft: -13, marginRight: -13 }}>
+          <div style={{ height: '100%', width: `${progress}%`, background: progress >= 80 ? 'var(--green-deep)' : progress >= 40 ? 'var(--violet-deep)' : 'var(--yellow-deep)', borderRadius: 2, transition: 'width 0.4s cubic-bezier(0.16,1,0.3,1)' }} />
         </div>
       )}
     </div>

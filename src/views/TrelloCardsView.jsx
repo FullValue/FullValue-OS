@@ -9,6 +9,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import TaskDetailModal from './shared/TaskDetailModal'
 import { TAG_PALETTE, getTagColor, computeProgress, getUrgencyStyle } from './shared/taskColors'
 
@@ -54,8 +56,8 @@ function ProgressDots({ percentage, accentColor, totalDots = 16 }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Progress</span>
-        <span className="text-[10px] font-mono font-semibold" style={{ color }}>{percentage}%</span>
+        <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Progression</span>
+        <span className="tabular text-[10px] font-mono font-semibold" style={{ color }}>{percentage}%</span>
       </div>
       <div className="flex gap-0.5">
         {Array.from({ length: totalDots }).map((_, i) => (
@@ -325,17 +327,21 @@ function TrelloColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
       {/* Column header */}
       <div className="flex items-center gap-2 mb-3 px-0.5">
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: col.color }} />
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--text-tertiary)' }}>
           {col.label}
         </span>
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'var(--c-card)', color: 'var(--text-tertiary)' }}>
+        <span className="tabular text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(var(--ink),0.06)]" style={{ color: 'var(--text-tertiary)' }}>
           {tasks.length}
         </span>
-        <button onClick={() => setAdding(true)}
-          className="ml-auto p-1 rounded transition-colors"
-          style={{ color: 'var(--text-tertiary)' }}>
-          <Plus size={13} />
-        </button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setAdding(true)}
+          className="ml-auto text-[var(--text-tertiary)]"
+          aria-label="Ajouter une carte"
+        >
+          <Plus size={14} />
+        </Button>
       </div>
 
       {/* Drop zone */}
@@ -358,31 +364,23 @@ function TrelloColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
           {/* Quick add */}
           {adding ? (
             <form onSubmit={submitAdd} className="rounded-2xl p-3"
-              style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-              <input
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-card)' }}>
+              <Input
                 autoFocus
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') { setAdding(false); setNewTitle('') } }}
                 placeholder="Titre de la tâche..."
-                className="w-full rounded-xl px-3 py-2 text-xs placeholder-white/25 focus:outline-none mb-2"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--text-secondary)' }}
+                className="h-8 text-xs mb-2"
               />
               <div className="flex gap-1.5">
-                <button type="submit" className="flex-1 py-1.5 rounded-xl text-[11px] font-medium"
-                  style={{ background: col.color + '28', color: col.color }}>
-                  Ajouter
-                </button>
-                <button type="button" onClick={() => { setAdding(false); setNewTitle('') }}
-                  className="flex-1 py-1.5 rounded-xl text-[11px]"
-                  style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-tertiary)' }}>
-                  Annuler
-                </button>
+                <Button type="submit" size="sm" className="flex-1">Ajouter</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => { setAdding(false); setNewTitle('') }} className="flex-1">Annuler</Button>
               </div>
             </form>
           ) : (
             <button onClick={() => setAdding(true)}
-              className="flex items-center gap-1.5 text-[11px] py-2 px-1 transition-colors"
+              className="flex items-center gap-1.5 text-[11px] py-2 px-1 transition-colors hover:text-[var(--text-secondary)]"
               style={{ color: 'var(--text-tertiary)' }}>
               <Plus size={11} /> Ajouter une carte
             </button>

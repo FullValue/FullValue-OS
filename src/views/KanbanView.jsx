@@ -8,6 +8,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { TrelloCard } from './TrelloCardsView'
 import TaskDetailModal from './shared/TaskDetailModal'
 
@@ -58,24 +60,27 @@ function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
   return (
     <div
       ref={setDropRef}
-      className="flex flex-col flex-1 min-w-0 rounded-xl p-3 transition-colors"
+      className="flex flex-col flex-1 min-w-0 rounded-2xl p-3 transition-colors"
       style={{
-        background: isOver ? col.color + '08' : 'rgba(255,255,255,0.02)',
-        border: `1px solid ${isOver ? col.color + '30' : 'rgba(255,255,255,0.04)'}`,
+        background: isOver ? col.color + '14' : 'var(--bg-card-soft)',
+        border: `1px solid ${isOver ? col.color + '55' : 'var(--border-soft)'}`,
         minHeight: 300,
       }}
     >
       {/* Column header */}
       <div className="flex items-center gap-2 mb-3">
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: col.color }} />
-        <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">{col.label}</span>
-        <span className="text-[10px] bg-white/6 text-white/30 rounded-full px-1.5 py-0.5">{tasks.length}</span>
-        <button
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{col.label}</span>
+        <span className="tabular text-[10px] rounded-full px-1.5 py-0.5 bg-[rgba(var(--ink),0.06)] text-[var(--text-tertiary)]">{tasks.length}</span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={() => setAdding(true)}
-          className="ml-auto p-1 rounded text-white/20 hover:text-white/60 hover:bg-white/8 transition-all"
+          className="ml-auto text-[var(--text-tertiary)]"
+          aria-label="Ajouter une tâche"
         >
-          <Plus size={13} />
-        </button>
+          <Plus size={14} />
+        </Button>
       </div>
 
       {/* Tasks */}
@@ -94,21 +99,21 @@ function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
           {/* Quick add */}
           {adding ? (
             <form onSubmit={submitAdd} className="mt-1">
-              <input
+              <Input
                 autoFocus
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') { setAdding(false); setNewTitle('') } }}
                 placeholder="Titre de la tâche..."
-                className="w-full bg-white/8 border border-white/15 rounded-lg px-3 py-2 text-xs text-white/80 placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-violet/40"
+                className="h-8 text-xs"
               />
               <div className="flex gap-1.5 mt-1.5">
-                <button type="submit" className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-white" style={{ background: col.color + '30', color: col.color }}>Ajouter</button>
-                <button type="button" onClick={() => { setAdding(false); setNewTitle('') }} className="flex-1 py-1.5 rounded-lg bg-white/5 text-white/35 text-[11px]">Annuler</button>
+                <Button type="submit" size="sm" className="flex-1">Ajouter</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => { setAdding(false); setNewTitle('') }} className="flex-1">Annuler</Button>
               </div>
             </form>
           ) : (
-            <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-[11px] text-white/20 hover:text-white/50 py-1.5 px-1 transition-colors mt-auto">
+            <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] py-1.5 px-1 transition-colors mt-auto">
               <Plus size={11} /> Ajouter une tâche
             </button>
           )}

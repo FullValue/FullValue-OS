@@ -5,6 +5,12 @@ import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
 import BulkImportInterface from '@/components/import/BulkImportInterface'
 import PlanMyDayModal from '@/components/PlanMyDayModal'
 import { Zap, Sparkles } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
+import { toast, toastUndo } from '@/lib/toast'
 
 export const EVENT_TYPES = {
   meeting:        { label: 'Meeting',    emoji: '🤝', color: '#A8D4F0' },
@@ -71,19 +77,19 @@ function WeekRecapSidebar({ weekDays, state, getProject }) {
   const maxProjectHours = breakdown[0]?.hours || 1
 
   return (
-    <div className="w-full lg:w-64 flex-shrink-0 overflow-y-auto rounded-2xl p-4 space-y-4"
-      style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+    <div className="w-full lg:w-64 flex-shrink-0 overflow-y-auto rounded-2xl p-4 space-y-4 shadow-[var(--shadow-card)]"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)' }}>
 
       <div>
-        <p className="text-[10px] uppercase tracking-wider font-semibold mb-2"
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em]"
           style={{ color: 'var(--text-tertiary)' }}>Cette semaine</p>
 
         <div className="flex items-baseline gap-1.5 mb-2">
-          <span className="font-mono text-2xl font-bold"
+          <span className="font-mono text-2xl font-bold tabular"
             style={{ color: overload ? '#F87171' : 'var(--text-primary)' }}>
             {totalHours.toFixed(1)}h
           </span>
-          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          <span className="text-xs tabular" style={{ color: 'var(--text-tertiary)' }}>
             / {weekCap.toFixed(0)}h
           </span>
         </div>
@@ -96,7 +102,7 @@ function WeekRecapSidebar({ weekDays, state, getProject }) {
               background: overload ? '#F87171' : usedPct > 80 ? '#FFD66B' : 'var(--violet-deep)',
             }} />
         </div>
-        <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+        <p className="text-[10px] tabular" style={{ color: 'var(--text-tertiary)' }}>
           {overload ? `+${(totalHours - weekCap).toFixed(1)}h au-delà` : `${(weekCap - totalHours).toFixed(1)}h restantes`}
         </p>
       </div>
@@ -108,7 +114,7 @@ function WeekRecapSidebar({ weekDays, state, getProject }) {
       </div>
 
       <div>
-        <p className="text-[10px] uppercase tracking-wider font-semibold mb-2"
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em]"
           style={{ color: 'var(--text-tertiary)' }}>Par projet</p>
         {breakdown.length === 0 ? (
           <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>—</p>
@@ -137,10 +143,10 @@ function WeekRecapSidebar({ weekDays, state, getProject }) {
         )}
       </div>
 
-      <div className="pt-2" style={{ borderTop: '1px solid var(--c-border)' }}>
-        <p className="text-[10px] uppercase tracking-wider font-semibold mb-1"
+      <div className="pt-2" style={{ borderTop: '1px solid var(--border-soft)' }}>
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em]"
           style={{ color: 'var(--text-tertiary)' }}>Sessions loggées</p>
-        <p className="font-mono text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="font-mono text-sm tabular" style={{ color: 'var(--text-secondary)' }}>
           {sessionsHours.toFixed(1)}h
         </p>
       </div>
@@ -152,7 +158,7 @@ function SidebarStat({ label, value, color }) {
   return (
     <div className="rounded-xl p-2 text-center"
       style={{ background: 'rgba(255,255,255,0.03)' }}>
-      <p className="font-mono text-lg font-semibold leading-none mb-1"
+      <p className="font-mono text-lg font-semibold leading-none mb-1 tabular"
         style={{ color: color || 'var(--text-secondary)' }}>{value}</p>
       <p className="text-[9px] uppercase tracking-wider"
         style={{ color: 'var(--text-tertiary)' }}>{label}</p>
@@ -269,17 +275,17 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
 
       {/* Type selector */}
       <div>
-        <label className="text-[10px] uppercase tracking-wider font-semibold mb-1.5 block" style={{ color: 'var(--text-tertiary)' }}>Type</label>
+        <Label>Type</Label>
         <div className="grid grid-cols-5 gap-1.5">
           {TYPE_ORDER.map(t => {
             const cfg = EVENT_TYPES[t]
             const active = type === t
             return (
               <button key={t} type="button" onClick={() => setType(t)}
-                className="flex flex-col items-center gap-0.5 py-2 rounded-lg transition-all"
+                className="flex flex-col items-center gap-0.5 py-2 rounded-lg transition-all active:scale-[0.98]"
                 style={active
                   ? { background: cfg.color + '22', border: `1px solid ${cfg.color}50`, color: cfg.color }
-                  : { background: 'rgba(255,255,255,0.03)', border: '1px solid var(--c-border)', color: 'var(--text-tertiary)' }}>
+                  : { background: 'rgba(var(--ink),0.03)', border: '1px solid var(--border-soft)', color: 'var(--text-tertiary)' }}>
                 <span className="text-base leading-none">{cfg.emoji}</span>
                 <span className="text-[9px] leading-none">{cfg.label}</span>
               </button>
@@ -289,59 +295,51 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
       </div>
 
       <div className="flex items-stretch gap-2">
-        <input value={emoji} onChange={e => setEmoji(e.target.value.slice(0, 2))}
+        <Input value={emoji} onChange={e => setEmoji(e.target.value.slice(0, 2))}
           placeholder={EVENT_TYPES[type]?.emoji || '🤝'}
-          className="w-12 text-center text-base rounded-xl px-2 focus:outline-none"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }}
+          className="w-12 flex-shrink-0 px-2 text-center text-base"
           title="Emoji custom (optionnel)" />
-        <input autoFocus value={title} onChange={e => setTitle(e.target.value)}
+        <Input autoFocus value={title} onChange={e => setTitle(e.target.value)}
           placeholder="Titre…"
-          className="flex-1 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
+          className="flex-1" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Début</label>
-          <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
-            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none font-mono"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
+          <Label>Début</Label>
+          <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
+            className="font-mono tabular" />
         </div>
         <div>
-          <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Fin</label>
-          <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)}
-            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none font-mono"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
+          <Label>Fin</Label>
+          <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)}
+            className="font-mono tabular" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Projet</label>
-          <select value={projectId} onChange={e => setProjectId(e.target.value)}
-            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }}>
-            <option value="" style={{ background: '#1A1A20' }}>— Aucun —</option>
-            {projects.map(p => <option key={p.id} value={p.id} style={{ background: '#1A1A20' }}>{p.emoji} {p.name}</option>)}
-          </select>
+          <Label>Projet</Label>
+          <NativeSelect value={projectId} onChange={e => setProjectId(e.target.value)}>
+            <option value="">— Aucun —</option>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.emoji} {p.name}</option>)}
+          </NativeSelect>
         </div>
         <div>
-          <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>
+          <Label>
             Client {isAppointment && <span style={{ color: '#F87171' }}>*</span>}
-          </label>
-          <select value={clientId} onChange={e => setClientId(e.target.value)}
-            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }}>
-            <option value="" style={{ background: '#1A1A20' }}>— Aucun —</option>
+          </Label>
+          <NativeSelect value={clientId} onChange={e => setClientId(e.target.value)}>
+            <option value="">— Aucun —</option>
             {clients.filter(c => c.status !== 'archived').map(c => (
-              <option key={c.id} value={c.id} style={{ background: '#1A1A20' }}>{c.shortName || c.name}</option>
+              <option key={c.id} value={c.id}>{c.shortName || c.name}</option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
 
       <div>
-        <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Image (optionnel)</label>
+        <Label>Image (optionnel)</Label>
         <ImageOrFileInput
           bucket="task-attachments"
           pathPrefix={`event_${initial?.id || 'new'}`}
@@ -356,32 +354,23 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
       </div>
 
       <div>
-        <label className="text-[10px] uppercase tracking-wider font-semibold mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Notes</label>
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-          placeholder="Notes (optionnel)…"
-          className="w-full rounded-xl px-3 py-2 text-xs focus:outline-none resize-none"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-primary)' }} />
+        <Label>Notes</Label>
+        <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+          placeholder="Notes (optionnel)…" className="min-h-[60px] text-xs" />
       </div>
 
       <div className="flex items-center gap-2 mt-1">
         {isEdit && onDelete && (
-          <button type="button" onClick={onDelete}
-            className="p-2.5 rounded-xl transition-colors"
-            style={{ background: 'rgba(248,113,113,0.12)', color: '#F87171' }}
-            title="Supprimer">
+          <Button type="button" variant="danger" size="icon" onClick={onDelete} title="Supprimer">
             <Trash2 size={13} />
-          </button>
+          </Button>
         )}
-        <button type="button" onClick={onClose}
-          className="px-4 py-2.5 rounded-xl text-sm transition-colors"
-          style={{ color: 'var(--text-tertiary)' }}>
+        <Button type="button" variant="ghost" onClick={onClose}>
           Annuler
-        </button>
-        <button type="submit"
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
-          style={{ background: 'var(--violet-deep)', color: '#fff' }}>
+        </Button>
+        <Button type="submit" className="flex-1">
           {isEdit ? 'Enregistrer' : 'Ajouter'}
-        </button>
+        </Button>
       </div>
     </form>
   )
@@ -393,18 +382,16 @@ function ReadOnlyEventCard({ event, onClose }) {
       <div className="flex items-start gap-2 mb-3">
         <span className="text-xl">{event.emoji || '📅'}</span>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: 'var(--text-tertiary)' }}>
+          <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--text-tertiary)' }}>
             {event.kindLabel}
           </p>
           <h3 className="font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>{event.title}</h3>
           {event.label && <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>{event.label}</p>}
         </div>
       </div>
-      <button onClick={onClose}
-        className="w-full py-2 rounded-xl text-xs transition-colors"
-        style={{ color: 'var(--text-tertiary)', background: 'rgba(255,255,255,0.03)' }}>
+      <Button variant="subtle" size="sm" className="w-full" onClick={onClose}>
         Fermer
-      </button>
+      </Button>
     </div>
   )
 }
@@ -689,7 +676,7 @@ export default function Calendrier() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4 flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <h1 className="text-lg sm:text-xl font-semibold text-white">Calendrier</h1>
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-[var(--text-primary)]">Calendrier</h1>
           <div className="flex gap-1 bg-white/5 rounded-xl p-1">
             {[
               { id: 'week', label: 'Semaine' },
@@ -705,31 +692,28 @@ export default function Calendrier() {
 
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {view === 'week' && (
-            <button onClick={toggleRecap}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
-              style={{ color: recapOpen ? 'var(--violet-deep)' : 'var(--text-tertiary)' }}
+            <Button variant="ghost" size="icon-sm" onClick={toggleRecap}
+              style={recapOpen ? { color: 'var(--violet-deep)' } : undefined}
               title={recapOpen ? 'Masquer le récap' : 'Afficher le récap'}>
               {recapOpen ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
-            </button>
+            </Button>
           )}
-          <button onClick={() => setPlanOpen(true)}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all hover:opacity-90"
-            style={{ color: '#fff', background: 'var(--violet-deep)' }}>
+          <Button size="sm" onClick={() => setPlanOpen(true)}>
             <Sparkles size={11} /> <span className="hidden sm:inline">Plan ma journée</span><span className="sm:hidden">Plan</span>
-          </button>
-          <button onClick={() => setImportOpen(true)}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all"
-            style={{ color: 'var(--violet-deep)', background: 'rgba(139,124,255,0.12)' }}>
+          </Button>
+          <Button variant="subtle" size="sm" onClick={() => setImportOpen(true)}>
             <Zap size={11} /> Import
-          </button>
-          <button onClick={goToday} className="text-xs bg-white/5 hover:bg-white/10 text-white/60 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors"><span className="hidden sm:inline">Aujourd'hui</span><span className="sm:hidden">Aujd</span></button>
-          <button onClick={prevPeriod} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"><ChevronLeft size={16} /></button>
-          <span className="font-mono text-sm text-white/60 min-w-[140px] text-center">
+          </Button>
+          <Button variant="ghost" size="sm" onClick={goToday}>
+            <span className="hidden sm:inline">Aujourd'hui</span><span className="sm:hidden">Aujd</span>
+          </Button>
+          <Button variant="ghost" size="icon-sm" onClick={prevPeriod}><ChevronLeft size={16} /></Button>
+          <span className="font-mono text-sm tabular min-w-[140px] text-center" style={{ color: 'var(--text-secondary)' }}>
             {view === 'month'
               ? `${MONTHS_FR[referenceDate.getMonth()]} ${referenceDate.getFullYear()}`
               : `${weekDays[0].getDate()} ${MONTHS_FR[weekDays[0].getMonth()]} — ${weekDays[6].getDate()} ${MONTHS_FR[weekDays[6].getMonth()]}`}
           </span>
-          <button onClick={nextPeriod} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors"><ChevronRight size={16} /></button>
+          <Button variant="ghost" size="icon-sm" onClick={nextPeriod}><ChevronRight size={16} /></Button>
         </div>
       </div>
 
@@ -742,7 +726,7 @@ export default function Calendrier() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all"
             style={visibleProjects.has(p.id)
               ? { background: p.color + '20', color: p.color, border: `1px solid ${p.color}40` }
-              : { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.25)', border: '1px solid var(--c-border)' }}
+              : { background: 'rgba(var(--ink),0.03)', color: 'var(--text-tertiary)', border: '1px solid var(--border-soft)' }}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: visibleProjects.has(p.id) ? p.color : 'rgba(255,255,255,0.2)' }} />
             {p.name}
@@ -752,8 +736,8 @@ export default function Calendrier() {
 
       {/* Calendar grid */}
       {view === 'month' ? (
-        <div className="flex-1 overflow-auto rounded-2xl p-3"
-          style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+        <div className="flex-1 overflow-auto rounded-2xl p-3 shadow-[var(--shadow-card)]"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)' }}>
           {(() => {
             const days = getMonthGridDays(referenceDate)
             const month = referenceDate.getMonth()
@@ -789,24 +773,24 @@ export default function Calendrier() {
                           opacity: inMonth ? 1 : 0.35,
                         }}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-mono text-sm font-semibold"
+                          <span className="font-mono text-sm font-semibold tabular"
                             style={{ color: isToday ? 'var(--violet-deep)' : 'var(--text-secondary)' }}>
                             {d.date.getDate()}
                           </span>
                           {d.deadlineCount > 0 && (
-                            <span className="text-[9px] px-1 rounded font-semibold"
+                            <span className="text-[9px] px-1 rounded font-semibold tabular"
                               style={{ background: 'rgba(248,113,113,0.18)', color: '#F87171' }}>
                               {d.deadlineCount}
                             </span>
                           )}
                         </div>
                         {d.hours > 0 && (
-                          <p className="font-mono text-[10px] mt-auto" style={{ color: 'var(--text-tertiary)' }}>
+                          <p className="font-mono text-[10px] mt-auto tabular" style={{ color: 'var(--text-tertiary)' }}>
                             {d.hours.toFixed(1)}h
                           </p>
                         )}
                         {d.eventCount > 0 && (
-                          <p className="text-[9px]" style={{ color: 'var(--text-tertiary)' }}>
+                          <p className="text-[9px] tabular" style={{ color: 'var(--text-tertiary)' }}>
                             {d.eventCount} event{d.eventCount > 1 ? 's' : ''}
                           </p>
                         )}
@@ -820,13 +804,13 @@ export default function Calendrier() {
         </div>
       ) : (
       <div className="flex-1 flex flex-col lg:flex-row gap-3 overflow-hidden">
-      <div className="flex-1 overflow-auto rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+      <div className="flex-1 overflow-auto rounded-2xl shadow-[var(--shadow-card)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)' }}>
         <div ref={gridRef} className="flex sm:min-w-[700px]">
           {/* Time gutter */}
           <div className="w-14 flex-shrink-0 pt-10" style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
             {hourLabels.map(h => (
               <div key={h} className="h-14 flex items-start justify-end pr-2 pt-1">
-                <span className="font-mono text-[10px] text-white/20">{h}h</span>
+                <span className="font-mono text-[10px] tabular text-white/20">{h}h</span>
               </div>
             ))}
           </div>
@@ -844,7 +828,7 @@ export default function Calendrier() {
                   onClick={() => setAddingOnDate({ date: day, startTime: '09:00', endTime: '10:00' })}
                 >
                   <span className="text-[10px] text-white/30 uppercase">{DAYS_FR[day.getDay()]}</span>
-                  <span className={`font-mono text-sm font-semibold ${isToday ? 'text-violet' : 'text-white/60'}`}>{day.getDate()}</span>
+                  <span className={`font-mono text-sm font-semibold tabular ${isToday ? 'text-violet' : 'text-white/60'}`}>{day.getDate()}</span>
                 </div>
 
                 {/* Events area */}
@@ -951,8 +935,8 @@ export default function Calendrier() {
       {addingOnDate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddingOnDate(null)} />
-          <div className="relative w-full max-w-md rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-            <button onClick={() => setAddingOnDate(null)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70 z-10"><X size={14} /></button>
+          <div className="relative w-full max-w-md rounded-2xl shadow-[var(--shadow-modal)]" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)' }}>
+            <Button variant="ghost" size="icon-sm" onClick={() => setAddingOnDate(null)} className="absolute right-3 top-3 z-10"><X size={14} /></Button>
             <EventForm
               date={addingOnDate.date}
               initial={addingOnDate.startTime ? { startTime: addingOnDate.startTime, endTime: addingOnDate.endTime } : null}
@@ -977,8 +961,10 @@ export default function Calendrier() {
                       note: payload.notes,
                     },
                   })
+                  toast.success('Rendez-vous ajouté')
                 } else {
                   dispatch({ type: 'ADD_CALENDAR_EVENT', payload })
+                  toast.success('Événement ajouté')
                 }
                 setAddingOnDate(null)
               }}
@@ -991,8 +977,8 @@ export default function Calendrier() {
       {selectedEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)} />
-          <div className="relative w-full max-w-md rounded-2xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)', borderLeft: `3px solid ${selectedEvent.color}` }}>
-            <button onClick={() => setSelectedEvent(null)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70 z-10"><X size={14} /></button>
+          <div className="relative w-full max-w-md rounded-2xl shadow-[var(--shadow-modal)]" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)', borderLeft: `3px solid ${selectedEvent.color}` }}>
+            <Button variant="ghost" size="icon-sm" onClick={() => setSelectedEvent(null)} className="absolute right-3 top-3 z-10"><X size={14} /></Button>
             {selectedEvent.source === 'manual' ? (
               <EventForm
                 initial={{ ...selectedEvent.raw, emoji: selectedEvent.raw.emoji, eventType: selectedEvent.raw.eventType || 'meeting' }}
@@ -1001,10 +987,13 @@ export default function Calendrier() {
                 onClose={() => setSelectedEvent(null)}
                 onSubmit={payload => {
                   dispatch({ type: 'UPDATE_CALENDAR_EVENT', payload: { id: selectedEvent.raw.id, ...payload } })
+                  toast.success('Événement mis à jour')
                   setSelectedEvent(null)
                 }}
                 onDelete={() => {
+                  const snap = selectedEvent.raw
                   dispatch({ type: 'DELETE_CALENDAR_EVENT', payload: selectedEvent.raw.id })
+                  toastUndo('Événement supprimé', () => dispatch({ type: 'RESTORE_ITEMS', payload: { calendarEvents: [snap] } }))
                   setSelectedEvent(null)
                 }}
               />
@@ -1044,10 +1033,13 @@ export default function Calendrier() {
                       note: payload.notes,
                     },
                   })
+                  toast.success('Rendez-vous mis à jour')
                   setSelectedEvent(null)
                 }}
                 onDelete={() => {
+                  const snap = selectedEvent.raw
                   dispatch({ type: 'DELETE_APPOINTMENT', payload: selectedEvent.raw.id })
+                  toastUndo('Rendez-vous supprimé', () => dispatch({ type: 'RESTORE_ITEMS', payload: { appointments: [snap] } }))
                   setSelectedEvent(null)
                 }}
               />
@@ -1064,12 +1056,12 @@ export default function Calendrier() {
       {importOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setImportOpen(false)} />
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-            <button onClick={() => setImportOpen(false)} className="absolute right-3 top-3 p-1 text-white/30 hover:text-white/70 z-10">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 shadow-[var(--shadow-modal)]"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)' }}>
+            <Button variant="ghost" size="icon-sm" onClick={() => setImportOpen(false)} className="absolute right-3 top-3 z-10">
               <X size={14} />
-            </button>
-            <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Import bulk — événements calendrier</h2>
+            </Button>
+            <h2 className="text-lg font-semibold tracking-tight mb-4" style={{ color: 'var(--text-primary)' }}>Import bulk — événements calendrier</h2>
             <BulkImportInterface
               onImportSuccess={() => setImportOpen(false)}
               onCancel={() => setImportOpen(false)}

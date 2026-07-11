@@ -11,6 +11,8 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
+import { SimpleTooltip } from '@/components/ui/tooltip'
+import { toast, toastUndo } from '@/lib/toast'
 
 const PILOTAGE = [
   { id: 'journee',    label: 'Journée',     Icon: Home },
@@ -61,11 +63,10 @@ function NavLabel({ children, expanded }) {
 }
 
 function NavItem({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActive = false, expanded }) {
-  return (
+  const button = (
     <button
       onClick={() => onClick(id)}
-      title={!expanded ? label : undefined}
-      className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none group"
+      className="flex items-center gap-3 w-full transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] group active:scale-[0.98]"
       style={{
         padding: expanded ? '7px 12px' : '7px 0',
         justifyContent: expanded ? 'flex-start' : 'center',
@@ -94,6 +95,12 @@ function NavItem({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActi
         <NavLabel expanded={expanded}>{label}</NavLabel>
       </span>
     </button>
+  )
+  if (expanded) return button
+  return (
+    <SimpleTooltip label={label} side="right">
+      {button}
+    </SimpleTooltip>
   )
 }
 
@@ -337,14 +344,21 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
   }
 
   function handleDeleteProject(id) {
+    const project = state.projects.find(p => p.id === id)
+    const tasks = state.tasks.filter(t => t.projectId === id)
+    const sessions = state.sessions.filter(s => s.projectId === id)
     dispatch({ type: 'DELETE_PROJECT', payload: id })
     if (activePage === `projet_${id}` || activePage === 'ulycom_clients') setActivePage('journee')
+    toastUndo('Projet supprimé', () =>
+      dispatch({ type: 'RESTORE_ITEMS', payload: { projects: [project], tasks, sessions } })
+    )
   }
 
   function handleAddProject() {
     if (!newName.trim()) return
     const color = PROJECT_COLORS[state.projects.length % PROJECT_COLORS.length]
     dispatch({ type: 'ADD_PROJECT', payload: { name: newName.trim(), emoji: newEmoji.trim() || '📁', color } })
+    toast.success('Projet créé')
     setNewName('')
     setNewEmoji('📁')
     setAddingProject(false)

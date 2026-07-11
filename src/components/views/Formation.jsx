@@ -356,13 +356,13 @@ function AddForm({ onSubmit, onClose }) {
               <div className="flex-1">
                 <label className="text-white/40 text-xs mb-1 block">Catégorie</label>
                 <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-                  {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#1A1A20' }}>{c}</option>)}
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="flex-1">
                 <label className="text-white/40 text-xs mb-1 block">Statut initial</label>
                 <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-                  {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k} style={{ background: '#1A1A20' }}>{v.label}</option>)}
+                  {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
               </div>
             </div>
@@ -414,7 +414,7 @@ function AddForm({ onSubmit, onClose }) {
             <div>
               <label className="text-white/40 text-xs mb-1 block">Catégorie</label>
               <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-                {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#1A1A20' }}>{c}</option>)}
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>

@@ -170,14 +170,14 @@ function ResourceForm({ onSubmit, onClose, projects }) {
                 <div>
                   <label className="text-white/40 text-xs mb-1 block">Projet</label>
                   <select value={projectId} onChange={e => setProjectId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-                    <option value="" style={{ background: '#1A1A20' }}>Global</option>
-                    {projects.map(p => <option key={p.id} value={p.id} style={{ background: '#1A1A20' }}>{p.emoji} {p.name}</option>)}
+                    <option value="">Global</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.emoji} {p.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-white/40 text-xs mb-1 block">Catégorie</label>
                   <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-                    {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#1A1A20' }}>{c}</option>)}
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
@@ -237,14 +237,14 @@ function ResourceForm({ onSubmit, onClose, projects }) {
             <div>
               <label className="text-white/40 text-xs mb-1 block">Projet</label>
               <select value={projectId} onChange={e => setProjectId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-                <option value="" style={{ background: '#1A1A20' }}>Global</option>
-                {projects.map(p => <option key={p.id} value={p.id} style={{ background: '#1A1A20' }}>{p.emoji} {p.name}</option>)}
+                <option value="">Global</option>
+                {projects.map(p => <option key={p.id} value={p.id}>{p.emoji} {p.name}</option>)}
               </select>
             </div>
             <div>
               <label className="text-white/40 text-xs mb-1 block">Catégorie</label>
               <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-                {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#1A1A20' }}>{c}</option>)}
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
@@ -322,8 +322,8 @@ export default function HubRessources() {
           ))}
           <div className="ml-auto">
             <select value={projectFilter} onChange={e => setProjectFilter(e.target.value)} className="bg-white/5 border border-white/6 rounded-lg px-2 py-1.5 text-xs text-white/50 focus:outline-none">
-              <option value="all" style={{ background: '#1A1A20' }}>Tous les projets</option>
-              {state.projects.map(p => <option key={p.id} value={p.id} style={{ background: '#1A1A20' }}>{p.name}</option>)}
+              <option value="all">Tous les projets</option>
+              {state.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
         </div>

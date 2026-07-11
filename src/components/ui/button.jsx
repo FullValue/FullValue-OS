@@ -1,23 +1,28 @@
-import { cn } from '@/lib/utils'
+import { forwardRef } from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import { cva } from 'class-variance-authority'
+import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-violet/40 disabled:opacity-40 disabled:cursor-not-allowed',
+  'inline-flex select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:pointer-events-none disabled:opacity-45 active:scale-[0.98]',
   {
     variants: {
       variant: {
-        default: 'bg-violet hover:bg-violet/90 text-white',
-        ghost: 'bg-transparent hover:bg-white/5 text-white/60 hover:text-white/90',
-        outline: 'border bg-transparent hover:bg-white/5 text-white/70',
-        danger: 'bg-red/15 hover:bg-red/25 text-red',
-        subtle: 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90',
+        default: 'bg-violet text-white shadow-sm hover:bg-[#7A6BF0]',
+        secondary: 'bg-[var(--active-bg)] text-[var(--active-text)] hover:opacity-88',
+        ghost: 'bg-transparent text-[var(--text-secondary)] hover:bg-[rgba(var(--ink),0.05)] hover:text-[var(--text-primary)]',
+        outline: 'border border-[var(--border-medium)] bg-transparent text-[var(--text-secondary)] hover:bg-[rgba(var(--ink),0.04)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]',
+        danger: 'bg-[var(--red-bg)] text-[var(--red-deep)] hover:bg-[var(--red-solid)]',
+        subtle: 'bg-[rgba(var(--ink),0.05)] text-[var(--text-secondary)] hover:bg-[rgba(var(--ink),0.09)] hover:text-[var(--text-primary)]',
       },
       size: {
-        default: 'px-4 py-2',
-        sm: 'px-3 py-1.5 text-xs',
-        lg: 'px-6 py-3 text-base',
-        icon: 'p-2',
+        default: 'h-9 px-4',
+        xs: 'h-6 gap-1 rounded-lg px-2 text-xs',
+        sm: 'h-8 rounded-lg px-3 text-xs',
+        lg: 'h-11 rounded-xl px-6 text-base',
+        icon: 'h-9 w-9 p-0',
+        'icon-sm': 'h-7 w-7 rounded-lg p-0',
       },
     },
     defaultVariants: {
@@ -27,11 +32,22 @@ const buttonVariants = cva(
   }
 )
 
-export function Button({ className, variant, size, asChild, children, ...props }) {
+export const Button = forwardRef(function Button(
+  { className, variant, size, asChild, loading, disabled, children, ...props },
+  ref
+) {
   const Comp = asChild ? Slot : 'button'
   return (
-    <Comp className={cn(buttonVariants({ variant, size }), className)} {...props}>
+    <Comp
+      ref={ref}
+      className={cn(buttonVariants({ variant, size }), className)}
+      disabled={disabled || loading}
+      {...props}
+    >
+      {loading && <Loader2 size={14} className="animate-spin" />}
       {children}
     </Comp>
   )
-}
+})
+
+export { buttonVariants }

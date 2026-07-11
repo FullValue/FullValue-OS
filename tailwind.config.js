@@ -23,9 +23,9 @@ export default {
         cyan: '#7DD3D8',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        mono: ['"JetBrains Mono"', '"DM Mono"', 'monospace'],
-        heading: ['Inter', 'sans-serif'],
+        sans: ['Geist Variable', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono Variable', '"JetBrains Mono"', '"DM Mono"', 'monospace'],
+        heading: ['Geist Variable', 'Inter', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         pulse_ring: {
@@ -44,12 +44,50 @@ export default {
           from: { opacity: '0' },
           to: { opacity: '1' },
         },
+        overlayShow: {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        contentShow: {
+          from: { opacity: '0', transform: 'translate(-50%, -49%) scale(0.97)' },
+          to: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+        },
+        contentHide: {
+          from: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+          to: { opacity: '0', transform: 'translate(-50%, -49%) scale(0.97)' },
+        },
+        sheetIn: {
+          from: { transform: 'translateX(100%)' },
+          to: { transform: 'translateX(0)' },
+        },
+        sheetOut: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(100%)' },
+        },
+        popIn: {
+          from: { opacity: '0', transform: 'scale(0.96) translateY(-2px)' },
+          to: { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        staggerUp: {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         pulse_ring: 'pulse_ring 2s ease-in-out infinite',
         slideUp: 'slideUp 0.2s ease-out',
         slideRight: 'slideRight 0.2s ease-out',
         fadeIn: 'fadeIn 0.15s ease-out',
+        overlayShow: 'overlayShow 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+        contentShow: 'contentShow 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+        contentHide: 'contentHide 0.15s ease-in',
+        sheetIn: 'sheetIn 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
+        sheetOut: 'sheetOut 0.2s ease-in',
+        popIn: 'popIn 0.14s cubic-bezier(0.16, 1, 0.3, 1)',
+        staggerUp: 'staggerUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       gridTemplateColumns: {
         'hero': '1.4fr 1fr',

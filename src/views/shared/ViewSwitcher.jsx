@@ -19,22 +19,26 @@ export function setStoredView(contextId, viewId) {
 
 export default function ViewSwitcher({ activeView, onChange }) {
   return (
-    <div className="flex items-center gap-0.5 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.20)' }}>
-      {VIEWS.map(({ id, Icon, label }) => (
-        <button
-          key={id}
-          onClick={() => onChange(id)}
-          title={label}
-          className="p-1.5 rounded-md transition-all"
-          style={
-            activeView === id
-              ? { background: 'var(--c-card)', color: 'rgba(255,255,255,0.85)', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }
-              : { color: 'rgba(255,255,255,0.30)' }
-          }
-        >
-          <Icon size={14} />
-        </button>
-      ))}
+    <div className="inline-flex items-center gap-0.5 rounded-xl bg-[rgba(var(--ink),0.05)] p-1">
+      {VIEWS.map(({ id, Icon, label }) => {
+        const isActive = activeView === id
+        return (
+          <button
+            key={id}
+            onClick={() => onChange(id)}
+            title={label}
+            aria-label={label}
+            className={
+              'inline-flex items-center justify-center rounded-lg p-1.5 transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ' +
+              (isActive
+                ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')
+            }
+          >
+            <Icon size={14} />
+          </button>
+        )
+      })}
     </div>
   )
 }

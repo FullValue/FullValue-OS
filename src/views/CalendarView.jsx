@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import TaskDetailModal from './shared/TaskDetailModal'
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
@@ -48,23 +49,23 @@ function MonthView({ year, month, tasks, projects, onDayClick, onOpen }) {
     <div>
       <div className="grid grid-cols-7 mb-1">
         {DAYS.map(d => (
-          <div key={d} className="text-center text-[10px] uppercase tracking-wider text-white/25 py-1">{d}</div>
+          <div key={d} className="text-center text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)] py-1">{d}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-px" style={{ background: 'var(--c-border)' }}>
+      <div className="grid grid-cols-7 gap-px" style={{ background: 'var(--border-soft)' }}>
         {grid.map(({ date, inMonth }, i) => {
           const dayTasks = tasks.filter(t => t.dueDate && isSameDay(new Date(t.dueDate + 'T00:00:00'), date))
           const isToday = isSameDay(date, today)
           return (
             <div
               key={i}
-              className="min-h-[80px] p-1.5 cursor-pointer hover:bg-white/3 transition-colors"
-              style={{ background: 'var(--c-card)' }}
+              className="min-h-[80px] p-1.5 cursor-pointer hover:bg-[rgba(var(--ink),0.03)] transition-colors"
+              style={{ background: 'var(--bg-card)' }}
               onClick={() => onDayClick(date)}
             >
               <span
-                className={`text-xs font-medium inline-flex items-center justify-center w-6 h-6 rounded-full mb-1 ${inMonth ? 'text-white/70' : 'text-white/20'}`}
-                style={isToday ? { background: '#8B7CFF', color: '#fff' } : {}}
+                className={`tabular text-xs font-medium inline-flex items-center justify-center w-6 h-6 rounded-full mb-1 ${inMonth ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}
+                style={isToday ? { background: 'var(--violet-deep)', color: '#fff' } : {}}
               >
                 {date.getDate()}
               </span>
@@ -74,7 +75,7 @@ function MonthView({ year, month, tasks, projects, onDayClick, onOpen }) {
                   <div
                     key={task.id}
                     onClick={e => { e.stopPropagation(); onOpen(task) }}
-                    className="text-[10px] truncate rounded px-1 py-0.5 mb-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                    className="text-[10px] truncate rounded-md px-1 py-0.5 mb-0.5 cursor-pointer hover:opacity-80 transition-opacity"
                     style={{
                       background: (project?.color || '#8B7CFF') + '25',
                       color: project?.color || '#8B7CFF',
@@ -86,7 +87,7 @@ function MonthView({ year, month, tasks, projects, onDayClick, onOpen }) {
                 )
               })}
               {dayTasks.length > 3 && (
-                <div className="text-[10px] text-white/30">+{dayTasks.length - 3}</div>
+                <div className="text-[10px] text-[var(--text-tertiary)]">+{dayTasks.length - 3}</div>
               )}
             </div>
           )
@@ -108,28 +109,28 @@ function WeekView({ weekDays, tasks, projects, onOpen }) {
         <div className="h-8" /> {/* header spacer */}
         {HOURS.map(h => (
           <div key={h} className="h-14 flex items-start justify-end pr-2 pt-0.5">
-            <span className="text-[10px] text-white/20">{h}h</span>
+            <span className="tabular text-[10px] text-[var(--text-tertiary)]">{h}h</span>
           </div>
         ))}
       </div>
 
       {/* Day columns */}
-      <div className="flex flex-1 gap-px" style={{ background: 'var(--c-border)' }}>
+      <div className="flex flex-1 gap-px" style={{ background: 'var(--border-soft)' }}>
         {weekDays.map((day, di) => {
           const isToday = isSameDay(day, today)
           const dayTasks = tasks.filter(t => t.dueDate && isSameDay(new Date(t.dueDate + 'T00:00:00'), day))
           return (
-            <div key={di} className="flex-1 min-w-[90px]" style={{ background: 'var(--c-card)' }}>
+            <div key={di} className="flex-1 min-w-[90px]" style={{ background: 'var(--bg-card)' }}>
               {/* Day header */}
-              <div className={`h-8 flex flex-col items-center justify-center border-b`} style={{ borderColor: 'var(--c-border)' }}>
-                <span className="text-[10px] text-white/30">{DAYS[di]}</span>
-                <span className={`text-xs font-semibold ${isToday ? 'text-violet' : 'text-white/70'}`}>{day.getDate()}</span>
+              <div className={`h-8 flex flex-col items-center justify-center border-b`} style={{ borderColor: 'var(--border-soft)' }}>
+                <span className="text-[10px] text-[var(--text-tertiary)]">{DAYS[di]}</span>
+                <span className={`tabular text-xs font-semibold ${isToday ? 'text-[var(--violet-deep)]' : 'text-[var(--text-primary)]'}`}>{day.getDate()}</span>
               </div>
 
               {/* Hour rows */}
               <div className="relative">
                 {HOURS.map(h => (
-                  <div key={h} className="h-14 border-b" style={{ borderColor: 'rgba(255,255,255,0.03)' }} />
+                  <div key={h} className="h-14 border-b" style={{ borderColor: 'var(--border-soft)' }} />
                 ))}
 
                 {/* Tasks positioned absolutely */}
@@ -201,22 +202,24 @@ export default function CalendarView({ tasks = [], projects = [], onTaskUpdate }
     <>
       {/* Toolbar */}
       <div className="flex items-center gap-2 mb-3">
-        <button onClick={goToday} className="text-[11px] px-2.5 py-1.5 rounded-lg transition-colors" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.50)' }}>
+        <Button variant="subtle" size="sm" onClick={goToday}>
           Aujourd'hui
-        </button>
-        <button onClick={prevPeriod} className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white/70 transition-colors"><ChevronLeft size={14} /></button>
-        <button onClick={nextPeriod} className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white/70 transition-colors"><ChevronRight size={14} /></button>
-        <span className="text-sm font-semibold text-white/80">{headerLabel}</span>
+        </Button>
+        <Button variant="ghost" size="icon-sm" onClick={prevPeriod} aria-label="Période précédente"><ChevronLeft size={14} /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={nextPeriod} aria-label="Période suivante"><ChevronRight size={14} /></Button>
+        <span className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">{headerLabel}</span>
 
-        <div className="ml-auto flex gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.20)' }}>
+        <div className="ml-auto inline-flex gap-0.5 rounded-xl bg-[rgba(var(--ink),0.05)] p-1">
           {['month', 'week'].map(m => (
             <button
               key={m}
               onClick={() => setViewMode(m)}
-              className="text-[11px] px-2.5 py-1 rounded-md transition-all"
-              style={viewMode === m
-                ? { background: 'var(--c-card)', color: 'rgba(255,255,255,0.85)' }
-                : { color: 'rgba(255,255,255,0.30)' }}
+              className={
+                'text-[11px] font-medium px-2.5 py-1 rounded-lg transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ' +
+                (viewMode === m
+                  ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')
+              }
             >
               {m === 'month' ? 'Mois' : 'Semaine'}
             </button>
@@ -225,7 +228,7 @@ export default function CalendarView({ tasks = [], projects = [], onTaskUpdate }
       </div>
 
       {/* Calendar body */}
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
+      <div className="rounded-2xl overflow-hidden bg-[var(--bg-card)] border border-[var(--border-soft)] shadow-[var(--shadow-card)]">
         {viewMode === 'month' ? (
           <MonthView
             year={year}

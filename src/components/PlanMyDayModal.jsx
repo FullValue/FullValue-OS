@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Calendar, Sparkles } from 'lucide-react'
+import { X, Calendar, Sparkles, CheckCircle2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
+import { toast } from '@/lib/toast'
 
 const START_HOUR = 6
 const END_HOUR = 22
@@ -57,6 +60,7 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
             taskId: t.id,
           },
         })
+        toast.success('Ajouté au calendrier')
       }
       setDrag(null)
     }
@@ -131,30 +135,32 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
           <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
             Plan ma journée
           </h2>
-          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          <span className="text-xs tabular" style={{ color: 'var(--text-tertiary)' }}>
             {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </span>
         </div>
-        <button onClick={onClose}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-white/50 hover:text-white/80 transition-colors">
+        <Button variant="ghost" size="sm" onClick={onClose}>
           <X size={14} /> Fermer (Esc)
-        </button>
+        </Button>
       </div>
 
       <div className="flex-1 flex gap-4 px-6 pb-6 overflow-hidden">
 
         {/* Left: tasks list */}
-        <div className="w-80 flex-shrink-0 rounded-2xl p-4 overflow-y-auto"
-          style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-          <p className="text-[10px] uppercase tracking-wider font-semibold mb-3"
+        <div className="w-80 flex-shrink-0 rounded-2xl p-4 overflow-y-auto shadow-[var(--shadow-card)]"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)' }}>
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em]"
             style={{ color: 'var(--text-tertiary)' }}>
-            Tâches à planifier · {todayTasks.length}
+            Tâches à planifier · <span className="tabular">{todayTasks.length}</span>
           </p>
 
           {todayTasks.length === 0 ? (
-            <p className="text-xs text-center py-8" style={{ color: 'var(--text-tertiary)' }}>
-              Toutes tes tâches today sont déjà planifiées 🎉
-            </p>
+            <EmptyState
+              compact
+              icon={CheckCircle2}
+              title="Tout est planifié"
+              description="Toutes tes tâches du jour sont déjà dans ton calendrier."
+            />
           ) : (
             <div className="flex flex-col gap-2">
               {todayTasks.map(t => {
@@ -177,7 +183,7 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
                           {project.emoji} {project.name}
                         </span>
                       )}
-                      <span className="ml-auto font-mono text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                      <span className="ml-auto font-mono text-[10px] tabular" style={{ color: 'var(--text-tertiary)' }}>
                         {dur}
                       </span>
                     </div>
@@ -197,12 +203,12 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
         </div>
 
         {/* Right: today's calendar */}
-        <div className="flex-1 rounded-2xl overflow-hidden"
-          style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+        <div className="flex-1 rounded-2xl overflow-hidden shadow-[var(--shadow-card)]"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)' }}>
           <div className="px-4 py-2.5 flex items-center gap-2"
-            style={{ borderBottom: '1px solid var(--c-border)' }}>
+            style={{ borderBottom: '1px solid var(--border-soft)' }}>
             <Calendar size={12} style={{ color: 'var(--text-tertiary)' }} />
-            <p className="text-[10px] uppercase tracking-wider font-semibold"
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em]"
               style={{ color: 'var(--text-tertiary)' }}>Aujourd'hui</p>
             <span className="ml-auto text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
               Glisse une tâche sur une heure
@@ -214,7 +220,7 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
             <div className="w-14 flex-shrink-0 pt-0" style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
               {hourLabels.map(h => (
                 <div key={h} className="flex items-start justify-end pr-2 pt-1" style={{ height: `${HOUR_PX}px` }}>
-                  <span className="font-mono text-[10px] text-white/20">{h}h</span>
+                  <span className="font-mono text-[10px] tabular text-white/20">{h}h</span>
                 </div>
               ))}
             </div>

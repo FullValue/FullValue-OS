@@ -4,6 +4,14 @@ import { useStore } from '@/store/useStore'
 import { ImpactBadge, StatusBadge } from './TaskBadge'
 import { TAG_PALETTE, getTagColor, URGENCY_OPTIONS, getUrgencyStyle } from './taskColors'
 import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Progress } from '@/components/ui/progress'
+import { toast, toastUndo } from '@/lib/toast'
 
 const nanoid = () => Math.random().toString(36).slice(2, 10)
 
@@ -47,16 +55,12 @@ function ChecklistEditor({ items, onChange }) {
     <div className="space-y-1.5">
       {items.map(item => (
         <div key={item.id} className="flex items-center gap-2 group/item">
-          <button
-            onClick={() => toggleItem(item.id)}
-            className="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
-            style={item.done
-              ? { background: '#5DAA7C', borderColor: '#5DAA7C' }
-              : { background: 'transparent', borderColor: 'var(--text-tertiary)' }
-            }
-          >
-            {item.done && <Check size={8} strokeWidth={3} color="white" />}
-          </button>
+          <Checkbox
+            checked={item.done}
+            onCheckedChange={() => toggleItem(item.id)}
+            className="h-4 w-4 flex-shrink-0"
+            aria-label={item.label}
+          />
           <span className="flex-1 text-xs leading-tight"
             style={{
               color: item.done ? 'var(--text-tertiary)' : 'var(--text-secondary)',
@@ -73,19 +77,16 @@ function ChecklistEditor({ items, onChange }) {
       ))}
 
       <div className="flex gap-1.5 mt-2">
-        <input
+        <Input
           value={newLabel}
           onChange={e => setNewLabel(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addItem()}
           placeholder="Nouvel item..."
-          className="flex-1 rounded-lg px-2 py-1 text-xs focus:outline-none"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}
+          className="h-8 flex-1 text-xs"
         />
-        <button onClick={addItem}
-          className="p-1.5 rounded-lg transition-colors"
-          style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-tertiary)' }}>
+        <Button variant="subtle" size="icon-sm" onClick={addItem} aria-label="Ajouter un item">
           <Plus size={12} />
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -136,21 +137,20 @@ function TagInput({ tags, tagStyles, onTagsChange, onSetTagStyle }) {
       </div>
 
       <div className="flex gap-1">
-        <input
+        <Input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addTag()}
           placeholder="+ Ajouter un tag"
-          className="flex-1 rounded-lg px-2 py-1 text-[11px] focus:outline-none"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}
+          className="h-8 flex-1 text-[11px]"
         />
-        <button onClick={addTag} className="p-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-tertiary)' }}>
+        <Button variant="subtle" size="icon-sm" onClick={addTag} aria-label="Ajouter un tag">
           <Plus size={12} />
-        </button>
+        </Button>
       </div>
 
       {pendingTag && (
-        <div className="mt-2 p-3 rounded-xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+        <div className="mt-2 p-3 rounded-xl" style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}>
           <p className="text-[10px] mb-2" style={{ color: 'var(--text-tertiary)' }}>
             Choisir la couleur pour <span className="font-semibold">#{pendingTag}</span>
           </p>
@@ -243,12 +243,23 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
     save({ title, notes })
     setTitleDirty(false)
     setNotesDirty(false)
+    toast.success('Tâche enregistrée')
     setTimeout(onClose, 200)
   }
 
   function handleDiscardAndClose() {
     setTitleDirty(false)
     setNotesDirty(false)
+    onClose()
+  }
+
+  // ── Delete with undo ──────────────────────────────────────────────────────
+  function handleDelete() {
+    const snapshot = state.tasks.find(t => t.id === task.id) || task
+    onDelete?.(task.id)
+    toastUndo('Tâche supprimée', () =>
+      dispatch({ type: 'RESTORE_ITEMS', payload: { tasks: [snapshot] } })
+    )
     onClose()
   }
 
@@ -296,17 +307,17 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
       onClick={handleBackdrop}
     >
       <div
-        className="relative w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-        style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', maxHeight: '90vh' }}
+        className="relative w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-modal)', maxHeight: '90vh' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start gap-3 p-5 flex-shrink-0"
-          style={{ borderBottom: '1px solid var(--c-border)' }}>
+          style={{ borderBottom: '1px solid var(--border-soft)' }}>
           {project && (
             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: project.color }} />
           )}
@@ -316,19 +327,18 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
             onBlur={() => {
               if (titleDirty) { save({ title }); setTitleDirty(false) }
             }}
-            className="flex-1 text-base font-semibold bg-transparent focus:outline-none"
+            className="flex-1 text-lg font-semibold tracking-tight bg-transparent focus:outline-none"
             style={{ color: 'var(--text-primary)' }}
           />
           {/* Save state indicator */}
           <span className="text-[10px] flex-shrink-0 mt-1.5 transition-opacity" style={{
-            color: saveState === 'saved' ? '#5DAA7C' : 'transparent',
+            color: saveState === 'saved' ? 'var(--green-deep)' : 'transparent',
           }}>
             ✓ Enregistré
           </span>
-          <button onClick={handleClose} className="p-1 transition-colors flex-shrink-0"
-            style={{ color: 'var(--text-tertiary)' }}>
+          <Button variant="ghost" size="icon-sm" onClick={handleClose} className="flex-shrink-0" aria-label="Fermer">
             <X size={16} />
-          </button>
+          </Button>
         </div>
 
         {/* Scrollable body */}
@@ -337,16 +347,18 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
             {/* Left column: metadata */}
             <div className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--text-tertiary)' }}>Statut</label>
-                <select value={status} onChange={e => { setStatus(e.target.value); save({ status: e.target.value }) }}
-                  className="w-full rounded-lg px-2.5 py-1.5 text-xs focus:outline-none"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}>
-                  {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value} style={{ background: '#1A1A20' }}>{o.label}</option>)}
-                </select>
+                <Label className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Statut</Label>
+                <NativeSelect
+                  value={status}
+                  onChange={e => { setStatus(e.target.value); save({ status: e.target.value }) }}
+                  className="h-8 text-xs"
+                >
+                  {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </NativeSelect>
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--text-tertiary)' }}>Urgence</label>
+                <Label className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Urgence</Label>
                 <div className="flex flex-col gap-1">
                   {URGENCY_OPTIONS.map(opt => {
                     const s = opt.value ? getUrgencyStyle(opt.value, project?.color) : null
@@ -355,12 +367,12 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
                       <button
                         key={opt.value ?? 'none'}
                         onClick={() => { setUrgency(opt.value); save({ urgency: opt.value }) }}
-                        className="py-1.5 rounded-lg text-xs font-medium transition-colors text-left px-2.5"
+                        className="py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98] text-left px-2.5"
                         style={isActive && s
                           ? { background: s.bg, color: s.text, border: `1px solid ${s.text}40` }
                           : isActive
-                          ? { background: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)' }
-                          : { background: 'rgba(255,255,255,0.04)', color: 'var(--text-tertiary)' }}>
+                          ? { background: 'rgba(var(--ink),0.09)', color: 'var(--text-secondary)' }
+                          : { background: 'rgba(var(--ink),0.05)', color: 'var(--text-tertiary)' }}>
                         {opt.label}
                       </button>
                     )
@@ -369,23 +381,27 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--text-tertiary)' }}>Début</label>
-                <input type="date" value={startDate}
+                <Label className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Début</Label>
+                <Input
+                  type="date"
+                  value={startDate}
                   onChange={e => { setStartDate(e.target.value); save({ startDate: e.target.value || null }) }}
-                  className="w-full rounded-lg px-2.5 py-1.5 text-xs focus:outline-none"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c-border)', color: 'var(--text-secondary)' }} />
+                  className="h-8 text-xs tabular"
+                />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--text-tertiary)' }}>Échéance</label>
-                <input type="date" value={dueDate}
+                <Label className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Échéance</Label>
+                <Input
+                  type="date"
+                  value={dueDate}
                   onChange={e => { setDueDate(e.target.value); save({ dueDate: e.target.value || null }) }}
-                  className="w-full rounded-lg px-2.5 py-1.5 text-xs focus:outline-none"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c-border)', color: 'var(--text-secondary)' }} />
+                  className="h-8 text-xs tabular"
+                />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-wider block mb-2" style={{ color: 'var(--text-tertiary)' }}>Tags</label>
+                <Label className="mb-2 text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Tags</Label>
                 <TagInput
                   tags={tags}
                   tagStyles={tagStyles}
@@ -398,8 +414,8 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
             {/* Right column: notes */}
             <div className="flex flex-col gap-3">
               <div className="flex flex-col flex-1">
-                <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--text-tertiary)' }}>Notes</label>
-                <textarea
+                <Label className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Notes</Label>
+                <Textarea
                   value={notes}
                   onChange={e => { setNotes(e.target.value); setNotesDirty(true) }}
                   onBlur={() => {
@@ -407,18 +423,17 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
                   }}
                   rows={8}
                   placeholder="Notes, contexte, liens..."
-                  className="flex-1 w-full rounded-xl px-3 py-2.5 text-xs placeholder-white/25 focus:outline-none resize-none leading-relaxed"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}
+                  className="flex-1 text-xs leading-relaxed resize-none"
                 />
               </div>
             </div>
           </div>
 
           {/* ─── Apparence de la carte ─────────────────────────────────────────── */}
-          <div style={{ borderTop: '1px solid var(--c-border)' }}>
+          <div style={{ borderTop: '1px solid var(--border-soft)' }}>
             <button
               onClick={() => setShowAppearance(!showAppearance)}
-              className="w-full flex items-center justify-between px-5 py-3 text-xs font-medium transition-colors hover:bg-white/3"
+              className="w-full flex items-center justify-between px-5 py-3 text-xs font-medium transition-colors hover:bg-[rgba(var(--ink),0.03)]"
               style={{ color: 'var(--text-secondary)' }}
             >
               <span>Apparence de la carte</span>
@@ -429,19 +444,19 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
               <div className="px-5 pb-5 space-y-4">
                 {/* Color picker */}
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider block mb-2" style={{ color: 'var(--text-tertiary)' }}>
+                  <Label className="mb-2 text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
                     Couleur de fond
-                  </label>
+                  </Label>
                   <div className="flex gap-2 flex-wrap">
                     {CARD_BG_OPTIONS.map(opt => (
                       <button
                         key={opt.name}
                         onClick={() => handleCardColor(opt.color)}
-                        className="relative w-7 h-7 rounded-full transition-all hover:scale-110 flex items-center justify-center"
+                        className="relative w-7 h-7 rounded-full transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
                         style={{
-                          background: opt.color || 'var(--c-card)',
-                          border: `2px solid ${cardColor === opt.color ? 'var(--violet-deep, #8B7CFF)' : 'var(--c-border)'}`,
-                          outline: cardColor === opt.color ? '2px solid rgba(139,124,255,0.4)' : 'none',
+                          background: opt.color || 'var(--bg-card)',
+                          border: `2px solid ${cardColor === opt.color ? 'var(--violet-deep)' : 'var(--border-medium)'}`,
+                          outline: cardColor === opt.color ? '2px solid var(--ring)' : 'none',
                           outlineOffset: 2,
                         }}
                         title={opt.label}
@@ -456,9 +471,9 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
 
                 {/* Image cover — upload + URL */}
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider block mb-2" style={{ color: 'var(--text-tertiary)' }}>
+                  <Label className="mb-2 text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
                     Image cover
-                  </label>
+                  </Label>
                   <ImageOrFileInput
                     bucket="task-attachments"
                     pathPrefix={task.id}
@@ -476,28 +491,34 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
 
                 {/* Inline note */}
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: 'var(--text-tertiary)' }}>
+                  <Label className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
                     Note inline (affichée sur la carte)
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     value={inlineNote}
                     onChange={e => setInlineNote(e.target.value.slice(0, 120))}
                     onBlur={() => save({ inlineNote: inlineNote.trim() || null })}
                     placeholder="Note contextuelle courte…"
                     maxLength={120}
-                    className="w-full rounded-lg px-3 py-2 text-xs focus:outline-none italic"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}
+                    className="h-8 text-xs italic"
                   />
-                  <p className="text-[9px] mt-0.5 text-right" style={{ color: 'var(--text-tertiary)' }}>
+                  <p className="tabular text-[9px] mt-0.5 text-right" style={{ color: 'var(--text-tertiary)' }}>
                     {inlineNote.length}/120
                   </p>
                 </div>
 
                 {/* Checklist */}
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider block mb-2" style={{ color: 'var(--text-tertiary)' }}>
-                    Checklist ({checklist.filter(i => i.done).length}/{checklist.length})
-                  </label>
+                  <Label className="mb-2 text-[10px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                    Checklist (<span className="tabular">{checklist.filter(i => i.done).length}/{checklist.length}</span>)
+                  </Label>
+                  {checklist.length > 0 && (
+                    <Progress
+                      value={Math.round((checklist.filter(i => i.done).length / checklist.length) * 100)}
+                      color="var(--green-deep)"
+                      className="mb-2.5"
+                    />
+                  )}
                   <ChecklistEditor items={checklist} onChange={handleChecklistChange} />
                 </div>
               </div>
@@ -508,57 +529,49 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
         {/* ─── Confirm close overlay ────────────────────────────────────────────── */}
         {confirmClose && (
           <div className="absolute inset-x-0 bottom-0 z-10 p-4 rounded-b-2xl"
-            style={{ background: 'var(--c-surface)', borderTop: '1px solid var(--c-border)' }}>
+            style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-float)' }}>
             <div className="flex items-start gap-2 mb-3">
-              <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" style={{ color: '#FFD66B' }} />
+              <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--yellow-deep)' }} />
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                 Tu as des modifications non enregistrées (titre ou notes). Que faire ?
               </p>
             </div>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setConfirmClose(false)}
-                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmClose(false)}>
                 Annuler
-              </button>
-              <button onClick={handleDiscardAndClose}
-                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-                style={{ background: 'rgba(248,113,113,0.12)', color: '#F87171' }}>
+              </Button>
+              <Button variant="danger" size="sm" onClick={handleDiscardAndClose}>
                 Fermer sans enregistrer
-              </button>
-              <button onClick={handleSaveAndClose}
-                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
-                style={{ background: 'var(--violet-deep, #8B7CFF)', color: '#fff' }}>
+              </Button>
+              <Button size="sm" onClick={handleSaveAndClose}>
                 Enregistrer et fermer
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {/* Footer */}
         <div className="flex items-center gap-2 px-5 py-3 flex-shrink-0"
-          style={{ borderTop: '1px solid var(--c-border)' }}>
-          <button onClick={() => { onDelete?.(task.id); onClose() }}
-            className="flex items-center gap-1.5 text-xs transition-colors"
-            style={{ color: '#F87171' }}>
+          style={{ borderTop: '1px solid var(--border-soft)' }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="text-[var(--red-deep)] hover:bg-[var(--red-bg)] hover:text-[var(--red-deep)]"
+          >
             <Trash2 size={12} /> Supprimer
-          </button>
+          </Button>
           <div className="flex-1" />
-          <button onClick={handleClose}
-            className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
+          <Button variant="ghost" size="sm" onClick={handleClose}>
             Fermer
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={hasUnsaved ? 'default' : 'subtle'}
+            size="sm"
             onClick={handleSaveAndClose}
-            className="text-xs px-4 py-1.5 rounded-lg font-medium transition-all"
-            style={{
-              background: hasUnsaved ? 'var(--violet-deep, #8B7CFF)' : 'rgba(255,255,255,0.06)',
-              color: hasUnsaved ? '#fff' : 'var(--text-tertiary)',
-            }}
           >
             {hasUnsaved ? 'Enregistrer' : '✓ À jour'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -51,6 +51,23 @@ const INVOICE_STATUSES = {
   overdue: { label: 'En retard', color: '#F87171' },
 }
 
+// Mapping statut → variante sémantique de <UIBadge> (le sens dicte la couleur)
+const STATUS_BADGE_VARIANT = {
+  prospect: 'violet',
+  onboarding: 'yellow',
+  active: 'green',
+  paused: 'orange',
+  completed: 'blue',
+  archived: 'default',
+}
+
+const INVOICE_STATUS_VARIANT = {
+  to_emit: 'yellow',
+  sent: 'blue',
+  paid: 'green',
+  overdue: 'red',
+}
+
 function formatDuration(s) {
   if (!s) return '0m'
   const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60)
@@ -914,14 +931,14 @@ function ClientForm({ initial = {}, onSubmit, onClose }) {
         <div>
           <label className="text-white/40 text-xs mb-1 block">Type d'activité</label>
           <select value={activityType} onChange={e => setActivityType(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none">
-            <option value="" style={{ background: '#1A1A20' }}>— Sélectionner —</option>
-            {ACTIVITY_TYPES.map(t => <option key={t} value={t} style={{ background: '#1A1A20' }}>{t}</option>)}
+            <option value="">— Sélectionner —</option>
+            {ACTIVITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <div>
           <label className="text-white/40 text-xs mb-1 block">Statut</label>
           <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 focus:outline-none">
-            {Object.entries(STATUS_LABELS).filter(([k]) => k !== 'archived').map(([k, v]) => <option key={k} value={k} style={{ background: '#1A1A20' }}>{v.label}</option>)}
+            {Object.entries(STATUS_LABELS).filter(([k]) => k !== 'archived').map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
         </div>
       </div>

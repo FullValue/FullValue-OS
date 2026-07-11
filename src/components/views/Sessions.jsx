@@ -1,10 +1,16 @@
 import { useState } from 'react'
-import { Play, Pause, Square, ChevronDown } from 'lucide-react'
+import { Play, Pause, Square, Timer as TimerIcon, AlertTriangle } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import Timer, { formatTime } from '../ui/Timer'
 import BarChart from '../ui/BarChart'
 import Badge from '../ui/Badge'
 import Drawer from '../ui/Drawer'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
+import { EmptyState } from '@/components/ui/empty-state'
+import { toast } from '@/lib/toast'
 
 function formatDuration(seconds) {
   if (!seconds) return '0m'
@@ -55,6 +61,7 @@ export default function Sessions({
         note: logNote.trim(),
       }
     })
+    toast.success(`Session loggée — ${formatDuration(elapsed)}`)
     setLogNote('')
     setLogDrawer(false)
     onStop()
@@ -86,7 +93,7 @@ export default function Sessions({
     const dominantProjectId = daySessions.length > 0
       ? daySessions.reduce((a, b) => a.duration > b.duration ? a : b).projectId
       : null
-    const color = dominantProjectId ? (getProject(dominantProjectId)?.color || '#6366F1') : '#6366F1'
+    const color = dominantProjectId ? (getProject(dominantProjectId)?.color || 'var(--violet-deep)') : 'var(--violet-deep)'
     return { date, seconds, color }
   })
 
@@ -95,78 +102,61 @@ export default function Sessions({
   )
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="font-heading font-bold text-white text-2xl mb-8">Sessions</h1>
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <h1 className="mb-8 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">Sessions</h1>
 
       {/* Timer block */}
-      <div className="bg-white/3 border border-white/5 rounded-2xl p-8 mb-6 text-center">
+      <div className="mb-6 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-8 text-center shadow-[var(--shadow-card)]">
         <Timer elapsed={elapsed} isRunning={timerRunning} />
 
         {/* Project + Task selectors */}
-        <div className="flex gap-3 mt-6 mb-6">
-          <select
+        <div className="mb-6 mt-6 flex gap-3">
+          <NativeSelect
             value={timerProject}
             onChange={e => { setTimerProject(e.target.value); setTimerTask('') }}
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
           >
-            <option value="" style={{ background: '#161B22' }}>— Projet —</option>
+            <option value="">— Projet —</option>
             {state.projects.map(p => (
-              <option key={p.id} value={p.id} style={{ background: '#161B22' }}>{p.name}</option>
+              <option key={p.id} value={p.id}>{p.emoji} {p.name}</option>
             ))}
-          </select>
-          <select
+          </NativeSelect>
+          <NativeSelect
             value={timerTask}
             onChange={e => setTimerTask(e.target.value)}
             disabled={!timerProject}
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-40"
           >
-            <option value="" style={{ background: '#161B22' }}>— Tâche (opt.) —</option>
+            <option value="">— Tâche (opt.) —</option>
             {selectedProjectTasks.map(t => (
-              <option key={t.id} value={t.id} style={{ background: '#161B22' }}>{t.title}</option>
+              <option key={t.id} value={t.id}>{t.title}</option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Controls */}
-        <div className="flex gap-3 justify-center">
+        <div className="flex justify-center gap-3">
           {!timerRunning && !timerPaused && (
-            <button
-              onClick={() => onStart(timerProject, timerTask)}
-              className="flex items-center gap-2 px-8 py-3 bg-accent hover:bg-accent/90 text-white rounded-xl font-medium transition-all hover:scale-[1.02]"
-            >
+            <Button size="lg" onClick={() => onStart(timerProject, timerTask)} className="px-8 hover:scale-[1.02]">
               <Play size={18} /> Démarrer
-            </button>
+            </Button>
           )}
           {timerRunning && (
             <>
-              <button
-                onClick={onPause}
-                className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-medium transition-all"
-              >
+              <Button size="lg" variant="secondary" onClick={onPause}>
                 <Pause size={18} /> Pause
-              </button>
-              <button
-                onClick={handleStop}
-                className="flex items-center gap-2 px-6 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-xl font-medium transition-all"
-              >
+              </Button>
+              <Button size="lg" variant="danger" onClick={handleStop}>
                 <Square size={18} /> Stop
-              </button>
+              </Button>
             </>
           )}
           {timerPaused && (
             <>
-              <button
-                onClick={onResume}
-                className="flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent/90 text-white rounded-xl font-medium transition-all"
-              >
+              <Button size="lg" onClick={onResume}>
                 <Play size={18} /> Reprendre
-              </button>
-              <button
-                onClick={handleStop}
-                className="flex items-center gap-2 px-6 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-xl font-medium transition-all"
-              >
+              </Button>
+              <Button size="lg" variant="danger" onClick={handleStop}>
                 <Square size={18} /> Stop & Logger
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -174,27 +164,27 @@ export default function Sessions({
 
       {/* Imbalance alert */}
       {imbalance && (
-        <div className="mb-6 flex items-start gap-3 bg-amber/10 border border-amber/25 rounded-xl px-4 py-3">
-          <span className="text-amber text-lg">⚠️</span>
-          <p className="text-amber text-sm">Tu sur-investis en Tier 3/4 cette semaine ({Math.round((tier34Seconds / totalWeekSeconds) * 100)}% du temps)</p>
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-[var(--orange-solid)] bg-[var(--orange-bg)] px-4 py-3">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-[var(--orange-deep)]" />
+          <p className="text-sm text-[var(--orange-deep)]">Tu sur-investis en Tier 3/4 cette semaine ({Math.round((tier34Seconds / totalWeekSeconds) * 100)}% du temps)</p>
         </div>
       )}
 
       {/* Weekly summary */}
-      <div className="bg-white/3 border border-white/5 rounded-2xl p-5 mb-6">
-        <h2 className="text-white/60 text-xs font-medium uppercase tracking-wider mb-4">Cette semaine</h2>
-        <div className="grid grid-cols-3 gap-4 mb-5">
+      <div className="mb-6 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
+        <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Cette semaine</h2>
+        <div className="mb-5 grid grid-cols-3 gap-4">
           <div>
-            <p className="font-mono text-white text-2xl font-medium">{formatDuration(totalWeekSeconds)}</p>
-            <p className="text-white/30 text-xs">loggées</p>
+            <p className="font-mono text-2xl font-medium text-[var(--text-primary)] tabular">{formatDuration(totalWeekSeconds)}</p>
+            <p className="text-xs text-[var(--text-tertiary)]">loggées</p>
           </div>
           <div>
-            <p className="font-mono text-white text-2xl font-medium">{weekProjects}</p>
-            <p className="text-white/30 text-xs">projet{weekProjects > 1 ? 's' : ''}</p>
+            <p className="font-mono text-2xl font-medium text-[var(--text-primary)] tabular">{weekProjects}</p>
+            <p className="text-xs text-[var(--text-tertiary)]">projet{weekProjects > 1 ? 's' : ''}</p>
           </div>
           <div>
-            <p className="font-mono text-white text-2xl font-medium">{weekSessions.length}</p>
-            <p className="text-white/30 text-xs">session{weekSessions.length > 1 ? 's' : ''}</p>
+            <p className="font-mono text-2xl font-medium text-[var(--text-primary)] tabular">{weekSessions.length}</p>
+            <p className="text-xs text-[var(--text-tertiary)]">session{weekSessions.length > 1 ? 's' : ''}</p>
           </div>
         </div>
         <BarChart data={chartData} />
@@ -202,28 +192,31 @@ export default function Sessions({
 
       {/* Session history */}
       <div>
-        <h2 className="text-white/60 text-xs font-medium uppercase tracking-wider mb-3">Historique</h2>
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Historique</h2>
         {state.sessions.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-white/30 text-sm">Aucune session cette semaine — lance ta première avec le timer ☝️</p>
-          </div>
+          <EmptyState
+            icon={TimerIcon}
+            compact
+            title="Aucune session"
+            description="Lance ta première session avec le timer ci-dessus."
+          />
         ) : (
           <div className="flex flex-col gap-2">
             {state.sessions.map(session => {
               const project = getProject(session.projectId)
               const task = state.tasks.find(t => t.id === session.taskId)
               return (
-                <div key={session.id} className="flex items-start gap-3 p-3.5 bg-white/3 border border-white/5 rounded-xl">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                <div key={session.id} className="flex items-start gap-3 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-3.5 shadow-[var(--shadow-card)]">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
                       {project && <Badge color={project.color} name={project.name} />}
-                      <span className="font-mono text-white/60 text-xs">{formatDuration(session.duration)}</span>
-                      <span className="text-white/20 text-xs">
+                      <span className="font-mono text-xs text-[var(--text-secondary)] tabular">{formatDuration(session.duration)}</span>
+                      <span className="text-xs text-[var(--text-tertiary)] tabular">
                         {new Date(session.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
                       </span>
                     </div>
-                    <p className="text-white/70 text-sm">{session.note}</p>
-                    {task && <p className="text-white/30 text-xs mt-0.5">↳ {task.title}</p>}
+                    <p className="text-sm text-[var(--text-secondary)]">{session.note}</p>
+                    {task && <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">↳ {task.title}</p>}
                   </div>
                 </div>
               )
@@ -235,8 +228,8 @@ export default function Sessions({
       {/* Log drawer */}
       <Drawer isOpen={logDrawer} onClose={() => setLogDrawer(false)} title="Logger la session">
         <div className="flex flex-col gap-4">
-          <div className="bg-white/5 rounded-xl p-4 text-center">
-            <p className="font-mono text-white text-3xl font-medium">{formatTime(elapsed)}</p>
+          <div className="rounded-xl bg-[var(--bg-card-soft)] p-4 text-center">
+            <p className="font-mono text-3xl font-medium text-[var(--text-primary)] tabular">{formatTime(elapsed)}</p>
             {timerProject && getProject(timerProject) && (
               <div className="mt-2 flex justify-center">
                 <Badge color={getProject(timerProject).color} name={getProject(timerProject).name} />
@@ -245,42 +238,28 @@ export default function Sessions({
           </div>
 
           <div>
-            <label className="text-white/50 text-xs mb-1 block">Qu'est-ce que tu as produit ? *</label>
-            <textarea
+            <Label>Qu'est-ce que tu as produit ? *</Label>
+            <Textarea
               autoFocus
               value={logNote}
               onChange={e => setLogNote(e.target.value)}
-              placeholder="Décris ce que tu as accompli..."
+              placeholder="Décris ce que tu as accompli…"
               rows={4}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none"
             />
           </div>
 
-          <div className="flex gap-3">
-            <select
-              value={timerProject}
-              onChange={e => setTimerProject(e.target.value)}
-              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
-            >
-              {state.projects.map(p => (
-                <option key={p.id} value={p.id} style={{ background: '#161B22' }}>{p.name}</option>
-              ))}
-            </select>
-          </div>
+          <NativeSelect value={timerProject} onChange={e => setTimerProject(e.target.value)}>
+            {state.projects.map(p => (
+              <option key={p.id} value={p.id}>{p.emoji} {p.name}</option>
+            ))}
+          </NativeSelect>
 
-          <button
-            onClick={handleLog}
-            disabled={!logNote.trim()}
-            className="w-full bg-accent hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium transition-colors"
-          >
+          <Button onClick={handleLog} disabled={!logNote.trim()} className="w-full">
             Logger la session
-          </button>
-          <button
-            onClick={() => { setLogDrawer(false); onStop() }}
-            className="w-full bg-white/5 hover:bg-white/10 text-white/50 py-2.5 rounded-xl text-sm transition-colors"
-          >
+          </Button>
+          <Button variant="subtle" onClick={() => { setLogDrawer(false); onStop() }} className="w-full">
             Abandonner sans logger
-          </button>
+          </Button>
         </div>
       </Drawer>
     </div>

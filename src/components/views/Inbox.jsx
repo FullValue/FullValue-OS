@@ -1,8 +1,14 @@
 import { useState } from 'react'
-import { Trash2, Zap, X } from 'lucide-react'
+import { Trash2, Inbox as InboxIcon, X } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import Drawer from '@/components/ui/Drawer'
 import GlowSearchBar from '@/components/ui/GlowSearchBar'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
+import { EmptyState } from '@/components/ui/empty-state'
+import { toast, toastUndo } from '@/lib/toast'
 
 const TYPE_ICONS = { task: '📋', idea: '💡', note: '📝' }
 
@@ -22,26 +28,23 @@ function TaskForm({ initial = {}, onSubmit, onClose, projects }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label className="text-white/40 text-xs mb-1 block">Titre</label>
-        <input
-          autoFocus value={title} onChange={e => setTitle(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet/40"
-        />
+        <Label>Titre</Label>
+        <Input autoFocus value={title} onChange={e => setTitle(e.target.value)} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-white/40 text-xs mb-1 block">Projet</label>
-          <select value={projectId} onChange={e => setProjectId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
-            {projects.map(p => <option key={p.id} value={p.id} style={{ background: '#1A1A20' }}>{p.emoji} {p.name}</option>)}
-          </select>
+          <Label>Projet</Label>
+          <NativeSelect value={projectId} onChange={e => setProjectId(e.target.value)}>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.emoji} {p.name}</option>)}
+          </NativeSelect>
         </div>
         <div>
-          <label className="text-white/40 text-xs mb-1 block">Impact</label>
+          <Label>Impact</Label>
           <div className="flex gap-2">
             {['low', 'high'].map(v => (
               <button key={v} type="button" onClick={() => setImpact(v)}
-                className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${impact === v ? 'bg-violet/20 text-violet border border-violet/30' : 'bg-white/5 text-white/40 hover:bg-white/8'}`}>
-                {v === 'high' ? '⚡ High' : '· Low'}
+                className={`flex-1 rounded-xl py-2 text-xs font-medium transition-all active:scale-[0.98] ${impact === v ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] ring-1 ring-[var(--violet-solid)]' : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.08)]'}`}>
+                {v === 'high' ? '⚡ Fort' : '· Faible'}
               </button>
             ))}
           </div>
@@ -49,20 +52,20 @@ function TaskForm({ initial = {}, onSubmit, onClose, projects }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-white/40 text-xs mb-1 block">Date limite</label>
-          <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none" />
+          <Label>Date limite</Label>
+          <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
         </div>
         <div>
-          <label className="text-white/40 text-xs mb-2 block">Aujourd'hui</label>
+          <Label>Aujourd'hui</Label>
           <button type="button" onClick={() => setToday(!today)}
-            className={`w-full py-2 rounded-xl text-xs font-medium transition-colors ${today ? 'bg-violet/20 text-violet border border-violet/30' : 'bg-white/5 text-white/40 hover:bg-white/8'}`}>
+            className={`w-full rounded-xl py-2 text-xs font-medium transition-all active:scale-[0.98] ${today ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] ring-1 ring-[var(--violet-solid)]' : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.08)]'}`}>
             📌 {today ? 'Oui' : 'Non'}
           </button>
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <button type="submit" className="flex-1 bg-violet hover:bg-violet/90 text-white py-2.5 rounded-xl text-sm font-medium transition-colors">Créer la tâche</button>
-        <button type="button" onClick={onClose} className="flex-1 bg-white/5 hover:bg-white/8 text-white/50 py-2.5 rounded-xl text-sm transition-colors">Annuler</button>
+        <Button type="submit" className="flex-1">Créer la tâche</Button>
+        <Button type="button" variant="subtle" className="flex-1" onClick={onClose}>Annuler</Button>
       </div>
     </form>
   )
@@ -76,84 +79,101 @@ export default function Inbox({ onNavigate }) {
 
   const filtered = state.inbox.filter(i => i.text.toLowerCase().includes(search.toLowerCase()))
 
-  function assignQuick(inboxId, projectId) {
-    dispatch({ type: 'ASSIGN_INBOX', payload: { inboxId, projectId } })
+  function assignQuick(item, projectId) {
+    dispatch({ type: 'ASSIGN_INBOX', payload: { inboxId: item.id, projectId } })
+    const p = state.projects.find(pr => pr.id === projectId)
+    toast.success(`Assignée à ${p?.name || 'projet'}`)
+  }
+
+  function removeItem(item) {
+    dispatch({ type: 'REMOVE_INBOX', payload: item.id })
+    toastUndo('Élément supprimé', () => dispatch({ type: 'RESTORE_ITEMS', payload: { inbox: [item] } }))
+  }
+
+  function clearAll() {
+    const snapshot = [...state.inbox]
+    dispatch({ type: 'CLEAR_INBOX' })
+    setConfirmClear(false)
+    toastUndo(`${snapshot.length} élément${snapshot.length > 1 ? 's' : ''} supprimé${snapshot.length > 1 ? 's' : ''}`, () =>
+      dispatch({ type: 'RESTORE_ITEMS', payload: { inbox: snapshot } })
+    )
   }
 
   function handleTriage(payload) {
     dispatch({ type: 'ADD_TASK', payload })
     dispatch({ type: 'REMOVE_INBOX', payload: triageItem.id })
+    toast.success('Convertie en tâche')
     setTriageItem(null)
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
+    <div className="mx-auto max-w-3xl px-4 py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-white">Inbox</h1>
-          <p className="text-white/30 text-sm mt-0.5">{state.inbox.length} élément{state.inbox.length > 1 ? 's' : ''} à trier</p>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">Inbox</h1>
+          <p className="mt-0.5 text-sm text-[var(--text-tertiary)] tabular">{state.inbox.length} élément{state.inbox.length > 1 ? 's' : ''} à trier</p>
         </div>
         <div className="flex items-center gap-2">
           {state.inbox.length > 0 && (
             confirmClear ? (
               <div className="flex items-center gap-2">
-                <span className="text-white/40 text-xs">Confirmer ?</span>
-                <button onClick={() => { dispatch({ type: 'CLEAR_INBOX' }); setConfirmClear(false) }} className="text-xs bg-red/15 hover:bg-red/25 text-red px-3 py-1.5 rounded-lg transition-colors">Vider</button>
-                <button onClick={() => setConfirmClear(false)} className="text-white/40 hover:text-white/70 transition-colors"><X size={14} /></button>
+                <span className="text-xs text-[var(--text-tertiary)]">Confirmer ?</span>
+                <Button size="sm" variant="danger" onClick={clearAll}>Vider</Button>
+                <button onClick={() => setConfirmClear(false)} className="text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"><X size={14} /></button>
               </div>
             ) : (
-              <button onClick={() => setConfirmClear(true)} className="text-xs text-white/30 hover:text-red transition-colors">Tout vider</button>
+              <button onClick={() => setConfirmClear(true)} className="text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--red-deep)]">Tout vider</button>
             )
           )}
         </div>
       </div>
 
-      <div className="mb-4">
-        <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher dans l'inbox..." />
-      </div>
+      {state.inbox.length > 0 && (
+        <div className="mb-4">
+          <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher dans l'inbox…" />
+        </div>
+      )}
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-4">📭</p>
-          <p className="text-white/30 text-sm">Inbox vide — lance <kbd className="bg-white/5 px-1.5 py-0.5 rounded text-[10px] border border-white/10">⌘K</kbd> pour capturer</p>
-        </div>
+        <EmptyState
+          icon={InboxIcon}
+          title={search ? 'Aucun résultat' : 'Inbox vide'}
+          description={search ? 'Aucune capture ne correspond à ta recherche.' : 'Lance ⌘K pour capturer une idée, une tâche ou une note en une frappe.'}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map(item => (
-            <div key={item.id} className="rounded-2xl p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-              <div className="flex items-start gap-3 mb-3">
-                <span className="text-lg flex-shrink-0">{TYPE_ICONS[item.type] || '📋'}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white/85 text-sm leading-snug">{item.text}</p>
-                  <p className="font-mono text-[10px] text-white/25 mt-1">
+            <div key={item.id} className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-card-hover)]">
+              <div className="mb-3 flex items-start gap-3">
+                <span className="flex-shrink-0 text-lg">{TYPE_ICONS[item.type] || '📋'}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm leading-snug text-[var(--text-primary)]">{item.text}</p>
+                  <p className="mt-1 font-mono text-[10px] text-[var(--text-tertiary)] tabular">
                     {new Date(item.createdAt).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
-                <button onClick={() => dispatch({ type: 'REMOVE_INBOX', payload: item.id })} className="text-white/15 hover:text-red transition-colors flex-shrink-0 p-1">
+                <button onClick={() => removeItem(item)} className="flex-shrink-0 p-1 text-[var(--text-tertiary)] transition-colors hover:text-[var(--red-deep)]">
                   <Trash2 size={13} />
                 </button>
               </div>
 
               {/* Quick assign buttons */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2">
                 {state.projects.map(p => (
                   <button
                     key={p.id}
-                    onClick={() => assignQuick(item.id, p.id)}
-                    className="text-[11px] px-2.5 py-1.5 rounded-lg transition-all hover:scale-[1.03]"
-                    style={{ background: p.color + '18', color: p.color, border: `1px solid ${p.color}30` }}
+                    onClick={() => assignQuick(item, p.id)}
+                    className="rounded-lg px-2.5 py-1.5 text-[11px] transition-all hover:scale-[1.03] active:scale-100"
+                    style={{ background: p.color + '1F', color: p.color, boxShadow: `inset 0 0 0 1px ${p.color}33` }}
                   >
                     → {p.name}
                   </button>
                 ))}
-                <button
-                  onClick={() => setTriageItem(item)}
-                  className="ml-auto text-[11px] px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 transition-colors"
-                >
+                <Button size="xs" variant="subtle" className="ml-auto" onClick={() => setTriageItem(item)}>
                   Trier en détail →
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -164,8 +184,8 @@ export default function Inbox({ onNavigate }) {
       <Drawer isOpen={!!triageItem} onClose={() => setTriageItem(null)} title="Convertir en tâche">
         {triageItem && (
           <div className="flex flex-col gap-4">
-            <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--c-border)' }}>
-              <p className="text-white/60 text-sm">{triageItem.text}</p>
+            <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card-soft)] px-4 py-3">
+              <p className="text-sm text-[var(--text-secondary)]">{triageItem.text}</p>
             </div>
             <TaskForm
               initial={{ title: triageItem.text }}

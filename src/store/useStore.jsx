@@ -198,6 +198,19 @@ function reducer(state, action) {
     case 'SKIP_DAILY_REVIEW':
       return { ...state, dailyReviews: [...state.dailyReviews, { id: nanoid(), date: action.payload.date, skipped: true, createdAt: new Date().toISOString() }] }
 
+    case 'RESTORE_ITEMS': {
+      // Undo générique : réinsère des éléments supprimés en conservant leurs ids.
+      // payload: { tasks: [...], clients: [...], clientNotes: [...], ... }
+      const next = { ...state }
+      for (const [key, items] of Object.entries(action.payload || {})) {
+        if (Array.isArray(next[key]) && Array.isArray(items) && items.length) {
+          const existing = new Set(next[key].map(x => x.id))
+          next[key] = [...next[key], ...items.filter(x => x && !existing.has(x.id))]
+        }
+      }
+      return next
+    }
+
     case 'HYDRATE_STATE':
       // Replace entire state with data loaded from Supabase (post-migration)
       return { ...action.payload, _version: STATE_VERSION }

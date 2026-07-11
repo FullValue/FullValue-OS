@@ -1,14 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, Moon, Search } from 'lucide-react'
 import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import FloatingNavbar from '@/components/layout/FloatingNavbar'
 import RightSidebar from '@/components/layout/RightSidebar'
 import '@/components/ui/ThemeToggle.css'
-import CommandModal from '@/components/CommandModal'
+import CommandPalette from '@/components/CommandPalette'
+import ShortcutsDialog from '@/components/ShortcutsDialog'
 import StickyTimer from '@/components/ui/StickyTimer'
 import FocusMode from '@/components/ui/FocusMode'
 import DailyClosingModal from '@/components/DailyClosingModal'
+import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { SimpleTooltip } from '@/components/ui/tooltip'
+import { useShortcuts } from '@/hooks/useShortcuts'
 import { useStore } from '@/store/useStore'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
@@ -61,6 +66,7 @@ function AppInner() {
   const [cmdOpen, setCmdOpen] = useState(false)
   const [focusOpen, setFocusOpen] = useState(false)
   const [closingOpen, setClosingOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   // Theme — light mode is the new default
   const [theme, setTheme] = useState(() => localStorage.getItem('cockpit_theme') || 'light')
@@ -109,18 +115,13 @@ function AppInner() {
     return () => clearInterval(t)
   }, [state.dailyReviews, state.settings])
 
-  // Global ⌘+K
-  useEffect(() => {
-    function handler(e) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setCmdOpen(true)
-      }
-      if (e.key === 'Escape') setCmdOpen(false)
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
+  // Raccourcis clavier globaux : ⌘K, N/C, ?, G+lettre
+  useShortcuts({
+    togglePalette: () => setCmdOpen(o => !o),
+    openPalette: () => setCmdOpen(true),
+    navigate: setActivePage,
+    openShortcuts: () => setShortcutsOpen(true),
+  })
 
   const startTimer = useCallback((projectId = '', taskId = '') => {
     if (projectId) setTimerProject(projectId)
@@ -218,23 +219,37 @@ function AppInner() {
   }, [])
 
   return (
+    <TooltipProvider delayDuration={350} skipDelayDuration={200}>
     <div
       className="min-h-screen min-h-dvh"
       style={{ background: 'var(--bg-page)' }}
     >
-      {/* Theme toggle — top right */}
-      <div className="fixed top-4 right-4 z-40">
-        <input
-          type="checkbox"
-          id="cockpit-theme-toggle"
-          className="ttg-input"
-          checked={theme === 'dark'}
-          onChange={toggleTheme}
-        />
-        <label htmlFor="cockpit-theme-toggle" className="ttg-label" title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}>
-          <Moon size={14} className="ttg-moon" />
-          <Sun size={14} className="ttg-sun" />
-        </label>
+      {/* Top-right controls — palette + theme toggle */}
+      <div className="fixed top-4 right-4 z-40 flex items-center gap-2">
+        <SimpleTooltip label="Rechercher & commandes" shortcut="⌘K" side="bottom">
+          <button
+            onClick={() => setCmdOpen(true)}
+            aria-label="Ouvrir la palette de commandes"
+            className="hidden h-9 items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-surface)] px-3 text-sm text-[var(--text-tertiary)] shadow-[var(--shadow-card)] transition-all hover:text-[var(--text-secondary)] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.98] sm:flex"
+          >
+            <Search size={14} />
+            <span>Rechercher</span>
+            <kbd className="ml-1">⌘K</kbd>
+          </button>
+        </SimpleTooltip>
+        <div>
+          <input
+            type="checkbox"
+            id="cockpit-theme-toggle"
+            className="ttg-input"
+            checked={theme === 'dark'}
+            onChange={toggleTheme}
+          />
+          <label htmlFor="cockpit-theme-toggle" className="ttg-label" title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}>
+            <Moon size={14} className="ttg-moon" />
+            <Sun size={14} className="ttg-sun" />
+          </label>
+        </div>
       </div>
 
       {/* Floating left navbar */}
@@ -263,7 +278,17 @@ function AppInner() {
         </div>
       </main>
 
-      <CommandModal isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
+      <CommandPalette
+        open={cmdOpen}
+        onOpenChange={setCmdOpen}
+        onNavigate={setActivePage}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onOpenFocus={() => setFocusOpen(true)}
+        onOpenClosing={() => setClosingOpen(true)}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
+        onStartTask={goToSessionsWithTask}
+      />
 
       <StickyTimer
         elapsed={elapsed}
@@ -291,7 +316,12 @@ function AppInner() {
       />
 
       <DailyClosingModal isOpen={closingOpen} onClose={() => setClosingOpen(false)} />
+
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+
+      <Toaster theme={theme} />
     </div>
+    </TooltipProvider>
   )
 }
 

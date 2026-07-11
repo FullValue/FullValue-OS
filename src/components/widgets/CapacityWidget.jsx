@@ -42,7 +42,7 @@ export default function CapacityWidget() {
   const usedPct = Math.min(100, ((plannedMin + loggedMin) / capacityMin) * 100)
   const overload = plannedMin + loggedMin > capacityMin
 
-  const accent = overload ? '#F87171' : usedPct > 80 ? '#FFD66B' : 'var(--violet-deep)'
+  const accent = overload ? 'var(--red-deep)' : usedPct > 80 ? 'var(--yellow-deep)' : 'var(--violet-deep)'
 
   function saveCapacity() {
     const h = Math.max(1, Math.min(24, Number(draftHours) || 8))
@@ -89,17 +89,17 @@ export default function CapacityWidget() {
 
       {/* Progress bar */}
       <div className="flex h-2.5 rounded-full overflow-hidden mb-3"
-        style={{ background: 'rgba(255,255,255,0.04)' }}>
+        style={{ background: 'rgba(var(--ink),0.06)' }}>
         {loggedMin > 0 && (
           <div style={{
             width: `${Math.min(100, (loggedMin / capacityMin) * 100)}%`,
-            background: '#A8E6BD',
+            background: 'var(--green-deep)',
           }} title={`${formatHours(loggedMin)} déjà loggé`} />
         )}
         {apptMin > 0 && (
           <div style={{
             width: `${Math.min(100, (apptMin / capacityMin) * 100)}%`,
-            background: '#A8D4F0',
+            background: 'var(--blue-deep)',
           }} title={`${formatHours(apptMin)} de RDV`} />
         )}
         {estimatedMin > 0 && (

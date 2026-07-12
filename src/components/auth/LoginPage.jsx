@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 import './AuthForm.css'
 
 export default function LoginPage({ onNavigate }) {
+  const { signInAsGuest } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -12,9 +14,14 @@ export default function LoginPage({ onNavigate }) {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (err) setError(err.message)
+    try {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+      if (err) setError(err.message)
+    } catch {
+      setError('Connexion au serveur impossible. Utilise l’accès invité ci-dessous.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -66,6 +73,12 @@ export default function LoginPage({ onNavigate }) {
 
         <button type="button" className="afc-btn-forgot" onClick={() => onNavigate('forgot')}>
           Forgot Password
+        </button>
+
+        <div className="afc-divider"><span>ou</span></div>
+
+        <button type="button" className="afc-btn-guest" onClick={signInAsGuest}>
+          Accéder en invité →
         </button>
       </form>
     </div>

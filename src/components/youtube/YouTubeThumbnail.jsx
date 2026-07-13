@@ -5,7 +5,7 @@ export default function YouTubeThumbnail({ youtubeId, title, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="group relative w-full overflow-hidden rounded-xl bg-black"
+      className="group relative w-full overflow-hidden rounded-xl bg-black transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
       style={{ aspectRatio: '16/9' }}
     >
       <img

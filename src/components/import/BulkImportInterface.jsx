@@ -1,8 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
-import { X, CheckCircle, AlertCircle, AlertTriangle, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
+import { CheckCircle, AlertCircle, AlertTriangle, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
 import { BulkImportSchema, formatZodError } from '@/lib/import/schema'
 import { useBulkImport, countEntities, normalizeSlug, ID_TO_SLUG } from '@/hooks/useBulkImport'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { toast } from '@/lib/toast'
 
 // ─── Project label helpers ────────────────────────────────────────────────────
 
@@ -156,32 +163,20 @@ function SchemaModal({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden"
-        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-float)' }}>
-        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-soft)' }}>
-          <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Format JSON attendu</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/8 transition-colors" style={{ color: 'var(--text-tertiary)' }}>
-            <X size={16} />
-          </button>
-        </div>
+    <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col overflow-hidden p-0">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>Format JSON attendu</DialogTitle>
+        </DialogHeader>
 
-        <div className="flex gap-1 px-5 pt-3 flex-shrink-0">
-          {[['example', 'Exemple'], ['prompt', 'Prompt IA']].map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)}
-              className="px-3 py-1.5 text-xs rounded-lg transition-colors"
-              style={tab === id
-                ? { background: 'var(--violet-bg)', color: 'var(--violet-deep)', fontWeight: 500 }
-                : { color: 'var(--text-tertiary)' }}>
-              {label}
-            </button>
-          ))}
-        </div>
+        <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
+          <TabsList className="mx-5 mt-3 self-start">
+            <TabsTrigger value="example">Exemple</TabsTrigger>
+            <TabsTrigger value="prompt">Prompt IA</TabsTrigger>
+          </TabsList>
 
-        <div className="flex-1 overflow-y-auto p-5">
-          {tab === 'example' && (
-            <div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-5">
+            <TabsContent value="example" className="mt-0">
               <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
                 Exemple de JSON valide avec toutes les sections. Tu peux copier-coller et adapter.
               </p>
@@ -189,11 +184,9 @@ function SchemaModal({ onClose }) {
                 style={{ background: 'var(--bg-input, rgba(0,0,0,0.15))', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace', border: '1px solid var(--border-soft)' }}>
                 {EXAMPLE_JSON}
               </pre>
-            </div>
-          )}
+            </TabsContent>
 
-          {tab === 'prompt' && (
-            <div>
+            <TabsContent value="prompt" className="mt-0">
               <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
                 Colle ce prompt dans ton GPT, ton Gem Gemini ou ton Claude Project. Il transforme n'importe quel brain dump en JSON importable.
               </p>
@@ -201,17 +194,15 @@ function SchemaModal({ onClose }) {
                 style={{ background: 'var(--bg-input, rgba(0,0,0,0.15))', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace', border: '1px solid var(--border-soft)' }}>
                 {AI_PROMPT.replace('{{DATE}}', new Date().toISOString().slice(0, 10))}
               </pre>
-              <button onClick={copyPrompt}
-                className="mt-3 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
-                style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}>
+              <Button variant="subtle" size="sm" className="mt-3" onClick={copyPrompt}>
                 {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? 'Copié !' : 'Copier le prompt'}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+                {copied ? 'Copié' : 'Copier le prompt'}
+              </Button>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -273,7 +264,7 @@ function ImportPreview({ data, excluded, onToggle, defaultProjectSlug }) {
           <div key={type} style={{ borderBottom: '1px solid var(--border-soft)' }}>
             <button
               onClick={() => setCollapsed(c => ({ ...c, [type]: !c[type] }))}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors hover:bg-white/3"
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors hover:bg-[rgba(var(--ink),0.04)]"
             >
               <span className="text-sm">{meta.icon}</span>
               <span className="text-xs font-medium flex-1" style={{ color: 'var(--text-primary)' }}>
@@ -293,13 +284,10 @@ function ImportPreview({ data, excluded, onToggle, defaultProjectSlug }) {
                   const slug = meta.slug(item) || data.project_slug || defaultProjectSlug
 
                   return (
-                    <label key={i} className="flex items-center gap-2.5 px-4 py-1.5 cursor-pointer hover:bg-white/3 transition-colors">
-                      <input
-                        type="checkbox"
+                    <label key={i} onClick={() => onToggle(key)} className="flex items-center gap-2.5 px-4 py-1.5 cursor-pointer hover:bg-[rgba(var(--ink),0.04)] transition-colors">
+                      <Checkbox
                         checked={!isExcluded}
-                        onChange={() => onToggle(key)}
-                        className="rounded flex-shrink-0"
-                        style={{ accentColor: 'var(--violet-deep)', width: 13, height: 13 }}
+                        className="pointer-events-none flex-shrink-0"
                       />
                       <span
                         className="text-xs flex-1 truncate"
@@ -387,6 +375,7 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
     const r = importBulk(parsed, { dryRun, excluded, fallbackSlug: defaultProjectSlug, fallbackClientId: defaultClientId })
     setResult(r)
     if (r.success && !dryRun) {
+      toast.success(`${r.created} élément${r.created > 1 ? 's' : ''} importé${r.created > 1 ? 's' : ''}`)
       onImportSuccess?.(r.created)
     }
   }
@@ -427,26 +416,21 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
         {/* Left: textarea */}
         <div className="flex flex-col gap-2 lg:flex-[3]">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>JSON à importer</label>
-            <button onClick={() => setShowSchema(true)} className="text-xs transition-colors underline underline-offset-2"
-              style={{ color: 'var(--violet-deep)' }}>
+            <Label className="mb-0">JSON à importer</Label>
+            <Button variant="ghost" size="sm" onClick={() => setShowSchema(true)}
+              className="text-[var(--violet-deep)] underline underline-offset-2">
               Voir le format attendu
-            </button>
+            </Button>
           </div>
 
-          <textarea
+          <Textarea
             value={rawJson}
             onChange={e => setRawJson(e.target.value)}
             placeholder={`Colle ton JSON ici...\n\n{\n  "tasks": [\n    { "title": "Ma première tâche" }\n  ]\n}`}
-            className="w-full rounded-2xl text-xs leading-relaxed resize-none focus:outline-none focus:ring-2"
+            className="resize-none text-xs leading-relaxed"
             style={{
               minHeight: 'clamp(200px, 40vh, 340px)',
-              background: 'var(--bg-input, rgba(0,0,0,0.12))',
-              border: '1px solid var(--border-soft)',
-              color: 'var(--text-secondary)',
               fontFamily: 'JetBrains Mono, monospace',
-              padding: '14px 16px',
-              focusRingColor: 'var(--violet-deep)',
             }}
             spellCheck={false}
           />
@@ -498,7 +482,7 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
               {dryRun
                 ? `Dry-run : ${result.created} élément${result.created > 1 ? 's' : ''} seraient créés.`
                 : result.success
-                ? `${result.created} élément${result.created > 1 ? 's' : ''} importé${result.created > 1 ? 's' : ''} avec succès !`
+                ? `${result.created} élément${result.created > 1 ? 's' : ''} importé${result.created > 1 ? 's' : ''} avec succès`
                 : `${result.created} créé${result.created > 1 ? 's' : ''}, ${result.errors.length} erreur${result.errors.length > 1 ? 's' : ''}`}
             </p>
             {result.errors.length > 0 && (
@@ -514,13 +498,8 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
 
       {/* Footer */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1">
-        <label className="flex items-center gap-2 text-xs cursor-pointer select-none w-full sm:w-auto" style={{ color: 'var(--text-tertiary)' }}>
-          <input
-            type="checkbox"
-            checked={dryRun}
-            onChange={e => setDryRun(e.target.checked)}
-            style={{ accentColor: 'var(--violet-deep)' }}
-          />
+        <label onClick={() => setDryRun(v => !v)} className="flex items-center gap-2 text-xs cursor-pointer select-none w-full sm:w-auto" style={{ color: 'var(--text-tertiary)' }}>
+          <Checkbox checked={dryRun} className="pointer-events-none" />
           <span className="hidden sm:inline">Mode dry-run (simuler sans créer)</span>
           <span className="sm:hidden">Dry-run (simulation)</span>
         </label>
@@ -529,25 +508,22 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
 
         <div className="flex items-center gap-2 ml-auto flex-wrap">
           {rawJson && (
-            <button onClick={handleReset} className="text-xs px-3 py-2 rounded-xl transition-colors"
-              style={{ color: 'var(--text-tertiary)', background: 'transparent' }}>
+            <Button variant="ghost" size="sm" onClick={handleReset}>
               Réinitialiser
-            </button>
+            </Button>
           )}
           {onCancel && (
-            <button onClick={onCancel} className="text-xs px-4 py-2 rounded-xl transition-colors"
-              style={{ background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-secondary)' }}>
+            <Button variant="subtle" size="sm" onClick={onCancel}>
               Annuler
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            size="sm"
             onClick={handleImport}
             disabled={!canImport}
-            className="text-xs px-4 py-2 rounded-xl font-medium transition-all disabled:opacity-40"
-            style={{ background: 'var(--violet-deep)', color: '#fff' }}
           >
             {importing ? 'Import…' : dryRun ? `Simuler ${totalToCreate}` : `Importer ${totalToCreate}`}
-          </button>
+          </Button>
         </div>
       </div>
 

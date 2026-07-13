@@ -3,6 +3,8 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, Link, X, Image, ChevronDown, ChevronUp } from 'lucide-react'
 import { useFileUpload } from '@/hooks/useFileUpload'
 import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const IMAGES_MIME = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml']
 const ALL_MIME = [
@@ -110,13 +112,9 @@ export default function ImageOrFileInput({
           <span className="text-[11px] flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>
             {value.type === 'upload' ? value.fileName : value.url}
           </span>
-          <button
-            onClick={handleRemove}
-            className="text-[10px] px-2 py-0.5 rounded-lg flex-shrink-0 transition-colors"
-            style={{ background: 'rgba(248,113,113,0.12)', color: '#F87171' }}
-          >
+          <Button variant="danger" size="xs" onClick={handleRemove} className="flex-shrink-0">
             Retirer
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -162,33 +160,28 @@ export default function ImageOrFileInput({
       )}
 
       {/* Advanced: URL input */}
-      <button
+      <Button
+        variant="ghost"
+        size="xs"
         onClick={() => setShowUrl(v => !v)}
-        className="flex items-center gap-1 text-[10px] transition-colors"
-        style={{ color: 'var(--text-tertiary)' }}
+        className="gap-1 px-1 text-[10px] text-[var(--text-tertiary)]"
       >
         {showUrl ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         Options avancées (URL externe)
-      </button>
+      </Button>
 
       {showUrl && (
         <div className="flex gap-1.5">
-          <input
+          <Input
             value={urlInput}
             onChange={e => setUrlInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
             placeholder="https://..."
-            className="flex-1 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none font-mono"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}
+            className="h-8 flex-1 rounded-lg font-mono text-xs"
           />
-          <button
-            onClick={handleUrlSubmit}
-            disabled={!urlInput.trim()}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40"
-            style={{ background: 'var(--violet-deep, #8B7CFF)', color: '#fff' }}
-          >
+          <Button size="sm" onClick={handleUrlSubmit} disabled={!urlInput.trim()}>
             OK
-          </button>
+          </Button>
         </div>
       )}
     </div>

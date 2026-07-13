@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { X, Check } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { toast } from '@/lib/toast'
 
 const PRAYER_FIELDS = [
   { key: 'fajr',    label: 'Fajr' },
@@ -36,6 +39,7 @@ export default function PrayerTimesEditor({ isOpen, onClose }) {
         prayerTimesUpdatedAt: new Date().toISOString(),
       },
     })
+    toast.success('Horaires enregistrés')
     onClose()
   }
 
@@ -62,9 +66,9 @@ export default function PrayerTimesEditor({ isOpen, onClose }) {
               {lastUpdated && <> · MAJ le {lastUpdated}</>}
             </p>
           </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white/60 transition-colors">
+          <Button variant="ghost" size="icon-sm" onClick={onClose} className="text-[var(--text-tertiary)]">
             <X size={16} />
-          </button>
+          </Button>
         </div>
 
         <div className="px-6 pb-6">
@@ -75,26 +79,21 @@ export default function PrayerTimesEditor({ isOpen, onClose }) {
                 <span className="flex-1 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                   {f.label}
                 </span>
-                <input type="time"
+                <Input type="time"
                   value={draft[f.key] || ''}
                   onChange={e => setDraft(d => ({ ...d, [f.key]: e.target.value }))}
-                  className="bg-transparent font-mono text-sm focus:outline-none text-right"
-                  style={{ color: 'var(--text-primary)' }} />
+                  className="h-8 w-28 font-mono text-right" />
               </div>
             ))}
           </div>
 
           <div className="flex items-center gap-2 mt-5">
-            <button onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-sm transition-colors"
-              style={{ color: 'var(--text-tertiary)' }}>
+            <Button variant="ghost" onClick={onClose}>
               Annuler
-            </button>
-            <button onClick={handleSave}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
-              style={{ background: 'var(--violet-deep)', color: '#fff' }}>
+            </Button>
+            <Button onClick={handleSave} className="flex-1">
               <Check size={14} /> Enregistrer
-            </button>
+            </Button>
           </div>
         </div>
       </div>

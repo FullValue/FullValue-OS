@@ -3,6 +3,7 @@ import { Sunrise, Sun, Sunset, Moon, CloudSun, Settings } from 'lucide-react'
 import StatistiqueWidget from '@/components/widgets/StatistiqueWidget'
 import PrayerTimesEditor from '@/components/PrayerTimesEditor'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
 
 function hhmmToMin(s) {
   if (!s || typeof s !== 'string') return 0
@@ -112,12 +113,11 @@ function PrayerWidget({ nowMinutes }) {
         <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
           Horaires de prière
         </p>
-        <button onClick={() => setEditorOpen(true)}
-          className="p-1 rounded-lg transition-colors hover:bg-white/5"
-          style={{ color: 'var(--text-tertiary)' }}
+        <Button variant="ghost" size="icon-sm" onClick={() => setEditorOpen(true)}
+          className="text-[var(--text-tertiary)]"
           title="Modifier les horaires">
           <Settings size={12} />
-        </button>
+        </Button>
       </div>
       <p className="text-[10px] font-mono mb-4" style={{ color: 'var(--text-tertiary)' }}>
         {formatHHMM(nowMinutes)} · aujourd'hui

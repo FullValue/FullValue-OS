@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti'
 import {
   Play, AlertTriangle, Inbox, ChevronRight,
   TrendingUp, TrendingDown, Minus, Zap, GripVertical,
-  Check, Plus, X,
+  Plus, X,
 } from 'lucide-react'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -16,6 +16,11 @@ import { useStore } from '@/store/useStore'
 import { PrayerWidget } from '@/components/layout/RightSidebar'
 import StatistiqueWidget from '@/components/widgets/StatistiqueWidget'
 import CapacityWidget from '@/components/widgets/CapacityWidget'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Progress, ProgressRing } from '@/components/ui/progress'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -73,14 +78,7 @@ function getMomentum(tasks, projectId) {
 
 function WidgetCard({ title, badge, action, children, accent }) {
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: 'var(--bg-card)',
-        border: '0.5px solid var(--border-soft)',
-        boxShadow: 'var(--shadow-card)',
-      }}
-    >
+    <Card className="overflow-hidden">
       {title && (
         <div
           className="flex items-center justify-between px-5 pt-4 pb-3"
@@ -96,7 +94,7 @@ function WidgetCard({ title, badge, action, children, accent }) {
         </div>
       )}
       <div className="px-5 py-4">{children}</div>
-    </div>
+    </Card>
   )
 }
 
@@ -132,9 +130,9 @@ function DeadlinesCard({ tasks, projects, onNavigate }) {
         </span>
       )}
       action={
-        <button onClick={() => onNavigate('taches')} style={{ color: 'var(--text-tertiary)' }} className="hover:opacity-70 transition-opacity">
+        <Button variant="ghost" size="icon-sm" onClick={() => onNavigate('taches')} style={{ color: 'var(--text-tertiary)' }}>
           <ChevronRight size={14} />
-        </button>
+        </Button>
       }
     >
       {withDue.length === 0 ? (
@@ -188,21 +186,9 @@ function MomentumCard({ projects, tasks }) {
           return (
             <div key={p.id} className="flex items-center gap-3">
               {/* Ring */}
-              <div className="relative w-10 h-10 flex-shrink-0">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{
-                    background: `conic-gradient(${p.color} ${pct * 3.6}deg, var(--border-soft) 0deg)`,
-                  }}
-                >
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[11px]"
-                    style={{ background: 'var(--bg-card)', color: p.color }}
-                  >
-                    {p.emoji}
-                  </div>
-                </div>
-              </div>
+              <ProgressRing value={pct} size={40} strokeWidth={3} color={p.color} className="flex-shrink-0">
+                <span className="text-[11px]" style={{ color: p.color }}>{p.emoji}</span>
+              </ProgressRing>
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -230,25 +216,18 @@ function MomentumCard({ projects, tasks }) {
 
 function StatTile({ label, value, sub, barPct, barColor, onClick }) {
   return (
-    <div
-      className="rounded-2xl p-4 flex flex-col gap-2 transition-all"
-      style={{
-        background: 'var(--bg-card)',
-        border: '0.5px solid var(--border-soft)',
-        boxShadow: 'var(--shadow-card)',
-        cursor: onClick ? 'pointer' : 'default',
-      }}
+    <Card
+      className="p-4 flex flex-col gap-2"
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
       onClick={onClick}
     >
       <p className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>{label}</p>
-      <div className="font-mono text-xl font-semibold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{value}</div>
+      <div className="font-mono text-xl font-semibold tabular" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{value}</div>
       {barPct !== undefined && (
-        <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--border-soft)' }}>
-          <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, background: barColor }} />
-        </div>
+        <Progress value={barPct} color={barColor} className="h-1" />
       )}
       {sub && <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{sub}</p>}
-    </div>
+    </Card>
   )
 }
 
@@ -281,10 +260,7 @@ function StatsRow({ state, nowMinutes, onNavigate, dispatch }) {
         barPct={todayAll.length ? (todayDone / todayAll.length) * 100 : 0}
         barColor="var(--violet-deep)"
       />
-      <div
-        className="rounded-2xl p-4 flex flex-col gap-2"
-        style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border-soft)', boxShadow: 'var(--shadow-card)' }}
-      >
+      <Card className="p-4 flex flex-col gap-2">
         <p className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>Énergie</p>
         <div className="flex gap-1.5 mt-0.5">
           {[1, 2, 3, 4, 5].map(n => (
@@ -302,7 +278,7 @@ function StatsRow({ state, nowMinutes, onNavigate, dispatch }) {
           ))}
         </div>
         <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{energyLabels[state.energy] || 'Non défini'}</p>
-      </div>
+      </Card>
       <StatTile
         label="Inbox à trier"
         value={<span style={{ color: inboxCount > 0 ? 'var(--yellow-deep)' : 'var(--text-tertiary)' }}>{inboxCount}</span>}
@@ -411,16 +387,11 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
                 className="flex items-center gap-3 py-1.5 px-1 rounded-xl group"
                 style={{ opacity: isDone ? 0.5 : 1 }}
               >
-                <button
-                  onClick={() => dispatch({ type: 'TOGGLE_TASK_DONE', payload: task.id })}
-                  className="w-4 h-4 rounded border-2 flex-shrink-0 transition-all flex items-center justify-center"
-                  style={{
-                    borderColor: isDone ? 'var(--violet-deep)' : 'var(--border-medium)',
-                    background: isDone ? 'var(--violet-bg)' : 'transparent',
-                  }}
-                >
-                  {isDone && <Check size={9} style={{ color: 'var(--violet-deep)' }} />}
-                </button>
+                <Checkbox
+                  checked={isDone}
+                  onCheckedChange={() => dispatch({ type: 'TOGGLE_TASK_DONE', payload: task.id })}
+                  className="flex-shrink-0"
+                />
                 {project && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />}
                 <span
                   className="flex-1 text-sm truncate"
@@ -460,13 +431,12 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
       {/* Picker */}
       {picking && (
         <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
-          <input
+          <Input
             autoFocus
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Chercher une tâche..."
-            className="w-full text-sm px-3 py-2 rounded-xl focus:outline-none mb-2"
-            style={{ background: 'var(--bg-input)', border: '1px solid var(--border-soft)', color: 'var(--text-primary)' }}
+            className="mb-2"
           />
           {filtered.length === 0 ? (
             <p className="text-sm text-center py-3" style={{ color: 'var(--text-tertiary)' }}>
@@ -712,12 +682,12 @@ export default function Journee({ onStartTask, onNavigate }) {
         className="rounded-2xl px-4 py-3 flex items-center gap-3"
         style={{ background: 'var(--violet-bg)', border: '1px solid var(--violet-solid)' }}
       >
-        <input
+        <Input
           value={captureText}
           onChange={e => setCaptureText(e.target.value)}
           onKeyDown={handleCapture}
           placeholder="Capture rapide — idée, tâche, à pas oublier..."
-          className="flex-1 bg-transparent text-sm focus:outline-none"
+          className="flex-1 h-auto border-transparent bg-transparent px-0 focus:border-transparent focus:bg-transparent focus:ring-0"
           style={{ color: 'var(--text-primary)' }}
         />
         {captured ? (

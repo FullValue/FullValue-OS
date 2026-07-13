@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/button'
 
 // ── Field mappers ────────────────────────────────────────────────────────────
 
@@ -368,18 +369,14 @@ export default function MigratePage() {
           Migration réussie ! Tes données sont maintenant dans Supabase.
         </div>
       ) : (
-        <button
+        <Button
+          variant="secondary"
+          size="lg"
           onClick={runMigration}
           disabled={status === 'running'}
-          className="rounded-xl px-6 py-3 text-sm font-medium transition-opacity"
-          style={{
-            background: 'var(--active-bg)',
-            color: 'var(--active-text)',
-            opacity: status === 'running' ? 0.6 : 1,
-          }}
         >
           {status === 'running' ? 'Migration en cours…' : status === 'error' ? 'Réessayer' : 'Lancer la migration'}
-        </button>
+        </Button>
       )}
     </div>
   )

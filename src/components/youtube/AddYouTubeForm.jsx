@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { extractYouTubeId, isYouTubeUrl, fetchYouTubeMetadata, buildThumbnailUrl } from '@/lib/youtube'
 import { Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function AddYouTubeForm({ onSubmit, onCancel, extraFields, extraDefaults = {} }) {
   const [url, setUrl] = useState('')
@@ -39,13 +42,13 @@ export default function AddYouTubeForm({ onSubmit, onCancel, extraFields, extraD
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label className="text-white/40 text-xs mb-1 block">Lien YouTube</label>
-        <input
+        <Label>Lien YouTube</Label>
+        <Input
           autoFocus
           value={url}
           onChange={e => setUrl(e.target.value)}
           placeholder="https://youtube.com/watch?v=..."
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet/40 font-mono"
+          className="font-mono"
         />
       </div>
 
@@ -74,11 +77,10 @@ export default function AddYouTubeForm({ onSubmit, onCancel, extraFields, extraD
       {metadata && (
         <>
           <div>
-            <label className="text-white/40 text-xs mb-1 block">Titre *</label>
-            <input
+            <Label>Titre *</Label>
+            <Input
               value={title}
               onChange={e => setTitle(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-violet/40"
             />
           </div>
           {extraFields}
@@ -86,16 +88,12 @@ export default function AddYouTubeForm({ onSubmit, onCancel, extraFields, extraD
       )}
 
       <div className="flex gap-3 pt-2">
-        <button
-          type="submit"
-          disabled={!metadata || !title.trim()}
-          className="flex-1 bg-red-500 hover:bg-red-500/90 text-white py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40"
-        >
+        <Button type="submit" disabled={!metadata || !title.trim()} className="flex-1">
           ▶ Ajouter la vidéo
-        </button>
-        <button type="button" onClick={onCancel} className="flex-1 bg-white/5 hover:bg-white/8 text-white/50 py-2.5 rounded-xl text-sm transition-colors">
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
           Annuler
-        </button>
+        </Button>
       </div>
     </form>
   )

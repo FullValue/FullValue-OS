@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Gauge, Edit2, Check } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { toast } from '@/lib/toast'
 
 function todayStr() {
   const d = new Date()
@@ -48,6 +51,7 @@ export default function CapacityWidget() {
     const h = Math.max(1, Math.min(24, Number(draftHours) || 8))
     dispatch({ type: 'UPDATE_SETTINGS', payload: { dailyCapacityMinutes: h * 60 } })
     setEditing(false)
+    toast.success('Capacité mise à jour')
   }
 
   return (
@@ -65,25 +69,22 @@ export default function CapacityWidget() {
 
         {editing ? (
           <div className="flex items-center gap-1">
-            <input type="number" min="1" max="24"
+            <Input type="number" min="1" max="24"
               value={draftHours}
               onChange={e => setDraftHours(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') saveCapacity(); if (e.key === 'Escape') setEditing(false) }}
               autoFocus
-              className="w-12 bg-transparent text-xs font-mono text-right focus:outline-none"
-              style={{ color: 'var(--text-primary)', borderBottom: '1px solid var(--c-border)' }} />
+              className="h-7 w-14 px-2 text-xs font-mono text-right" />
             <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>h</span>
-            <button onClick={saveCapacity}
-              className="ml-1 text-white/50 hover:text-white/80 transition-colors">
+            <Button variant="ghost" size="icon-sm" onClick={saveCapacity} aria-label="Valider">
               <Check size={11} />
-            </button>
+            </Button>
           </div>
         ) : (
-          <button onClick={() => setEditing(true)}
-            className="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-lg transition-colors hover:bg-white/5"
-            style={{ color: 'var(--text-tertiary)' }}>
+          <Button variant="ghost" size="sm" onClick={() => setEditing(true)}
+            className="gap-1 font-mono text-[11px] text-[var(--text-tertiary)]">
             {Math.round(capacityMin / 60)}h <Edit2 size={9} />
-          </button>
+          </Button>
         )}
       </div>
 

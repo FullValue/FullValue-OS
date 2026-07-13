@@ -185,13 +185,13 @@ export default function Taches() {
       {/* Capture */}
       <div className="mb-6">
         <div className="relative">
-          <Plus size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
-          <input
+          <Plus size={16} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 text-[var(--text-tertiary)]" />
+          <Input
             value={captureText}
             onChange={e => setCaptureText(e.target.value)}
             onKeyDown={handleCapture}
             placeholder="Capturer une idée ou tâche…  (Entrée pour ajouter)"
-            className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] py-3.5 pl-9 pr-4 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] shadow-[var(--shadow-card)] transition-all hover:border-[var(--border-medium)] focus:border-[var(--violet-deep)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+            className="h-12 pl-9 pr-4 shadow-[var(--shadow-card)]"
           />
         </div>
 
@@ -204,15 +204,18 @@ export default function Taches() {
                 <div key={item.id} className="flex items-center gap-3">
                   <span className="flex-1 text-sm text-[var(--text-secondary)]">{item.text}</span>
                   <Button size="xs" variant="subtle" onClick={() => setInboxDrawer(item)}>Trier →</Button>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => {
                       dispatch({ type: 'REMOVE_INBOX', payload: item.id })
                       toastUndo('Capture supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { inbox: [item] } }))
                     }}
-                    className="text-[var(--text-tertiary)] transition-colors hover:text-[var(--red-deep)]"
+                    className="text-[var(--text-tertiary)] hover:text-[var(--red-deep)]"
+                    aria-label="Supprimer"
                   >
                     <Trash2 size={12} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -298,13 +301,13 @@ export default function Taches() {
                 {/* Content */}
                 <div className="min-w-0 flex-1">
                   {editingTitle === task.id ? (
-                    <input
+                    <Input
                       autoFocus
                       value={editTitle}
                       onChange={e => setEditTitle(e.target.value)}
                       onBlur={() => commitEditTitle(task.id)}
                       onKeyDown={e => { if (e.key === 'Enter') commitEditTitle(task.id); if (e.key === 'Escape') setEditingTitle(null) }}
-                      className="w-full rounded-md border border-[var(--violet-deep)] bg-[var(--bg-input)] px-2 py-0.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+                      className="h-7 px-2 border-[var(--violet-deep)]"
                     />
                   ) : (
                     <p
@@ -357,13 +360,15 @@ export default function Taches() {
                   >
                     <Pin size={13} />
                   </button>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => deleteTask(task)}
-                    className="rounded p-1.5 text-[var(--text-tertiary)] opacity-0 transition-all hover:text-[var(--red-deep)] group-hover:opacity-100"
+                    className="text-[var(--text-tertiary)] opacity-0 hover:text-[var(--red-deep)] group-hover:opacity-100"
                     title="Supprimer"
                   >
                     <Trash2 size={13} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             )

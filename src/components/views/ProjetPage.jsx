@@ -5,6 +5,14 @@ import ViewContainer from '@/views/ViewContainer'
 import Drawer from '@/components/ui/Drawer'
 import BulkImportInterface from '@/components/import/BulkImportInterface'
 import { ID_TO_SLUG } from '@/hooks/useBulkImport'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Card } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { EmptyState } from '@/components/ui/empty-state'
+import { UIBadge } from '@/components/ui/Badge'
+import { toast, toastUndo } from '@/lib/toast'
 
 function formatDuration(seconds) {
   if (!seconds) return '0m'
@@ -76,13 +84,8 @@ function NorthStarBanner({ project }) {
       {/* Progress badge */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <div className="flex items-center gap-1.5">
-          <div className="w-24 h-1.5 bg-white/8 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${project.northStarProgress}%`, background: project.color }}
-            />
-          </div>
-          <span className="font-mono text-[11px]" style={{ color: project.color }}>{project.northStarProgress}%</span>
+          <Progress value={project.northStarProgress} color={project.color} className="w-24" />
+          <span className="font-mono text-[11px] tabular" style={{ color: project.color }}>{project.northStarProgress}%</span>
         </div>
 
         {/* Slider trigger */}
@@ -96,12 +99,13 @@ function NorthStarBanner({ project }) {
           style={{ accentColor: project.color }}
         />
 
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={() => { setDraft(project.northStar); setEditing(!editing) }}
-          className="p-1 rounded transition-colors hover:bg-white/10 text-white/30"
         >
           {editing ? <Check size={12} style={{ color: project.color }} /> : <Edit2 size={12} />}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -178,8 +182,7 @@ function SessionTaskPicker({ project, tasks, onStart, onClose }) {
                 {icon && <span className="flex-shrink-0">{icon}</span>}
                 <span className="truncate flex-1">{task.title}</span>
                 {task.status === 'inprogress' && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0"
-                    style={{ background: 'rgba(255,214,107,0.15)', color: '#FFD66B' }}>En cours</span>
+                  <UIBadge variant="yellow" className="flex-shrink-0">En cours</UIBadge>
                 )}
               </button>
             )
@@ -338,7 +341,7 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
         <div className="flex gap-2 relative">
           <button
             onClick={() => setShowPicker(v => !v)}
-            className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-semibold transition-all hover:opacity-90"
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
             style={{ background: project.color, color: '#0a0a0a' }}
           >
             <Play size={13} strokeWidth={2.5} />
@@ -363,14 +366,14 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
           { Icon: null,        label: "Aujourd'hui",    value: todayTasks.length, sub: 'priorité du jour', emoji: '📌', color: null },
           { Icon: null,        label: 'Ship 80%',       value: ship80Tasks.length, sub: 'à livrer vite', emoji: '🚀', color: '#FFC1E0' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl p-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+          <Card key={i} className="p-3">
             <div className="flex items-center gap-1.5 mb-2">
               {s.Icon ? <s.Icon size={12} className="text-white/30" /> : <span className="text-[10px]">{s.emoji}</span>}
               <span className="text-[10px] text-white/30 uppercase tracking-wider">{s.label}</span>
             </div>
-            <p className="font-mono text-2xl font-medium" style={{ color: s.color || 'var(--text-primary)' }}>{s.value}</p>
+            <p className="font-mono text-2xl font-medium tabular" style={{ color: s.color || 'var(--text-primary)' }}>{s.value}</p>
             <p className="text-[10px] text-white/25 mt-0.5">{s.sub}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -444,15 +447,19 @@ function NotesTab({ project }) {
     setShowNew(false)
     setEditing(note.id)
     setDraft('')
+    toast.success('Note créée')
   }
 
   function saveNote(noteId) {
     dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, notes: notes.map(n => n.id === noteId ? { ...n, content: draft } : n) } })
     setEditing(null)
+    toast.success('Note enregistrée')
   }
 
   function deleteNote(noteId) {
+    const snapshot = notes
     dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, notes: notes.filter(n => n.id !== noteId) } })
+    toastUndo('Note supprimée', () => dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, notes: snapshot } }))
   }
 
   return (
@@ -461,7 +468,7 @@ function NotesTab({ project }) {
         <p className="text-[10px] text-white/30 uppercase tracking-wider">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
         <button
           onClick={() => setShowNew(true)}
-          className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-colors"
+          className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-all active:scale-[0.98]"
           style={{ background: project.color + '18', color: project.color }}
         >
           <Plus size={12} /> Nouvelle note
@@ -469,58 +476,60 @@ function NotesTab({ project }) {
       </div>
 
       {showNew && (
-        <div className="rounded-xl p-3" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-          <input
+        <Card className="p-3">
+          <Input
             autoFocus
             value={newTitle}
             onChange={e => setNewTitle(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addNote(); if (e.key === 'Escape') setShowNew(false) }}
             placeholder="Titre de la note..."
-            className="w-full bg-transparent text-sm text-white/80 focus:outline-none"
           />
           <div className="flex gap-2 mt-2">
-            <button onClick={addNote} className="text-xs px-3 py-1 rounded-lg text-white font-medium" style={{ background: project.color }}>Créer</button>
-            <button onClick={() => setShowNew(false)} className="text-xs px-3 py-1 rounded-lg bg-white/5 text-white/40">Annuler</button>
+            <button onClick={addNote} className="text-xs px-3 py-1 rounded-lg text-white font-medium transition-all active:scale-[0.98]" style={{ background: project.color }}>Créer</button>
+            <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Annuler</Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {notes.length === 0 && !showNew && (
-        <div className="text-center py-16">
-          <p className="text-3xl mb-3">📝</p>
-          <p className="text-white/30 text-sm">Aucune note pour ce projet</p>
-        </div>
+        <EmptyState icon={FileText} title="Aucune note pour ce projet" description="Crée une note pour capturer les idées et décisions de ce projet." />
       )}
 
       {notes.map(note => (
-        <div key={note.id} className="rounded-xl overflow-hidden group" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+        <Card key={note.id} className="overflow-hidden group">
           <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: editing === note.id ? '1px solid var(--c-border)' : 'none' }}>
             <span className="flex-1 text-sm font-medium text-white/80">{note.title}</span>
             <span className="font-mono text-[10px] text-white/25">
               {new Date(note.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
             </span>
-            <button
+            <Button
+              variant="subtle"
+              size="xs"
               onClick={() => { setEditing(editing === note.id ? null : note.id); setDraft(note.content) }}
-              className="text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 transition-colors"
             >
               {editing === note.id ? 'Fermer' : 'Éditer'}
-            </button>
-            <button onClick={() => deleteNote(note.id)} className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red transition-all">
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => deleteNote(note.id)}
+              className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red"
+            >
               <Trash2 size={12} />
-            </button>
+            </Button>
           </div>
 
           {editing === note.id ? (
             <div className="p-4">
-              <textarea
+              <Textarea
                 autoFocus
                 value={draft}
                 onChange={e => setDraft(e.target.value)}
                 rows={8}
                 placeholder="Écris ta note en Markdown..."
-                className="w-full bg-transparent text-sm text-white/70 focus:outline-none resize-none font-mono leading-relaxed"
+                className="border-transparent bg-transparent focus:bg-transparent resize-none font-mono leading-relaxed"
               />
-              <button onClick={() => saveNote(note.id)} className="mt-2 text-xs px-3 py-1.5 rounded-lg text-white font-medium transition-colors" style={{ background: project.color }}>
+              <button onClick={() => saveNote(note.id)} className="mt-2 text-xs px-3 py-1.5 rounded-lg text-white font-medium transition-all active:scale-[0.98]" style={{ background: project.color }}>
                 Enregistrer
               </button>
             </div>
@@ -529,7 +538,7 @@ function NotesTab({ project }) {
               <p className="text-white/50 text-xs leading-relaxed whitespace-pre-wrap line-clamp-3">{note.content}</p>
             </div>
           ) : null}
-        </div>
+        </Card>
       ))}
     </div>
   )
@@ -556,18 +565,15 @@ function SessionsTab({ project, sessions }) {
           { label: 'Ce mois', value: formatDuration(monthTotal) },
           { label: 'Total', value: formatDuration(allTotal) },
         ].map(stat => (
-          <div key={stat.label} className="rounded-xl p-3 text-center" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-            <p className="font-mono text-xl font-medium" style={{ color: project.color }}>{stat.value}</p>
+          <Card key={stat.label} className="p-3 text-center">
+            <p className="font-mono text-xl font-medium tabular" style={{ color: project.color }}>{stat.value}</p>
             <p className="text-[10px] text-white/30 mt-0.5">{stat.label}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       {projectSessions.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-3xl mb-3">⏱</p>
-          <p className="text-white/30 text-sm">Aucune session enregistrée</p>
-        </div>
+        <EmptyState icon={Clock} title="Aucune session enregistrée" description="Lance une session depuis le dashboard pour suivre ton temps sur ce projet." />
       ) : (
         <div className="flex flex-col gap-2">
           {projectSessions.map(s => (
@@ -605,10 +611,13 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
 
   function handleTaskCreate(data) {
     dispatch({ type: 'ADD_TASK', payload: { ...data, projectId: project.id } })
+    toast.success('Tâche créée')
   }
 
   function handleTaskDelete(id) {
+    const snapshot = state.tasks.find(t => t.id === id)
     dispatch({ type: 'DELETE_TASK', payload: id })
+    if (snapshot) toastUndo('Tâche supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { tasks: [snapshot] } }))
   }
 
   return (
@@ -619,12 +628,14 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
       {/* Page header */}
       <div className="px-4 pt-4 pb-0 max-w-5xl mx-auto w-full">
         <div className="flex items-center gap-3 mb-4">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onNavigate('projets')}
-            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/8 transition-all"
+            className="text-white/30 hover:text-white/70"
           >
             <ArrowLeft size={16} />
-          </button>
+          </Button>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ background: project.color + '20', border: `1px solid ${project.color}30` }}>
             {project.emoji}
           </div>
@@ -634,7 +645,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
           </div>
           <button
             onClick={() => { setImportOpen(true); setImportSuccessCount(null) }}
-            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl transition-all"
+            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl transition-all active:scale-[0.98]"
             style={{ background: project.color + '15', color: project.color, border: `1px solid ${project.color}25` }}
           >
             <FileJson size={13} />

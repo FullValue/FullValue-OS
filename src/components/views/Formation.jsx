@@ -1,6 +1,14 @@
 import { useState } from 'react'
-import { Plus, ExternalLink, Play, FileText, BookOpen, Puzzle, Mic, X, Trash2, Plus as PlusIcon, Paperclip, ArrowLeft } from 'lucide-react'
+import { Plus, ExternalLink, Play, FileText, BookOpen, Puzzle, Mic, X, Trash2, Plus as PlusIcon, Paperclip, ArrowLeft, GraduationCap } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
+import { Card } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { toast, toastUndo } from '@/lib/toast'
 import Drawer from '@/components/ui/Drawer'
 import FileUploader from '@/components/files/FileUploader'
 import GlowSearchBar from '@/components/ui/GlowSearchBar'
@@ -32,7 +40,7 @@ const CATEGORIES = ['Business', 'Tech', 'Mindset', 'Productivité', 'Marketing',
 function YouTubeCard({ resource, onClick, onDelete }) {
   const status = STATUS_CONFIG[resource.status] || STATUS_CONFIG.a_voir
   return (
-    <div className="rounded-2xl overflow-hidden group relative" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+    <Card className="overflow-hidden group relative">
       <YouTubeThumbnail youtubeId={resource.youtubeId} title={resource.title} onClick={() => onClick(resource)} />
       <div className="p-3">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -43,10 +51,10 @@ function YouTubeCard({ resource, onClick, onDelete }) {
         <h3 className="text-white/90 text-sm font-medium leading-tight line-clamp-2">{resource.title}</h3>
         {resource.youtubeChannel && <p className="text-white/30 text-xs mt-0.5">{resource.youtubeChannel}</p>}
       </div>
-      <button onClick={() => onDelete(resource.id)} className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/40 hover:text-red transition-all opacity-0 group-hover:opacity-100">
+      <Button variant="ghost" size="icon-sm" onClick={() => onDelete(resource.id)} className="absolute top-2 right-2 bg-black/60 text-white/40 hover:text-[var(--red-deep)] opacity-0 group-hover:opacity-100">
         <Trash2 size={12} />
-      </button>
-    </div>
+      </Button>
+    </Card>
   )
 }
 
@@ -56,7 +64,7 @@ function LearningCard({ resource, onClick, onDelete }) {
   const { Icon } = config
 
   return (
-    <button onClick={() => onClick(resource)} className="text-left rounded-2xl p-4 hover:border-white/10 transition-all group" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+    <Card hover onClick={() => onClick(resource)} className="text-left w-full cursor-pointer p-4 group">
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: config.color + '15' }}>
           <Icon size={16} style={{ color: config.color }} />
@@ -73,7 +81,7 @@ function LearningCard({ resource, onClick, onDelete }) {
           {resource.takeaways?.length > 0 && <p className="text-white/25 text-xs mt-1.5">{resource.takeaways.length} takeaway{resource.takeaways.length > 1 ? 's' : ''}</p>}
         </div>
       </div>
-    </button>
+    </Card>
   )
 }
 
@@ -105,9 +113,9 @@ function VideoDetailPage({ resource, onBack }) {
     <div className="max-w-5xl mx-auto px-4 py-4">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white/80 transition-colors">
+        <Button variant="ghost" size="sm" onClick={onBack} className="px-2 text-white/40 hover:text-white/80">
           <ArrowLeft size={15} /> Formation
-        </button>
+        </Button>
         <span className="text-white/20">/</span>
         <span className="text-sm text-white/60 truncate">{resource.title}</span>
         <div className="ml-auto flex gap-1.5">
@@ -115,7 +123,7 @@ function VideoDetailPage({ resource, onBack }) {
             const sc = STATUS_CONFIG[s]
             return (
               <button key={s} onClick={() => save({ status: s })}
-                className="py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+                className="py-1.5 px-3 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
                 style={resource.status === s ? { background: sc.color + '20', color: sc.color, border: `1px solid ${sc.color}40` } : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>
                 {sc.label}
               </button>
@@ -146,13 +154,13 @@ function VideoDetailPage({ resource, onBack }) {
           {/* Notes */}
           <div className="rounded-2xl p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
             <p className="text-white/30 text-[10px] uppercase tracking-wider mb-2">Notes personnelles</p>
-            <textarea
+            <Textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               onBlur={() => save({ notes })}
               placeholder="Tes notes sur cette vidéo…"
               rows={6}
-              className="w-full bg-transparent text-sm text-white/70 placeholder-white/20 focus:outline-none resize-none leading-relaxed"
+              className="bg-transparent border-transparent px-0 resize-none leading-relaxed text-white/70 focus:bg-transparent focus:border-transparent focus:ring-0"
             />
           </div>
 
@@ -164,16 +172,15 @@ function VideoDetailPage({ resource, onBack }) {
                 <div key={i} className="flex items-start gap-2 group">
                   <span className="text-violet text-xs mt-0.5 flex-shrink-0">•</span>
                   <span className="text-sm text-white/70 flex-1 leading-relaxed">{t}</span>
-                  <button onClick={() => { const u = takeaways.filter((_, j) => j !== i); setTakeaways(u); save({ takeaways: u }) }} className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red transition-all flex-shrink-0 mt-0.5">
+                  <Button variant="ghost" size="icon-sm" onClick={() => { const u = takeaways.filter((_, j) => j !== i); setTakeaways(u); save({ takeaways: u }) }} className="opacity-0 group-hover:opacity-100 shrink-0 text-white/20 hover:text-[var(--red-deep)]">
                     <X size={11} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
             <div className="flex gap-2">
-              <input value={newTakeaway} onChange={e => setNewTakeaway(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTakeaway()} placeholder="Ajouter un takeaway…"
-                className="flex-1 bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none" />
-              <button onClick={addTakeaway} className="p-2 bg-violet/15 hover:bg-violet/25 text-violet rounded-xl transition-colors"><PlusIcon size={13} /></button>
+              <Input value={newTakeaway} onChange={e => setNewTakeaway(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTakeaway()} placeholder="Ajouter un takeaway…" className="flex-1 text-xs" />
+              <Button size="icon" onClick={addTakeaway} className="bg-[var(--violet-bg)] text-[var(--violet-deep)] hover:bg-[var(--violet-solid)] shrink-0"><PlusIcon size={13} /></Button>
             </div>
           </div>
 
@@ -185,23 +192,22 @@ function VideoDetailPage({ resource, onBack }) {
                 <div key={i} className="flex items-start gap-2 group">
                   <span className="text-yellow text-xs mt-0.5 flex-shrink-0">"</span>
                   <span className="text-sm text-white/60 italic flex-1 leading-relaxed">{c}</span>
-                  <button onClick={() => { const u = citations.filter((_, j) => j !== i); setCitations(u); save({ citations: u }) }} className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red transition-all flex-shrink-0 mt-0.5">
+                  <Button variant="ghost" size="icon-sm" onClick={() => { const u = citations.filter((_, j) => j !== i); setCitations(u); save({ citations: u }) }} className="opacity-0 group-hover:opacity-100 shrink-0 text-white/20 hover:text-[var(--red-deep)]">
                     <X size={11} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
             <div className="flex gap-2">
-              <input value={newCitation} onChange={e => setNewCitation(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCitation()} placeholder="Ajouter une citation…"
-                className="flex-1 bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none italic" />
-              <button onClick={addCitation} className="p-2 bg-yellow/15 hover:bg-yellow/25 text-yellow rounded-xl transition-colors"><PlusIcon size={13} /></button>
+              <Input value={newCitation} onChange={e => setNewCitation(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCitation()} placeholder="Ajouter une citation…" className="flex-1 text-xs italic" />
+              <Button size="icon" onClick={addCitation} className="bg-[var(--yellow-bg)] text-[var(--yellow-deep)] hover:bg-[var(--yellow-solid)] shrink-0"><PlusIcon size={13} /></Button>
             </div>
           </div>
 
-          <button onClick={() => { dispatch({ type: 'DELETE_LEARNING', payload: resource.id }); onBack() }}
-            className="flex items-center gap-1.5 text-xs text-red/50 hover:text-red transition-colors">
+          <Button variant="ghost" size="sm" onClick={() => { const snap = resource; dispatch({ type: 'DELETE_LEARNING', payload: resource.id }); toastUndo('Ressource supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { learningResources: [snap] } })); onBack() }}
+            className="self-start px-2 text-[var(--red-deep)] hover:bg-[var(--red-bg)]">
             <Trash2 size={12} /> Supprimer cette ressource
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -250,7 +256,7 @@ function LearningDrawer({ resource, onClose }) {
         <div className="flex gap-2">
           {statusOrder.map(s => {
             const sc = STATUS_CONFIG[s]
-            return <button key={s} onClick={() => save({ status: s })} className="flex-1 py-2 rounded-xl text-xs font-medium transition-colors"
+            return <button key={s} onClick={() => save({ status: s })} className="flex-1 py-2 rounded-xl text-xs font-medium transition-all active:scale-[0.98]"
               style={resource.status === s ? { background: sc.color + '20', color: sc.color, border: `1px solid ${sc.color}40` } : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>{sc.label}</button>
           })}
         </div>
@@ -258,8 +264,7 @@ function LearningDrawer({ resource, onClose }) {
 
       <div>
         <p className="text-white/30 text-xs mb-2 uppercase tracking-wider">Notes personnelles</p>
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} onBlur={() => save({ notes })} placeholder="Tes notes…" rows={5}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none resize-none" />
+        <Textarea value={notes} onChange={e => setNotes(e.target.value)} onBlur={() => save({ notes })} placeholder="Tes notes…" rows={5} className="resize-none" />
       </div>
 
       <div>
@@ -269,13 +274,13 @@ function LearningDrawer({ resource, onClose }) {
             <div key={i} className="flex items-start gap-2 group">
               <span className="text-violet text-xs mt-0.5">•</span>
               <span className="text-sm text-white/70 flex-1">{t}</span>
-              <button onClick={() => { const u = takeaways.filter((_, j) => j !== i); setTakeaways(u); save({ takeaways: u }) }} className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red"><X size={11} /></button>
+              <Button variant="ghost" size="icon-sm" onClick={() => { const u = takeaways.filter((_, j) => j !== i); setTakeaways(u); save({ takeaways: u }) }} className="opacity-0 group-hover:opacity-100 shrink-0 text-white/20 hover:text-[var(--red-deep)]"><X size={11} /></Button>
             </div>
           ))}
         </div>
         <div className="flex gap-2">
-          <input value={newTakeaway} onChange={e => setNewTakeaway(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTakeaway()} placeholder="Ajouter un takeaway…" className="flex-1 bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none" />
-          <button onClick={addTakeaway} className="p-2 bg-violet/15 hover:bg-violet/25 text-violet rounded-xl"><PlusIcon size={13} /></button>
+          <Input value={newTakeaway} onChange={e => setNewTakeaway(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTakeaway()} placeholder="Ajouter un takeaway…" className="flex-1 text-xs" />
+          <Button size="icon" onClick={addTakeaway} className="bg-[var(--violet-bg)] text-[var(--violet-deep)] hover:bg-[var(--violet-solid)] shrink-0"><PlusIcon size={13} /></Button>
         </div>
       </div>
 
@@ -286,20 +291,20 @@ function LearningDrawer({ resource, onClose }) {
             <div key={i} className="flex items-start gap-2 group">
               <span className="text-yellow text-xs mt-0.5">"</span>
               <span className="text-sm text-white/60 italic flex-1">{c}</span>
-              <button onClick={() => { const u = citations.filter((_, j) => j !== i); setCitations(u); save({ citations: u }) }} className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red"><X size={11} /></button>
+              <Button variant="ghost" size="icon-sm" onClick={() => { const u = citations.filter((_, j) => j !== i); setCitations(u); save({ citations: u }) }} className="opacity-0 group-hover:opacity-100 shrink-0 text-white/20 hover:text-[var(--red-deep)]"><X size={11} /></Button>
             </div>
           ))}
         </div>
         <div className="flex gap-2">
-          <input value={newCitation} onChange={e => setNewCitation(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCitation()} placeholder="Ajouter une citation…" className="flex-1 bg-white/5 border border-white/8 rounded-xl px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none italic" />
-          <button onClick={addCitation} className="p-2 bg-yellow/15 hover:bg-yellow/25 text-yellow rounded-xl"><PlusIcon size={13} /></button>
+          <Input value={newCitation} onChange={e => setNewCitation(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCitation()} placeholder="Ajouter une citation…" className="flex-1 text-xs italic" />
+          <Button size="icon" onClick={addCitation} className="bg-[var(--yellow-bg)] text-[var(--yellow-deep)] hover:bg-[var(--yellow-solid)] shrink-0"><PlusIcon size={13} /></Button>
         </div>
       </div>
 
       <div className="mt-2 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <button onClick={() => { dispatch({ type: 'DELETE_LEARNING', payload: resource.id }); onClose() }} className="flex items-center gap-1.5 text-xs text-red/60 hover:text-red transition-colors">
+        <Button variant="ghost" size="sm" onClick={() => { const snap = resource; dispatch({ type: 'DELETE_LEARNING', payload: resource.id }); toastUndo('Ressource supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { learningResources: [snap] } })); onClose() }} className="px-2 text-[var(--red-deep)] hover:bg-[var(--red-bg)]">
           <Trash2 size={12} /> Supprimer
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -338,7 +343,7 @@ function AddForm({ onSubmit, onClose }) {
       <div className="flex gap-2">
         {MODES.map(([m, label]) => (
           <button key={m} type="button" onClick={() => setMode(m)}
-            className="flex-1 py-2 rounded-xl text-xs font-medium transition-colors"
+            className="flex-1 py-2 rounded-xl text-xs font-medium transition-all active:scale-[0.98]"
             style={mode === m
               ? { background: m === 'youtube' ? 'rgba(239,68,68,0.15)' : 'rgba(139,124,255,0.15)', color: m === 'youtube' ? '#ef4444' : '#8B7CFF', border: `1px solid ${m === 'youtube' ? 'rgba(239,68,68,0.3)' : 'rgba(139,124,255,0.3)'}` }
               : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
@@ -354,16 +359,16 @@ function AddForm({ onSubmit, onClose }) {
           extraFields={
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="text-white/40 text-xs mb-1 block">Catégorie</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                <Label>Catégorie</Label>
+                <NativeSelect value={category} onChange={e => setCategory(e.target.value)}>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                </NativeSelect>
               </div>
               <div className="flex-1">
-                <label className="text-white/40 text-xs mb-1 block">Statut initial</label>
-                <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                <Label>Statut initial</Label>
+                <NativeSelect value={status} onChange={e => setStatus(e.target.value)}>
                   {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                </select>
+                </NativeSelect>
               </div>
             </div>
           }
@@ -375,7 +380,7 @@ function AddForm({ onSubmit, onClose }) {
               <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(168,230,189,0.1)', border: '1px solid rgba(168,230,189,0.2)' }}>
                 <span>✓</span>
                 <div className="flex-1 min-w-0"><p className="text-sm text-white/80 truncate">{uploadedFile.fileName}</p></div>
-                <button type="button" onClick={() => setUploadedFile(null)} className="text-white/30"><X size={14} /></button>
+                <Button type="button" variant="ghost" size="icon-sm" onClick={() => setUploadedFile(null)} className="text-white/30 shrink-0"><X size={14} /></Button>
               </div>
             ) : (
               <>
@@ -387,11 +392,11 @@ function AddForm({ onSubmit, onClose }) {
 
           {mode === 'link' && (
             <div>
-              <label className="text-white/40 text-xs mb-1.5 block">Type</label>
+              <Label className="mb-1.5">Type</Label>
               <div className="flex gap-2 flex-wrap">
                 {Object.entries(TYPE_CONFIG).filter(([k]) => k !== 'fichier' && k !== 'youtube').map(([k, v]) => (
                   <button key={k} type="button" onClick={() => setType(k)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
                     style={type === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
                     {v.label}
                   </button>
@@ -401,37 +406,36 @@ function AddForm({ onSubmit, onClose }) {
           )}
 
           <div>
-            <label className="text-white/40 text-xs mb-1 block">Titre *</label>
-            <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Titre"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-violet/40" />
+            <Label>Titre *</Label>
+            <Input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Titre" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-white/40 text-xs mb-1 block">Auteur / Source</label>
-              <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Auteur…" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none" />
+              <Label>Auteur / Source</Label>
+              <Input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Auteur…" />
             </div>
             <div>
-              <label className="text-white/40 text-xs mb-1 block">Catégorie</label>
-              <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+              <Label>Catégorie</Label>
+              <NativeSelect value={category} onChange={e => setCategory(e.target.value)}>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              </NativeSelect>
             </div>
           </div>
 
           {mode === 'link' && (
             <div>
-              <label className="text-white/40 text-xs mb-1 block">URL</label>
-              <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none font-mono" />
+              <Label>URL</Label>
+              <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" className="font-mono" />
             </div>
           )}
 
           <div>
-            <label className="text-white/40 text-xs mb-1 block">Statut initial</label>
+            <Label>Statut initial</Label>
             <div className="flex gap-2">
               {Object.entries(STATUS_CONFIG).map(([k, v]) => (
                 <button key={k} type="button" onClick={() => setStatus(k)}
-                  className="flex-1 py-2 rounded-xl text-xs font-medium transition-colors"
+                  className="flex-1 py-2 rounded-xl text-xs font-medium transition-all active:scale-[0.98]"
                   style={status === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>
                   {v.label}
                 </button>
@@ -440,11 +444,10 @@ function AddForm({ onSubmit, onClose }) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={mode === 'file' && !uploadedFile}
-              className="flex-1 bg-violet hover:bg-violet/90 text-white py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40">
+            <Button type="submit" disabled={mode === 'file' && !uploadedFile} className="flex-1">
               Ajouter
-            </button>
-            <button type="button" onClick={onClose} className="flex-1 bg-white/5 hover:bg-white/8 text-white/50 py-2.5 rounded-xl text-sm">Annuler</button>
+            </Button>
+            <Button type="button" variant="subtle" onClick={onClose} className="flex-1">Annuler</Button>
           </div>
         </form>
       )}
@@ -471,6 +474,12 @@ export default function Formation() {
   const drawerResource = selectedResource ? state.learningResources.find(l => l.id === selectedResource.id) : null
   const videoDetailResource = videoDetail ? state.learningResources.find(l => l.id === videoDetail) : null
 
+  function handleDelete(id) {
+    const snap = state.learningResources.find(l => l.id === id)
+    dispatch({ type: 'DELETE_LEARNING', payload: id })
+    if (snap) toastUndo('Ressource supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { learningResources: [snap] } }))
+  }
+
   // Show video detail page
   if (videoDetailResource) {
     return <VideoDetailPage resource={videoDetailResource} onBack={() => setVideoDetail(null)} />
@@ -483,28 +492,28 @@ export default function Formation() {
           <h1 className="text-xl font-semibold text-white">Formation</h1>
           <p className="text-white/30 text-sm mt-0.5">{state.learningResources.length} ressource{state.learningResources.length > 1 ? 's' : ''}</p>
         </div>
-        <button onClick={() => setAddDrawer(true)} className="flex items-center gap-1.5 text-sm bg-violet/15 hover:bg-violet/25 text-violet px-4 py-2 rounded-xl transition-colors">
+        <Button onClick={() => setAddDrawer(true)}>
           <Plus size={14} /> Ajouter
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3 mb-5">
         <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher…" />
         <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setTypeFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${typeFilter === 'all' ? 'bg-white/10 text-white/90' : 'text-white/30 hover:text-white/60'}`}>Tous</button>
+          <button onClick={() => setTypeFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98] ${typeFilter === 'all' ? 'bg-white/10 text-white/90' : 'text-white/30 hover:text-white/60'}`}>Tous</button>
           {Object.entries(TYPE_CONFIG).filter(([k]) => k !== 'youtube').map(([k, v]) => (
-            <button key={k} onClick={() => setTypeFilter(k)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            <button key={k} onClick={() => setTypeFilter(k)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
               style={typeFilter === k ? { background: v.color + '20', color: v.color } : { color: 'rgba(255,255,255,0.3)' }}>
               {v.label}
             </button>
           ))}
-          <button onClick={() => setTypeFilter('youtube')} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+          <button onClick={() => setTypeFilter('youtube')} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
             style={typeFilter === 'youtube' ? { background: 'rgba(239,68,68,0.2)', color: '#ef4444' } : { color: 'rgba(255,255,255,0.3)' }}>
             ▶ YouTube
           </button>
           <div className="ml-auto flex gap-2">
             {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-              <button key={k} onClick={() => setStatusFilter(statusFilter === k ? 'all' : k)} className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+              <button key={k} onClick={() => setStatusFilter(statusFilter === k ? 'all' : k)} className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-[0.98]"
                 style={statusFilter === k ? { background: v.color + '20', color: v.color } : { color: 'rgba(255,255,255,0.3)' }}>
                 {v.label}
               </button>
@@ -514,16 +523,17 @@ export default function Formation() {
       </div>
 
       {resources.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-3xl mb-3">🎓</p>
-          <p className="text-white/30 text-sm">Aucune ressource</p>
-          <button onClick={() => setAddDrawer(true)} className="mt-3 text-violet text-sm hover:text-violet/80">+ Ajouter</button>
-        </div>
+        <EmptyState
+          icon={GraduationCap}
+          title="Aucune ressource"
+          description="Ajoute une vidéo, un article, un livre ou un fichier à ta bibliothèque."
+          action={<Button size="sm" onClick={() => setAddDrawer(true)}><Plus size={14} /> Ajouter</Button>}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {resources.map(r => r.type === 'youtube'
-            ? <YouTubeCard key={r.id} resource={r} onClick={() => setVideoDetail(r.id)} onDelete={id => dispatch({ type: 'DELETE_LEARNING', payload: id })} />
-            : <LearningCard key={r.id} resource={r} onClick={res => setSelectedResource(res)} onDelete={id => dispatch({ type: 'DELETE_LEARNING', payload: id })} />
+            ? <YouTubeCard key={r.id} resource={r} onClick={() => setVideoDetail(r.id)} onDelete={handleDelete} />
+            : <LearningCard key={r.id} resource={r} onClick={res => setSelectedResource(res)} onDelete={handleDelete} />
           )}
         </div>
       )}
@@ -533,7 +543,7 @@ export default function Formation() {
       </Drawer>
 
       <Drawer isOpen={addDrawer} onClose={() => setAddDrawer(false)} title="Ajouter une ressource">
-        <AddForm onClose={() => setAddDrawer(false)} onSubmit={payload => { dispatch({ type: 'ADD_LEARNING', payload }); setAddDrawer(false) }} />
+        <AddForm onClose={() => setAddDrawer(false)} onSubmit={payload => { dispatch({ type: 'ADD_LEARNING', payload }); toast.success('Ressource ajoutée'); setAddDrawer(false) }} />
       </Drawer>
     </div>
   )

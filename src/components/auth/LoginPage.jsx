@@ -1,7 +1,11 @@
 import { useState } from 'react'
+import { LogIn, UserRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import './AuthForm.css'
+import AuthLayout from './AuthLayout'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function LoginPage({ onNavigate }) {
   const { signInAsGuest } = useAuth()
@@ -25,62 +29,69 @@ export default function LoginPage({ onNavigate }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#0f0f12' }}>
-      <form className="afc-form" onSubmit={handleSubmit}>
-        <p className="afc-logo">✦ Le Cockpit</p>
-        <p className="afc-heading">Login</p>
+    <AuthLayout>
+      <h1 className="mb-6 text-center text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+        Connexion
+      </h1>
 
-        <div className="afc-field">
-          <svg className="afc-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z" />
-          </svg>
-          <input
-            autoComplete="email"
-            placeholder="Email"
-            className="afc-input"
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="login-email">Email</Label>
+          <Input
+            id="login-email"
             type="email"
             required
+            autoComplete="email"
+            placeholder="toi@exemple.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
           />
         </div>
 
-        <div className="afc-field">
-          <svg className="afc-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-          </svg>
-          <input
-            placeholder="Mot de passe"
-            className="afc-input"
+        <div>
+          <Label htmlFor="login-password">Mot de passe</Label>
+          <Input
+            id="login-password"
             type="password"
             required
             autoComplete="current-password"
+            placeholder="••••••••"
             value={password}
             onChange={e => setPassword(e.target.value)}
           />
         </div>
 
-        {error && <p className="afc-error">{error}</p>}
+        {error && (
+          <p className="rounded-lg px-3 py-2 text-xs" style={{ background: 'var(--red-bg)', color: 'var(--red-deep)' }}>
+            {error}
+          </p>
+        )}
 
-        <div className="afc-btns">
-          <button type="submit" className="afc-btn-login" disabled={loading}>
-            {loading ? '…' : 'Login'}
-          </button>
-          <button type="button" className="afc-btn-signup" onClick={() => onNavigate('signup')}>
-            Sign Up
-          </button>
-        </div>
-
-        <button type="button" className="afc-btn-forgot" onClick={() => onNavigate('forgot')}>
-          Forgot Password
-        </button>
-
-        <div className="afc-divider"><span>ou</span></div>
-
-        <button type="button" className="afc-btn-guest" onClick={signInAsGuest}>
-          Accéder en invité →
-        </button>
+        <Button type="submit" variant="secondary" size="lg" loading={loading} className="w-full">
+          {!loading && <LogIn size={15} />}
+          {loading ? 'Connexion…' : 'Se connecter'}
+        </Button>
       </form>
-    </div>
+
+      <div className="my-5 flex items-center gap-3">
+        <div className="h-px flex-1" style={{ background: 'var(--border-soft)' }} />
+        <span className="text-[10px] uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>ou</span>
+        <div className="h-px flex-1" style={{ background: 'var(--border-soft)' }} />
+      </div>
+
+      <Button type="button" variant="outline" size="lg" className="w-full" onClick={signInAsGuest}>
+        <UserRound size={15} />
+        Accéder en invité
+      </Button>
+
+      <div className="mt-6 flex items-center justify-between text-sm" style={{ color: 'var(--text-tertiary)' }}>
+        <button type="button" onClick={() => onNavigate('forgot')} className="transition-colors hover:text-[var(--text-secondary)]">
+          Mot de passe oublié
+        </button>
+        <button type="button" onClick={() => onNavigate('signup')} className="font-medium transition-colors hover:text-[var(--text-secondary)]">
+          Créer un compte
+        </button>
+      </div>
+    </AuthLayout>
   )
 }

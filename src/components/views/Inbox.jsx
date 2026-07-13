@@ -120,10 +120,10 @@ export default function Inbox({ onNavigate }) {
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[var(--text-tertiary)]">Confirmer ?</span>
                 <Button size="sm" variant="danger" onClick={clearAll}>Vider</Button>
-                <button onClick={() => setConfirmClear(false)} className="text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"><X size={14} /></button>
+                <Button variant="ghost" size="icon-sm" onClick={() => setConfirmClear(false)} aria-label="Annuler"><X size={14} /></Button>
               </div>
             ) : (
-              <button onClick={() => setConfirmClear(true)} className="text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--red-deep)]">Tout vider</button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmClear(true)} className="text-[var(--text-tertiary)] hover:text-[var(--red-deep)]">Tout vider</Button>
             )
           )}
         </div>
@@ -154,9 +154,9 @@ export default function Inbox({ onNavigate }) {
                     {new Date(item.createdAt).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
-                <button onClick={() => removeItem(item)} className="flex-shrink-0 p-1 text-[var(--text-tertiary)] transition-colors hover:text-[var(--red-deep)]">
+                <Button variant="ghost" size="icon-sm" onClick={() => removeItem(item)} className="flex-shrink-0 text-[var(--text-tertiary)] hover:text-[var(--red-deep)]" aria-label="Supprimer">
                   <Trash2 size={13} />
-                </button>
+                </Button>
               </div>
 
               {/* Quick assign buttons */}

@@ -1,5 +1,7 @@
 import { TrendingUp, Clock, CheckSquare } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { Card } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 
 function formatDuration(seconds) {
   if (!seconds) return '0m'
@@ -39,10 +41,14 @@ export default function Projets({ onNavigate }) {
           const hasMomentum = completedThisWeek > 0
 
           return (
-            <button
+            <Card
               key={project.id}
+              hover
+              role="button"
+              tabIndex={0}
               onClick={() => onNavigate('projet_' + project.id)}
-              className="bg-white/3 border border-white/5 rounded-2xl p-5 text-left hover:border-white/15 hover:bg-white/5 transition-all group focus:outline-none focus:ring-2 focus:ring-accent/30"
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate('projet_' + project.id) } }}
+              className="p-5 text-left cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
@@ -87,14 +93,9 @@ export default function Projets({ onNavigate }) {
                   <span className="truncate max-w-[70%]">{project.northStar}</span>
                   <span>{project.northStarProgress}%</span>
                 </div>
-                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${project.northStarProgress}%`, backgroundColor: project.color }}
-                  />
-                </div>
+                <Progress value={project.northStarProgress} color={project.color} className="h-1" />
               </div>
-            </button>
+            </Card>
           )
         })}
       </div>

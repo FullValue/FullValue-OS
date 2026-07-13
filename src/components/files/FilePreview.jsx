@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Download, Trash2, FileText, FileCode, Image, File } from 'lucide-react'
 import { useFileUpload } from '@/hooks/useFileUpload'
+import { Button } from '@/components/ui/button'
 
 function getFileIcon(mimeType) {
   if (!mimeType) return { Icon: File, color: '#9B9895' }
@@ -81,16 +82,17 @@ export default function FilePreview({ bucket, filePath, fileName, fileSizeBytes,
           </a>
         )}
         {onDelete && (
-          <button
+          <Button
+            variant={confirmDelete ? 'danger' : 'ghost'}
+            size={confirmDelete ? 'sm' : 'icon-sm'}
             onClick={handleDelete}
             disabled={deleting}
-            className="p-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs"
-            style={{ color: confirmDelete ? 'var(--red-deep)' : 'var(--text-tertiary)', background: confirmDelete ? 'var(--red-bg)' : 'transparent' }}
+            className="gap-1"
             title={confirmDelete ? 'Cliquer pour confirmer' : 'Supprimer'}
           >
             <Trash2 size={13} />
             {confirmDelete && 'Confirmer'}
-          </button>
+          </Button>
         )}
       </div>
     </div>

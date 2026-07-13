@@ -3,6 +3,16 @@ import { Plus, Copy, Trash2, ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import Badge from '../ui/Badge'
 import Drawer from '../ui/Drawer'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
+import { UIBadge } from '@/components/ui/Badge'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { toast, toastUndo } from '@/lib/toast'
 
 function ResourceForm({ onSubmit, onClose, projects, initial = {} }) {
   const [type, setType] = useState(initial.type || 'prompt')
@@ -20,74 +30,69 @@ function ResourceForm({ onSubmit, onClose, projects, initial = {} }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label className="text-white/50 text-xs mb-1 block">Type</label>
+        <Label>Type</Label>
         <div className="flex gap-2">
           {['prompt', 'template'].map(v => (
-            <button
+            <Button
               key={v}
               type="button"
+              variant="ghost"
               onClick={() => setType(v)}
-              className={`flex-1 py-2 rounded-lg text-xs font-medium capitalize transition-colors ${type === v ? 'bg-accent/25 text-accent border border-accent/40' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+              className={`flex-1 capitalize ${type === v ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)]' : ''}`}
             >
               {v === 'prompt' ? '💬 Prompt' : '📄 Template'}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       <div>
-        <label className="text-white/50 text-xs mb-1 block">Titre *</label>
-        <input
+        <Label>Titre *</Label>
+        <Input
           autoFocus
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="Nom de la ressource..."
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-accent/50"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-white/50 text-xs mb-1 block">Projet</label>
-          <select
-            value={projectId}
-            onChange={e => setProjectId(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
-          >
+          <Label>Projet</Label>
+          <NativeSelect value={projectId} onChange={e => setProjectId(e.target.value)}>
             {projects.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <div>
-          <label className="text-white/50 text-xs mb-1 block">Tag</label>
-          <input
+          <Label>Tag</Label>
+          <Input
             value={tag}
             onChange={e => setTag(e.target.value)}
             placeholder="ex: Prospection"
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
         </div>
       </div>
 
       <div>
-        <label className="text-white/50 text-xs mb-1 block">Contenu *</label>
-        <textarea
+        <Label>Contenu *</Label>
+        <Textarea
           value={content}
           onChange={e => setContent(e.target.value)}
           placeholder="Contenu du prompt ou template..."
           rows={8}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none font-mono"
+          className="resize-none font-mono"
         />
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" className="flex-1 bg-accent hover:bg-accent/90 text-white py-2.5 rounded-lg text-sm font-medium transition-colors">
+        <Button type="submit" className="flex-1">
           Enregistrer
-        </button>
-        <button type="button" onClick={onClose} className="flex-1 bg-white/5 hover:bg-white/10 text-white/60 py-2.5 rounded-lg text-sm transition-colors">
+        </Button>
+        <Button type="button" variant="subtle" onClick={onClose} className="flex-1">
           Annuler
-        </button>
+        </Button>
       </div>
     </form>
   )
@@ -105,52 +110,57 @@ function ResourceCard({ resource, project, onDelete }) {
   }
 
   return (
-    <div className="bg-white/3 border border-white/5 rounded-xl overflow-hidden hover:border-white/10 transition-all group">
+    <Card hover className="overflow-hidden group">
       <div className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
-              <span className="text-[10px] text-white/30 uppercase tracking-wider">
+              <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">
                 {resource.type === 'prompt' ? '💬 Prompt' : '📄 Template'}
               </span>
               {resource.tag && (
-                <span className="text-[10px] bg-white/5 text-white/40 px-2 py-0.5 rounded-full">{resource.tag}</span>
+                <UIBadge variant="default" className="text-[10px]">{resource.tag}</UIBadge>
               )}
             </div>
-            <h3 className="text-white/90 text-sm font-medium">{resource.title}</h3>
+            <h3 className="text-[var(--text-primary)] text-sm font-medium">{resource.title}</h3>
             {project && <div className="mt-1.5"><Badge color={project.color} name={project.name} /></div>}
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button
+            <Button
+              size="sm"
+              variant="subtle"
               onClick={copyToClipboard}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${copied ? 'bg-emerald/20 text-emerald' : 'bg-white/5 hover:bg-white/10 text-white/50 hover:text-white/80'}`}
+              className={copied ? 'bg-[var(--green-bg)] text-[var(--green-deep)] hover:bg-[var(--green-bg)]' : ''}
             >
               {copied ? <><Check size={12} /> Copié</> : <><Copy size={12} /> Copier</>}
-            </button>
-            <button
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="subtle"
               onClick={() => setExpanded(!expanded)}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 transition-colors"
             >
               {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
-            <button
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
               onClick={() => onDelete(resource.id)}
-              className="p-1.5 rounded-lg text-white/10 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100"
+              className="text-[var(--text-tertiary)] hover:text-[var(--red-deep)] hover:bg-[var(--red-bg)] opacity-0 group-hover:opacity-100"
             >
               <Trash2 size={14} />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t border-white/5 px-4 py-3 bg-white/2">
-          <pre className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap font-mono overflow-x-auto">
+        <div className="border-t border-[var(--border-soft)] px-4 py-3 bg-[var(--bg-card-soft)]">
+          <pre className="text-[var(--text-secondary)] text-xs leading-relaxed whitespace-pre-wrap font-mono overflow-x-auto">
             {resource.content}
           </pre>
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -164,67 +174,69 @@ export default function Ressources() {
     return state.projects.find(p => p.id === id)
   }
 
+  function handleDelete(id) {
+    const snap = state.resources.find(r => r.id === id)
+    dispatch({ type: 'DELETE_RESOURCE', payload: id })
+    if (snap) toastUndo('Ressource supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { resources: [snap] } }))
+  }
+
   let resources = state.resources.filter(r => r.type === subTab)
   if (projectFilter !== 'all') resources = resources.filter(r => r.projectId === projectFilter)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-heading font-bold text-white text-2xl">Ressources</h1>
-        <button
-          onClick={() => setAddDrawer(true)}
-          className="flex items-center gap-1.5 text-xs bg-accent/15 hover:bg-accent/25 text-accent px-3 py-1.5 rounded-lg transition-colors"
-        >
+        <h1 className="font-heading font-bold text-[var(--text-primary)] text-2xl">Ressources</h1>
+        <Button size="sm" onClick={() => setAddDrawer(true)}>
           <Plus size={12} /> Nouveau
-        </button>
+        </Button>
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setSubTab('prompt')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${subTab === 'prompt' ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-white/5 text-white/40 hover:bg-white/8'}`}
-        >
-          💬 Prompts
-        </button>
-        <button
-          onClick={() => setSubTab('template')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${subTab === 'template' ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-white/5 text-white/40 hover:bg-white/8'}`}
-        >
-          📄 Templates
-        </button>
+      <div className="mb-4">
+        <Tabs value={subTab} onValueChange={setSubTab}>
+          <TabsList>
+            <TabsTrigger value="prompt">💬 Prompts</TabsTrigger>
+            <TabsTrigger value="template">📄 Templates</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Project filter */}
       <div className="flex gap-2 mb-5 flex-wrap">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => setProjectFilter('all')}
-          className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${projectFilter === 'all' ? 'bg-white/10 text-white/80' : 'text-white/30 hover:text-white/60'}`}
+          className={projectFilter === 'all' ? 'bg-[var(--active-bg)] text-[var(--active-text)]' : ''}
         >
           Tous
-        </button>
+        </Button>
         {state.projects.map(p => (
-          <button
+          <Button
             key={p.id}
+            variant="ghost"
+            size="sm"
             onClick={() => setProjectFilter(projectFilter === p.id ? 'all' : p.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5 ${projectFilter === p.id ? 'bg-white/10 text-white/80' : 'text-white/30 hover:text-white/60'}`}
+            className={projectFilter === p.id ? 'bg-[var(--active-bg)] text-[var(--active-text)]' : ''}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
             {p.name}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Resource cards */}
       {resources.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-white/30 text-sm mb-3">
-            Aucun {subTab === 'prompt' ? 'prompt' : 'template'} — crée ta première ressource
-          </p>
-          <button onClick={() => setAddDrawer(true)} className="text-accent text-sm hover:text-accent/80 transition-colors">
-            + Nouveau {subTab === 'prompt' ? 'prompt' : 'template'}
-          </button>
-        </div>
+        <EmptyState
+          title={`Aucun ${subTab === 'prompt' ? 'prompt' : 'template'}`}
+          description="Crée ta première ressource pour la retrouver ici."
+          action={
+            <Button onClick={() => setAddDrawer(true)}>
+              <Plus size={14} /> Nouveau {subTab === 'prompt' ? 'prompt' : 'template'}
+            </Button>
+          }
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {resources.map(resource => (
@@ -232,7 +244,7 @@ export default function Ressources() {
               key={resource.id}
               resource={resource}
               project={getProject(resource.projectId)}
-              onDelete={id => dispatch({ type: 'DELETE_RESOURCE', payload: id })}
+              onDelete={handleDelete}
             />
           ))}
         </div>
@@ -246,6 +258,7 @@ export default function Ressources() {
           onClose={() => setAddDrawer(false)}
           onSubmit={payload => {
             dispatch({ type: 'ADD_RESOURCE', payload })
+            toast.success('Ressource ajoutée')
             setAddDrawer(false)
           }}
         />

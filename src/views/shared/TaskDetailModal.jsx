@@ -68,11 +68,11 @@ function ChecklistEditor({ items, onChange }) {
             }}>
             {item.label}
           </span>
-          <button onClick={() => deleteItem(item.id)}
-            className="opacity-0 group-hover/item:opacity-100 p-0.5 transition-opacity"
-            style={{ color: 'var(--text-tertiary)' }}>
+          <Button variant="ghost" size="icon-sm" onClick={() => deleteItem(item.id)}
+            aria-label="Supprimer l'item"
+            className="opacity-0 group-hover/item:opacity-100 h-5 w-5 flex-shrink-0 transition-opacity text-[var(--text-tertiary)] hover:bg-transparent">
             <X size={11} />
-          </button>
+          </Button>
         </div>
       ))}
 
@@ -163,10 +163,10 @@ function TagInput({ tags, tagStyles, onTagsChange, onSetTagStyle }) {
               </button>
             ))}
           </div>
-          <button onClick={() => { onTagsChange([...tags, pendingTag]); setPendingTag(null) }}
-            className="mt-2 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+          <Button variant="ghost" size="xs" onClick={() => { onTagsChange([...tags, pendingTag]); setPendingTag(null) }}
+            className="mt-2 h-auto p-0 text-[10px] hover:bg-transparent" style={{ color: 'var(--text-tertiary)' }}>
             Sans couleur
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -364,17 +364,18 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
                     const s = opt.value ? getUrgencyStyle(opt.value, project?.color) : null
                     const isActive = urgency === opt.value
                     return (
-                      <button
+                      <Button
                         key={opt.value ?? 'none'}
+                        variant="ghost"
                         onClick={() => { setUrgency(opt.value); save({ urgency: opt.value }) }}
-                        className="py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98] text-left px-2.5"
+                        className="w-full justify-start h-auto py-1.5 rounded-lg text-xs font-medium text-left px-2.5 hover:bg-transparent"
                         style={isActive && s
                           ? { background: s.bg, color: s.text, border: `1px solid ${s.text}40` }
                           : isActive
                           ? { background: 'rgba(var(--ink),0.09)', color: 'var(--text-secondary)' }
                           : { background: 'rgba(var(--ink),0.05)', color: 'var(--text-tertiary)' }}>
                         {opt.label}
-                      </button>
+                      </Button>
                     )
                   })}
                 </div>

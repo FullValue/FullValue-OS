@@ -131,16 +131,17 @@ export default function ListView({ tasks = [], projects = [], onTaskUpdate, onTa
             />
           </div>
           {COLUMNS.map(col => (
-            <button
+            <Button
               key={col.key}
+              variant="ghost"
               onClick={() => toggleSort(col.key)}
-              className="flex items-center gap-1 hover:text-[var(--text-secondary)] transition-colors text-left"
+              className="justify-start h-auto p-0 gap-1 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-transparent"
             >
               {col.label}
               {sortKey === col.key ? (
                 sortDir === 'asc' ? <ChevronUp size={10} /> : <ChevronDown size={10} />
               ) : null}
-            </button>
+            </Button>
           ))}
         </div>
 

@@ -227,11 +227,11 @@ function ResourceForm({ onSubmit, onClose, projects }) {
               <Label>Type</Label>
               <div className="flex gap-2 flex-wrap">
                 {Object.entries(TYPE_CONFIG).filter(([k]) => k !== 'fichier' && k !== 'youtube').map(([k, v]) => (
-                  <button key={k} type="button" onClick={() => setType(k)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
+                  <Button key={k} variant="ghost" type="button" onClick={() => setType(k)}
+                    className="h-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
                     style={type === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(var(--ink),0.05)', color: 'var(--text-secondary)' }}>
                     {v.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -326,10 +326,10 @@ export default function HubRessources() {
         <div className="flex gap-2 flex-wrap">
           <Button variant="ghost" size="sm" onClick={() => setTypeFilter('all')} className={typeFilter === 'all' ? 'bg-[var(--active-bg)] text-[var(--active-text)]' : ''}>Tous</Button>
           {Object.entries(TYPE_CONFIG).map(([k, v]) => (
-            <button key={k} onClick={() => setTypeFilter(k)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
+            <Button key={k} variant="ghost" onClick={() => setTypeFilter(k)} className="h-auto px-3 py-1.5 rounded-lg text-xs font-medium"
               style={typeFilter === k ? { background: v.color + '20', color: v.color } : { color: 'var(--text-tertiary)' }}>
               {v.label}
-            </button>
+            </Button>
           ))}
           <div className="ml-auto">
             <NativeSelect value={projectFilter} onChange={e => setProjectFilter(e.target.value)} className="h-8 text-xs">

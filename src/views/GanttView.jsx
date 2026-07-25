@@ -81,18 +81,19 @@ export default function GanttView({ tasks = [], projects = [], onTaskUpdate, onT
 
         <div className="ml-auto inline-flex gap-0.5 rounded-xl bg-[rgba(var(--ink),0.05)] p-1">
           {ZOOM_OPTIONS.map(z => (
-            <button
+            <Button
               key={z.id}
+              variant="ghost"
               onClick={() => setZoom(z.id)}
               className={
-                'text-[11px] font-medium px-2.5 py-1 rounded-lg transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ' +
+                'h-auto text-[11px] font-medium px-2.5 py-1 rounded-lg ' +
                 (zoom === z.id
-                  ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                  ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm hover:bg-[var(--bg-card)]'
                   : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')
               }
             >
               {z.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

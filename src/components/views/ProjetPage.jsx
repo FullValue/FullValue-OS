@@ -339,14 +339,14 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
 
         {/* Actions */}
         <div className="flex gap-2 relative">
-          <button
+          <Button
             onClick={() => setShowPicker(v => !v)}
-            className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+            className="font-semibold hover:opacity-90"
             style={{ background: project.color, color: '#0a0a0a' }}
           >
             <Play size={13} strokeWidth={2.5} />
             Lancer session
-          </button>
+          </Button>
           {showPicker && (
             <SessionTaskPicker
               project={project}
@@ -466,13 +466,13 @@ function NotesTab({ project }) {
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between mb-1">
         <p className="text-[10px] text-white/30 uppercase tracking-wider">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
-        <button
+        <Button
+          size="sm"
           onClick={() => setShowNew(true)}
-          className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-all active:scale-[0.98]"
           style={{ background: project.color + '18', color: project.color }}
         >
           <Plus size={12} /> Nouvelle note
-        </button>
+        </Button>
       </div>
 
       {showNew && (
@@ -485,7 +485,7 @@ function NotesTab({ project }) {
             placeholder="Titre de la note..."
           />
           <div className="flex gap-2 mt-2">
-            <button onClick={addNote} className="text-xs px-3 py-1 rounded-lg text-white font-medium transition-all active:scale-[0.98]" style={{ background: project.color }}>Créer</button>
+            <Button size="sm" onClick={addNote} className="text-white" style={{ background: project.color }}>Créer</Button>
             <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Annuler</Button>
           </div>
         </Card>
@@ -529,9 +529,9 @@ function NotesTab({ project }) {
                 placeholder="Écris ta note en Markdown..."
                 className="border-transparent bg-transparent focus:bg-transparent resize-none font-mono leading-relaxed"
               />
-              <button onClick={() => saveNote(note.id)} className="mt-2 text-xs px-3 py-1.5 rounded-lg text-white font-medium transition-all active:scale-[0.98]" style={{ background: project.color }}>
+              <Button size="sm" onClick={() => saveNote(note.id)} className="mt-2 text-white" style={{ background: project.color }}>
                 Enregistrer
-              </button>
+              </Button>
             </div>
           ) : note.content ? (
             <div className="px-4 py-3">
@@ -643,14 +643,15 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
             <h1 className="text-lg font-semibold text-white leading-none">{project.name}</h1>
             <span className="text-[11px] text-white/30">{TIER_LABELS[project.tier]}</span>
           </div>
-          <button
+          <Button
+            size="sm"
             onClick={() => { setImportOpen(true); setImportSuccessCount(null) }}
-            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl transition-all active:scale-[0.98]"
+            className="rounded-xl"
             style={{ background: project.color + '15', color: project.color, border: `1px solid ${project.color}25` }}
           >
             <FileJson size={13} />
             Import bulk
-          </button>
+          </Button>
         </div>
 
         {importSuccessCount !== null && (

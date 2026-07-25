@@ -1,4 +1,5 @@
 import { Columns3, Calendar, List, GanttChart } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const VIEWS = [
   { id: 'kanban',  Icon: Columns3,   label: 'Kanban' },
@@ -23,20 +24,21 @@ export default function ViewSwitcher({ activeView, onChange }) {
       {VIEWS.map(({ id, Icon, label }) => {
         const isActive = activeView === id
         return (
-          <button
+          <Button
             key={id}
+            variant="ghost"
+            size="icon-sm"
             onClick={() => onChange(id)}
             title={label}
             aria-label={label}
             className={
-              'inline-flex items-center justify-center rounded-lg p-1.5 transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ' +
-              (isActive
-                ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
-                : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')
+              isActive
+                ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm hover:bg-[var(--bg-card)]'
+                : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
             }
           >
             <Icon size={14} />
-          </button>
+          </Button>
         )
       })}
     </div>

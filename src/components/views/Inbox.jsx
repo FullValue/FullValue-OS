@@ -42,10 +42,10 @@ function TaskForm({ initial = {}, onSubmit, onClose, projects }) {
           <Label>Impact</Label>
           <div className="flex gap-2">
             {['low', 'high'].map(v => (
-              <button key={v} type="button" onClick={() => setImpact(v)}
-                className={`flex-1 rounded-xl py-2 text-xs font-medium transition-all active:scale-[0.98] ${impact === v ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] ring-1 ring-[var(--violet-solid)]' : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.08)]'}`}>
+              <Button key={v} variant="ghost" type="button" onClick={() => setImpact(v)}
+                className={`flex-1 h-auto rounded-xl py-2 text-xs font-medium ${impact === v ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] ring-1 ring-[var(--violet-solid)]' : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.08)]'}`}>
                 {v === 'high' ? '⚡ Fort' : '· Faible'}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -57,10 +57,10 @@ function TaskForm({ initial = {}, onSubmit, onClose, projects }) {
         </div>
         <div>
           <Label>Aujourd'hui</Label>
-          <button type="button" onClick={() => setToday(!today)}
-            className={`w-full rounded-xl py-2 text-xs font-medium transition-all active:scale-[0.98] ${today ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] ring-1 ring-[var(--violet-solid)]' : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.08)]'}`}>
+          <Button variant="ghost" type="button" onClick={() => setToday(!today)}
+            className={`w-full h-auto rounded-xl py-2 text-xs font-medium ${today ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] ring-1 ring-[var(--violet-solid)]' : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.08)]'}`}>
             📌 {today ? 'Oui' : 'Non'}
-          </button>
+          </Button>
         </div>
       </div>
       <div className="flex gap-3 pt-2">
@@ -162,14 +162,15 @@ export default function Inbox({ onNavigate }) {
               {/* Quick assign buttons */}
               <div className="flex flex-wrap items-center gap-2">
                 {state.projects.map(p => (
-                  <button
+                  <Button
                     key={p.id}
+                    variant="ghost"
                     onClick={() => assignQuick(item, p.id)}
-                    className="rounded-lg px-2.5 py-1.5 text-[11px] transition-all hover:scale-[1.03] active:scale-100"
+                    className="h-auto rounded-lg px-2.5 py-1.5 text-[11px] font-normal hover:scale-[1.03] active:scale-100"
                     style={{ background: p.color + '1F', color: p.color, boxShadow: `inset 0 0 0 1px ${p.color}33` }}
                   >
                     → {p.name}
-                  </button>
+                  </Button>
                 ))}
                 <Button size="xs" variant="subtle" className="ml-auto" onClick={() => setTriageItem(item)}>
                   Trier en détail →

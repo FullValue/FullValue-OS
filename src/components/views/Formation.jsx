@@ -122,11 +122,11 @@ function VideoDetailPage({ resource, onBack }) {
           {statusOrder.map(s => {
             const sc = STATUS_CONFIG[s]
             return (
-              <button key={s} onClick={() => save({ status: s })}
-                className="py-1.5 px-3 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
+              <Button key={s} variant="ghost" onClick={() => save({ status: s })}
+                className="h-auto py-1.5 px-3 rounded-lg text-xs font-medium"
                 style={resource.status === s ? { background: sc.color + '20', color: sc.color, border: `1px solid ${sc.color}40` } : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>
                 {sc.label}
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -256,8 +256,8 @@ function LearningDrawer({ resource, onClose }) {
         <div className="flex gap-2">
           {statusOrder.map(s => {
             const sc = STATUS_CONFIG[s]
-            return <button key={s} onClick={() => save({ status: s })} className="flex-1 py-2 rounded-xl text-xs font-medium transition-all active:scale-[0.98]"
-              style={resource.status === s ? { background: sc.color + '20', color: sc.color, border: `1px solid ${sc.color}40` } : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>{sc.label}</button>
+            return <Button key={s} variant="ghost" onClick={() => save({ status: s })} className="flex-1 h-auto py-2 rounded-xl text-xs font-medium"
+              style={resource.status === s ? { background: sc.color + '20', color: sc.color, border: `1px solid ${sc.color}40` } : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>{sc.label}</Button>
           })}
         </div>
       </div>
@@ -342,13 +342,13 @@ function AddForm({ onSubmit, onClose }) {
       {/* Mode switch */}
       <div className="flex gap-2">
         {MODES.map(([m, label]) => (
-          <button key={m} type="button" onClick={() => setMode(m)}
-            className="flex-1 py-2 rounded-xl text-xs font-medium transition-all active:scale-[0.98]"
+          <Button key={m} variant="ghost" type="button" onClick={() => setMode(m)}
+            className="flex-1 h-auto py-2 rounded-xl text-xs font-medium"
             style={mode === m
               ? { background: m === 'youtube' ? 'rgba(239,68,68,0.15)' : 'rgba(139,124,255,0.15)', color: m === 'youtube' ? '#ef4444' : '#8B7CFF', border: `1px solid ${m === 'youtube' ? 'rgba(239,68,68,0.3)' : 'rgba(139,124,255,0.3)'}` }
               : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
             {label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -395,11 +395,11 @@ function AddForm({ onSubmit, onClose }) {
               <Label className="mb-1.5">Type</Label>
               <div className="flex gap-2 flex-wrap">
                 {Object.entries(TYPE_CONFIG).filter(([k]) => k !== 'fichier' && k !== 'youtube').map(([k, v]) => (
-                  <button key={k} type="button" onClick={() => setType(k)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
+                  <Button key={k} variant="ghost" type="button" onClick={() => setType(k)}
+                    className="h-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
                     style={type === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
                     {v.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -434,11 +434,11 @@ function AddForm({ onSubmit, onClose }) {
             <Label>Statut initial</Label>
             <div className="flex gap-2">
               {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                <button key={k} type="button" onClick={() => setStatus(k)}
-                  className="flex-1 py-2 rounded-xl text-xs font-medium transition-all active:scale-[0.98]"
+                <Button key={k} variant="ghost" type="button" onClick={() => setStatus(k)}
+                  className="flex-1 h-auto py-2 rounded-xl text-xs font-medium"
                   style={status === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>
                   {v.label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -500,23 +500,23 @@ export default function Formation() {
       <div className="flex flex-col gap-3 mb-5">
         <GlowSearchBar value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher…" />
         <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setTypeFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98] ${typeFilter === 'all' ? 'bg-white/10 text-white/90' : 'text-white/30 hover:text-white/60'}`}>Tous</button>
+          <Button variant="ghost" onClick={() => setTypeFilter('all')} className={`h-auto px-3 py-1.5 rounded-lg text-xs font-medium ${typeFilter === 'all' ? 'bg-white/10 text-white/90' : 'text-white/30 hover:text-white/60'}`}>Tous</Button>
           {Object.entries(TYPE_CONFIG).filter(([k]) => k !== 'youtube').map(([k, v]) => (
-            <button key={k} onClick={() => setTypeFilter(k)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
+            <Button key={k} variant="ghost" onClick={() => setTypeFilter(k)} className="h-auto px-3 py-1.5 rounded-lg text-xs font-medium"
               style={typeFilter === k ? { background: v.color + '20', color: v.color } : { color: 'rgba(255,255,255,0.3)' }}>
               {v.label}
-            </button>
+            </Button>
           ))}
-          <button onClick={() => setTypeFilter('youtube')} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.98]"
+          <Button variant="ghost" onClick={() => setTypeFilter('youtube')} className="h-auto px-3 py-1.5 rounded-lg text-xs font-medium"
             style={typeFilter === 'youtube' ? { background: 'rgba(239,68,68,0.2)', color: '#ef4444' } : { color: 'rgba(255,255,255,0.3)' }}>
             ▶ YouTube
-          </button>
+          </Button>
           <div className="ml-auto flex gap-2">
             {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-              <button key={k} onClick={() => setStatusFilter(statusFilter === k ? 'all' : k)} className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-[0.98]"
+              <Button key={k} variant="ghost" onClick={() => setStatusFilter(statusFilter === k ? 'all' : k)} className="h-auto px-3 py-1.5 rounded-lg text-[11px] font-medium"
                 style={statusFilter === k ? { background: v.color + '20', color: v.color } : { color: 'rgba(255,255,255,0.3)' }}>
                 {v.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

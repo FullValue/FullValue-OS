@@ -281,14 +281,14 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
             const cfg = EVENT_TYPES[t]
             const active = type === t
             return (
-              <button key={t} type="button" onClick={() => setType(t)}
-                className="flex flex-col items-center gap-0.5 py-2 rounded-lg transition-all active:scale-[0.98]"
+              <Button key={t} type="button" variant="ghost" onClick={() => setType(t)}
+                className="flex-col w-full h-auto items-center gap-0.5 py-2 rounded-lg hover:bg-transparent"
                 style={active
                   ? { background: cfg.color + '22', border: `1px solid ${cfg.color}50`, color: cfg.color }
                   : { background: 'rgba(var(--ink),0.03)', border: '1px solid var(--border-soft)', color: 'var(--text-tertiary)' }}>
                 <span className="text-base leading-none">{cfg.emoji}</span>
                 <span className="text-[9px] leading-none">{cfg.label}</span>
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -682,10 +682,10 @@ export default function Calendrier() {
               { id: 'week', label: 'Semaine' },
               { id: 'month', label: 'Mois' },
             ].map(v => (
-              <button key={v.id} onClick={() => setView(v.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${view === v.id ? 'bg-violet/20 text-violet' : 'text-white/40 hover:text-white/70'}`}>
+              <Button key={v.id} variant="ghost" onClick={() => setView(v.id)}
+                className={`h-auto px-3 py-1.5 rounded-lg text-xs font-medium ${view === v.id ? 'bg-violet/20 text-violet hover:bg-violet/20' : 'text-white/40 hover:text-white/70 hover:bg-transparent'}`}>
                 {v.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -720,17 +720,18 @@ export default function Calendrier() {
       {/* Project filters */}
       <div className="flex items-center gap-2 mb-4 flex-shrink-0 flex-wrap">
         {state.projects.map(p => (
-          <button
+          <Button
             key={p.id}
+            variant="ghost"
             onClick={() => toggleProject(p.id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all"
+            className="h-auto gap-1.5 px-3 py-1.5 rounded-lg text-xs font-normal hover:bg-transparent"
             style={visibleProjects.has(p.id)
               ? { background: p.color + '20', color: p.color, border: `1px solid ${p.color}40` }
               : { background: 'rgba(var(--ink),0.03)', color: 'var(--text-tertiary)', border: '1px solid var(--border-soft)' }}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: visibleProjects.has(p.id) ? p.color : 'rgba(255,255,255,0.2)' }} />
             {p.name}
-          </button>
+          </Button>
         ))}
       </div>
 

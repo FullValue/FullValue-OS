@@ -20,15 +20,16 @@ function ToggleChip({ active, onClick, children, tone = 'violet' }) {
     green: 'bg-[var(--green-bg)] text-[var(--green-deep)] ring-1 ring-[var(--green-solid)]',
   }
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={onClick}
-      className={`w-full rounded-xl py-2 text-xs font-medium transition-all active:scale-[0.98] ${
+      className={`h-auto w-full rounded-xl py-2 text-xs font-medium ${
         active ? tones[tone] : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.08)]'
       }`}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -230,17 +231,18 @@ export default function Taches() {
       {/* Filters */}
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map(f => (
-          <button
+          <Button
             key={f}
+            variant="ghost"
             onClick={() => setFilter(f)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all active:scale-[0.98] ${
+            className={`h-auto rounded-lg px-3 py-1.5 text-xs font-medium ${
               filter === f
                 ? 'bg-[var(--active-bg)] text-[var(--active-text)]'
                 : 'bg-[rgba(var(--ink),0.05)] text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.09)] hover:text-[var(--text-secondary)]'
             }`}
           >
             {f}
-          </button>
+          </Button>
         ))}
         <div className="ml-auto w-auto">
           <NativeSelect
@@ -329,37 +331,44 @@ export default function Taches() {
 
                 {/* Actions */}
                 <div className="flex flex-shrink-0 items-center gap-1">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, impact: task.impact === 'high' ? 'low' : 'high' } })}
-                    className={`rounded p-1.5 transition-colors ${task.impact === 'high' ? 'text-[var(--orange-deep)]' : 'text-[var(--text-tertiary)] hover:text-[var(--orange-deep)]'}`}
+                    className={task.impact === 'high' ? 'text-[var(--orange-deep)]' : 'text-[var(--text-tertiary)] hover:text-[var(--orange-deep)]'}
                     title="Impact"
                   >
                     <Zap size={13} />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, ship80: !task.ship80 } })}
-                    className={`rounded p-1.5 text-sm transition-opacity ${task.ship80 ? 'opacity-100' : 'opacity-25 hover:opacity-60'}`}
+                    className={`text-sm ${task.ship80 ? 'opacity-100' : 'opacity-25 hover:opacity-60'}`}
                     title="Ship 80"
                   >
                     🚀
-                  </button>
+                  </Button>
                   {task.ship80 && !done && !task.ship80Delivered && (
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={() => dispatch({ type: 'SHIP80_DELIVER', payload: task.id })}
-                      className="rounded-lg px-2 py-1 text-[10px] font-medium transition-colors"
+                      className="h-auto rounded-lg px-2 py-1 text-[10px] font-medium"
                       style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}
                       title="Livrer en mode 80%"
                     >
                       Livrer&nbsp;80%
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, today: !task.today } })}
-                    className={`rounded p-1.5 transition-colors ${task.today ? 'text-[var(--violet-deep)]' : 'text-[var(--text-tertiary)] hover:text-[var(--violet-deep)]'}`}
+                    className={task.today ? 'text-[var(--violet-deep)]' : 'text-[var(--text-tertiary)] hover:text-[var(--violet-deep)]'}
                     title="Aujourd'hui"
                   >
                     <Pin size={13} />
-                  </button>
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon-sm"

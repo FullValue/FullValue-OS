@@ -414,14 +414,14 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
 
         {/* Actions */}
         <div className="flex gap-2 relative">
-          <button
+          <Button
             onClick={() => setShowPicker(v => !v)}
-            className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+            className="gap-2 font-semibold hover:opacity-90"
             style={{ background: accent, color: '#0a0a0a' }}
           >
             <Play size={13} strokeWidth={2.5} />
             Lancer session
-          </button>
+          </Button>
           {showPicker && (
             <ClientSessionPicker
               client={client}
@@ -553,16 +553,16 @@ function NotesTab({ client, accent }) {
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between mb-1">
         <p className="text-[10px] text-white/30 uppercase tracking-wider">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
-        <button onClick={() => setShowNew(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-all active:scale-[0.98]" style={{ background: accent + '18', color: accent }}>
+        <Button size="sm" onClick={() => setShowNew(true)} style={{ background: accent + '18', color: accent }}>
           <Plus size={12} /> Nouvelle note
-        </button>
+        </Button>
       </div>
 
       {showNew && (
         <Card className="rounded-xl p-3">
           <Input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addNote(); if (e.key === 'Escape') setShowNew(false) }} placeholder="Titre de la note..." />
           <div className="flex gap-2 mt-2">
-            <button onClick={addNote} className="text-xs px-3 py-1 rounded-lg text-white font-medium transition-all active:scale-[0.98]" style={{ background: accent }}>Créer</button>
+            <Button size="sm" onClick={addNote} className="text-white" style={{ background: accent }}>Créer</Button>
             <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Annuler</Button>
           </div>
         </Card>
@@ -583,7 +583,7 @@ function NotesTab({ client, accent }) {
           {editing === note.id ? (
             <div className="p-4">
               <Textarea autoFocus value={draft} onChange={e => setDraft(e.target.value)} rows={8} placeholder="Markdown..." className="font-mono leading-relaxed" />
-              <button onClick={() => saveNote(note.id)} className="mt-2 text-xs px-3 py-1.5 rounded-lg text-white font-medium transition-all active:scale-[0.98]" style={{ background: accent }}>Enregistrer</button>
+              <Button size="sm" onClick={() => saveNote(note.id)} className="mt-2 text-white" style={{ background: accent }}>Enregistrer</Button>
             </div>
           ) : note.content ? (
             <div className="px-4 py-3"><p className="text-white/50 text-xs leading-relaxed whitespace-pre-wrap line-clamp-3">{note.content}</p></div>
@@ -637,9 +637,9 @@ function HubTab({ client, accent }) {
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between mb-1">
         <p className="text-[10px] text-white/30 uppercase tracking-wider">{docs.length} document{docs.length > 1 ? 's' : ''}</p>
-        <button onClick={() => setShowForm(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-all active:scale-[0.98]" style={{ background: accent + '18', color: accent }}>
+        <Button size="sm" onClick={() => setShowForm(true)} style={{ background: accent + '18', color: accent }}>
           <Plus size={12} /> Ajouter
-        </button>
+        </Button>
       </div>
 
       {showForm && (
@@ -647,11 +647,11 @@ function HubTab({ client, accent }) {
           {/* Mode switch */}
           <div className="flex gap-2">
             {[['lien', '🔗 Lien'], ['upload', '📎 Fichier'], ['youtube', '▶ YouTube']].map(([m, label]) => (
-              <button key={m} type="button" onClick={() => setMode(m)}
-                className="flex-1 py-2 rounded-xl text-xs font-medium transition-all active:scale-[0.98]"
+              <Button key={m} type="button" variant="ghost" onClick={() => setMode(m)}
+                className="flex-1 text-xs font-medium"
                 style={mode === m ? { background: accent + '20', color: accent, border: `1px solid ${accent}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -692,10 +692,10 @@ function HubTab({ client, accent }) {
               ) : (
                 <div className="flex gap-2 flex-wrap">
                   {DOC_TYPES.map(t => (
-                    <button key={t} type="button" onClick={() => setType(t)} className="text-xs px-2.5 py-1.5 rounded-lg transition-all active:scale-[0.98]"
+                    <Button key={t} type="button" variant="ghost" size="sm" onClick={() => setType(t)} className="px-2.5"
                       style={type === t ? { background: accent + '20', color: accent, border: `1px solid ${accent}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
                       {DOC_ICONS[t]} {t}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -706,10 +706,10 @@ function HubTab({ client, accent }) {
               )}
               <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Description (optionnel)" />
               <div className="flex gap-2">
-                <button onClick={addDoc} disabled={mode === 'upload' && !uploadedFile}
-                  className="flex-1 py-2 rounded-xl text-sm font-medium text-white disabled:opacity-40 transition-all active:scale-[0.98]" style={{ background: accent }}>
+                <Button onClick={addDoc} disabled={mode === 'upload' && !uploadedFile}
+                  className="flex-1 text-white" style={{ background: accent }}>
                   Ajouter
-                </button>
+                </Button>
                 <Button variant="ghost" onClick={resetForm} className="flex-1">Annuler</Button>
               </div>
             </>
@@ -865,9 +865,9 @@ function FacturationTab({ client, accent }) {
 
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-white/30 uppercase tracking-wider">{invoices.length} facture{invoices.length > 1 ? 's' : ''}</p>
-        <button onClick={() => setShowForm(true)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-all active:scale-[0.98]" style={{ background: accent + '18', color: accent }}>
+        <Button size="sm" onClick={() => setShowForm(true)} style={{ background: accent + '18', color: accent }}>
           <Plus size={12} /> Nouvelle facture
-        </button>
+        </Button>
       </div>
 
       {showForm && (
@@ -881,13 +881,13 @@ function FacturationTab({ client, accent }) {
           <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Description (optionnel)" />
           <div className="flex gap-2 flex-wrap">
             {Object.entries(INVOICE_STATUSES).map(([k, v]) => (
-              <button key={k} onClick={() => setStatus(k)} className="text-xs px-2.5 py-1 rounded-lg transition-all active:scale-[0.98]" style={status === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
+              <Button key={k} type="button" variant="ghost" size="sm" onClick={() => setStatus(k)} className="px-2.5" style={status === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
                 {v.label}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="flex gap-2">
-            <button onClick={addInvoice} className="flex-1 py-2 rounded-xl text-sm font-medium text-white transition-all active:scale-[0.98]" style={{ background: accent }}>Enregistrer</button>
+            <Button onClick={addInvoice} className="flex-1 text-white" style={{ background: accent }}>Enregistrer</Button>
             <Button variant="ghost" onClick={() => setShowForm(false)} className="flex-1">Annuler</Button>
           </div>
         </Card>
@@ -985,9 +985,9 @@ function ClientForm({ initial = {}, onSubmit, onClose }) {
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <button type="submit" className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-all active:scale-[0.98]" style={{ background: accentColor }}>
+        <Button type="submit" className="flex-1 h-11 text-white" style={{ background: accentColor }}>
           {initial.id ? 'Mettre à jour' : 'Créer le client'}
-        </button>
+        </Button>
         <Button type="button" variant="ghost" onClick={onClose} className="flex-1 h-11">Annuler</Button>
       </div>
     </form>
@@ -1087,14 +1087,16 @@ function ClientDashboard({ client, onStartTask }) {
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => { setImportSuccess(null); setImportOpen(true) }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all active:scale-[0.98]"
+              className="rounded-xl px-2.5"
               style={{ color: accent, background: accent + '15' }}
             >
               <Zap size={12} strokeWidth={2} />
               Import
-            </button>
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => setSettingsOpen(true)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
               <Settings size={14} />
             </Button>
@@ -1258,23 +1260,25 @@ export default function ClientSpace({ onStartTask }) {
               {c.shortName || c.name}
             </button>
           ))}
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setAddDrawer(true)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-white/25 hover:text-white/50 transition-colors whitespace-nowrap flex-shrink-0"
+            className="rounded-lg text-sm text-white/25 hover:text-white/50 whitespace-nowrap flex-shrink-0"
           >
             <Plus size={13} /> Ajouter
-          </button>
+          </Button>
           {archivedClients.length > 0 && (
-            <button onClick={() => setShowArchived(!showArchived)} className="ml-auto text-[10px] text-white/20 hover:text-white/40 px-2 py-1 flex-shrink-0 transition-colors">
+            <Button variant="ghost" size="xs" onClick={() => setShowArchived(!showArchived)} className="ml-auto text-[10px] text-white/20 hover:text-white/40 flex-shrink-0">
               {showArchived ? 'Masquer archivés' : `Archivés (${archivedClients.length})`}
-            </button>
+            </Button>
           )}
         </div>
 
         {showArchived && archivedClients.length > 0 && (
           <div className="flex gap-2 mt-2 flex-wrap">
             {archivedClients.map(c => (
-              <button key={c.id} onClick={() => setSelectedClientId(c.id)} className="text-[11px] px-2.5 py-1 rounded-lg text-white/25 bg-white/5 hover:bg-white/8 transition-colors">{c.shortName || c.name}</button>
+              <Button key={c.id} variant="ghost" size="xs" onClick={() => setSelectedClientId(c.id)} className="text-[11px] px-2.5 rounded-lg text-white/25 bg-white/5 hover:bg-white/8">{c.shortName || c.name}</Button>
             ))}
           </div>
         )}

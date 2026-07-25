@@ -262,9 +262,10 @@ function ImportPreview({ data, excluded, onToggle, defaultProjectSlug }) {
 
         return (
           <div key={type} style={{ borderBottom: '1px solid var(--border-soft)' }}>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setCollapsed(c => ({ ...c, [type]: !c[type] }))}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors hover:bg-[rgba(var(--ink),0.04)]"
+              className="w-full justify-start h-auto gap-2 px-4 py-2.5 text-left rounded-none hover:bg-[rgba(var(--ink),0.04)]"
             >
               <span className="text-sm">{meta.icon}</span>
               <span className="text-xs font-medium flex-1" style={{ color: 'var(--text-primary)' }}>
@@ -274,7 +275,7 @@ function ImportPreview({ data, excluded, onToggle, defaultProjectSlug }) {
                 {activeCount}/{items.length}
               </span>
               {isCollapsed ? <ChevronRight size={12} style={{ color: 'var(--text-tertiary)' }} /> : <ChevronDown size={12} style={{ color: 'var(--text-tertiary)' }} />}
-            </button>
+            </Button>
 
             {!isCollapsed && (
               <div className="pb-1">

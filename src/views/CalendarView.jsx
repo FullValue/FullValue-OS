@@ -211,18 +211,19 @@ export default function CalendarView({ tasks = [], projects = [], onTaskUpdate }
 
         <div className="ml-auto inline-flex gap-0.5 rounded-xl bg-[rgba(var(--ink),0.05)] p-1">
           {['month', 'week'].map(m => (
-            <button
+            <Button
               key={m}
+              variant="ghost"
               onClick={() => setViewMode(m)}
               className={
-                'text-[11px] font-medium px-2.5 py-1 rounded-lg transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ' +
+                'h-auto text-[11px] font-medium px-2.5 py-1 rounded-lg ' +
                 (viewMode === m
-                  ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                  ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm hover:bg-[var(--bg-card)]'
                   : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')
               }
             >
               {m === 'month' ? 'Mois' : 'Semaine'}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

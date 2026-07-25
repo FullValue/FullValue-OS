@@ -113,9 +113,9 @@ function KanbanColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
               </div>
             </form>
           ) : (
-            <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] py-1.5 px-1 transition-colors mt-auto">
+            <Button variant="ghost" onClick={() => setAdding(true)} className="justify-start h-auto gap-1.5 text-[11px] font-normal text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-transparent py-1.5 px-1 mt-auto">
               <Plus size={11} /> Ajouter une tâche
-            </button>
+            </Button>
           )}
         </div>
       </SortableContext>

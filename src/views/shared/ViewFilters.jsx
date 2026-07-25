@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Tous' },
@@ -57,24 +58,26 @@ export default function ViewFilters({ filters, onChange, compact = false }) {
 
       {/* Status filter */}
       {STATUS_OPTIONS.map(opt => (
-        <button
+        <Button
           key={opt.value}
+          variant="ghost"
           onClick={() => onChange({ ...filters, status: opt.value })}
-          className={`${CHIP_BASE} ${filters.status === opt.value ? CHIP_ACTIVE : CHIP_INACTIVE}`}
+          className={`${CHIP_BASE} h-auto ${filters.status === opt.value ? CHIP_ACTIVE : CHIP_INACTIVE}`}
         >
           {opt.label}
-        </button>
+        </Button>
       ))}
 
       {/* Urgency filter */}
       {URGENCY_OPTIONS.map(opt => (
-        <button
+        <Button
           key={opt.value}
+          variant="ghost"
           onClick={() => onChange({ ...filters, urgency: filters.urgency === opt.value ? null : opt.value })}
-          className={`${CHIP_BASE} ${filters.urgency === opt.value ? opt.activeClass : CHIP_INACTIVE}`}
+          className={`${CHIP_BASE} h-auto ${filters.urgency === opt.value ? opt.activeClass : CHIP_INACTIVE}`}
         >
           {opt.label}
-        </button>
+        </Button>
       ))}
     </div>
   )

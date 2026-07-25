@@ -362,13 +362,14 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
         </div>
       }
       action={
-        <button
+        <Button
+          size="icon-sm"
           onClick={() => { setPicking(p => !p); setSearch('') }}
-          className="w-5 h-5 rounded-full flex items-center justify-center transition-all"
+          className="w-5 h-5 rounded-full"
           style={{ background: picking ? 'var(--violet-deep)' : 'var(--violet-bg)', color: picking ? '#fff' : 'var(--violet-deep)' }}
         >
           {picking ? <X size={10} /> : <Plus size={10} />}
-        </button>
+        </Button>
       }
     >
       {/* Current today tasks */}
@@ -405,22 +406,25 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}>80%</span>
                   )}
                   {!isDone && (
-                    <button
+                    <Button
+                      size="xs"
                       onClick={() => onStartTask(task.projectId, task.id)}
-                      className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg"
+                      className="text-[10px]"
                       style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}
                     >
                       <Play size={9} /> Go
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, today: false } })}
-                    className="p-0.5 rounded transition-all opacity-0 group-hover:opacity-100"
+                    className="h-auto w-auto p-0.5 rounded opacity-0 group-hover:opacity-100"
                     style={{ color: 'var(--text-tertiary)' }}
                     title="Retirer des priorités"
                   >
                     <X size={11} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             )

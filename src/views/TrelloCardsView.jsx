@@ -379,11 +379,11 @@ function TrelloColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
               </div>
             </form>
           ) : (
-            <button onClick={() => setAdding(true)}
-              className="flex items-center gap-1.5 text-[11px] py-2 px-1 transition-colors hover:text-[var(--text-secondary)]"
+            <Button variant="ghost" onClick={() => setAdding(true)}
+              className="justify-start h-auto gap-1.5 text-[11px] font-normal py-2 px-1 hover:text-[var(--text-secondary)] hover:bg-transparent"
               style={{ color: 'var(--text-tertiary)' }}>
               <Plus size={11} /> Ajouter une carte
-            </button>
+            </Button>
           )}
         </div>
       </SortableContext>

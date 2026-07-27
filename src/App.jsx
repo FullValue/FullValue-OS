@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Sun, Moon, Search } from 'lucide-react'
 import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
-import FloatingNavbar from '@/components/layout/FloatingNavbar'
+import FloatingNavbar, { SIDEBAR_WIDTH } from '@/components/layout/FloatingNavbar'
 import RightSidebar from '@/components/layout/RightSidebar'
 import '@/components/ui/ThemeToggle.css'
 import CommandPalette from '@/components/CommandPalette'
@@ -198,18 +198,6 @@ function AppInner() {
     }
   }
 
-  const [sidebarLocked, setSidebarLocked] = useState(
-    () => localStorage.getItem('cockpit:sidebar:locked') === 'true'
-  )
-
-  function handleToggleSidebarLock() {
-    setSidebarLocked(prev => {
-      const next = !prev
-      localStorage.setItem('cockpit:sidebar:locked', String(next))
-      return next
-    })
-  }
-
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 639px)').matches)
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 639px)')
@@ -257,8 +245,6 @@ function AppInner() {
         activePage={activePage}
         setActivePage={setActivePage}
         timerRunning={timerRunning}
-        sidebarLocked={sidebarLocked}
-        onToggleSidebarLock={handleToggleSidebarLock}
       />
 
       {/* Right sidebar — only on Journée, desktop only */}
@@ -268,9 +254,9 @@ function AppInner() {
       <main
         className="transition-all duration-200"
         style={{
-          marginLeft: isMobile ? 0 : (sidebarLocked ? 268 : 'clamp(80px, 7vw, 100px)'),
+          marginLeft: isMobile ? 0 : SIDEBAR_WIDTH,
           marginRight: isMobile ? 0 : (isJournee ? 'clamp(0px, calc(300px + 2.5rem), 340px)' : 'clamp(0px, 5vw, 40px)'),
-          padding: isMobile ? '16px 16px 80px' : '24px 24px 80px',
+          padding: isMobile ? '16px 16px 80px' : '24px 32px 80px',
         }}
       >
         <div className="mx-auto animate-fadeIn" style={{ maxWidth: isMobile ? '100%' : (isJournee ? 760 : 1024) }}>

@@ -1,18 +1,18 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, Inbox, Calendar, CheckSquare, Timer,
   BookOpen, GraduationCap,
   Users, LayoutDashboard, ChevronDown, LogOut, Database, FileJson,
-  PanelLeftClose, PanelLeftOpen, Pencil, Trash2, Check, X, Plus, Menu,
+  Pencil, Trash2, Check, X, Plus, Menu,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
-import { SimpleTooltip } from '@/components/ui/tooltip'
 import { toast, toastUndo } from '@/lib/toast'
+
+export const SIDEBAR_WIDTH = 248
 
 const PILOTAGE = [
   { id: 'journee',    label: 'Journée',     Icon: Home },
@@ -44,86 +44,53 @@ function SortableProjectItem({ id, children }) {
   )
 }
 
-function NavLabel({ children, expanded }) {
+function SectionLabel({ children, className = '' }) {
   return (
-    <AnimatePresence>
-      {expanded && (
-        <motion.span
-          initial={{ opacity: 0, x: -6 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -6 }}
-          transition={{ duration: 0.13 }}
-          className="text-sm leading-none whitespace-nowrap overflow-hidden"
-        >
-          {children}
-        </motion.span>
-      )}
-    </AnimatePresence>
+    <p
+      className={`px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.09em] ${className}`}
+      style={{ color: 'var(--text-tertiary)' }}
+    >
+      {children}
+    </p>
   )
 }
 
-function NavItem({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActive = false, expanded }) {
-  const button = (
+// Rangée de navigation (toujours ouverte). Fond actif = inverse ; sinon hover neutre.
+function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActive = false }) {
+  return (
     <button
       onClick={() => onClick(id)}
-      className="flex items-center gap-3 w-full transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] group active:scale-[0.98]"
-      style={{
-        padding: expanded ? '7px 12px' : '7px 0',
-        justifyContent: expanded ? 'flex-start' : 'center',
-        borderRadius: 12,
-        background: isActive ? 'var(--active-bg)' : 'transparent',
-      }}
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+      style={{ background: isActive ? 'var(--active-bg)' : undefined }}
     >
-      <span
-        className="relative flex-shrink-0 flex items-center justify-center rounded-full transition-all"
-        style={{ width: 32, height: 32, color: isActive ? 'var(--active-text)' : 'var(--text-tertiary)' }}
-      >
-        <Icon size={17} strokeWidth={isActive ? 2 : 1.6} />
+      <span className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
+        <Icon
+          size={18}
+          strokeWidth={isActive ? 2 : 1.7}
+          style={{ color: isActive ? 'var(--active-text)' : 'var(--text-tertiary)' }}
+        />
         {badgeCount > 0 && (
           <span
-            className="absolute -top-1 -right-1 min-w-[14px] h-3.5 rounded-full text-[8px] flex items-center justify-center font-bold px-0.5"
-            style={{ background: 'var(--yellow-solid)', color: '#1A1918' }}
+            className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-0.5 text-[8px] font-bold"
+            style={{ background: 'var(--violet-deep)', color: '#fff' }}
           >
             {badgeCount > 9 ? '9+' : badgeCount}
           </span>
         )}
         {timerActive && (
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--green-deep)' }} />
+          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 animate-pulse rounded-full" style={{ background: 'var(--green-deep)' }} />
         )}
       </span>
-      <span style={{ color: isActive ? 'var(--active-text)' : 'var(--text-secondary)', fontWeight: isActive ? 500 : 400 }}>
-        <NavLabel expanded={expanded}>{label}</NavLabel>
+      <span
+        className="text-sm"
+        style={{
+          color: isActive ? 'var(--active-text)' : 'var(--text-secondary)',
+          fontWeight: isActive ? 600 : 500,
+        }}
+      >
+        {label}
       </span>
     </button>
-  )
-  if (expanded) return button
-  return (
-    <SimpleTooltip label={label} side="right">
-      {button}
-    </SimpleTooltip>
-  )
-}
-
-function SectionDivider({ label, expanded }) {
-  return (
-    <div className="flex items-center gap-2 px-1 my-1" style={{ height: 20 }}>
-      <div className="flex-1 h-px" style={{ background: 'var(--border-soft)' }} />
-      <AnimatePresence>
-        {expanded && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
-            className="text-[9px] uppercase tracking-widest font-semibold whitespace-nowrap"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
-            {label}
-          </motion.span>
-        )}
-      </AnimatePresence>
-      <div className="flex-1 h-px" style={{ background: 'var(--border-soft)' }} />
-    </div>
   )
 }
 
@@ -139,7 +106,7 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex safe-bottom"
+      className="fixed bottom-0 left-0 right-0 z-50 flex sm:hidden"
       style={{
         background: 'var(--bg-surface)',
         borderTop: '1px solid var(--border-soft)',
@@ -153,18 +120,18 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
           <button
             key={id}
             onClick={() => setActivePage(id)}
-            className="flex-1 flex flex-col items-center gap-1 py-2.5 transition-colors relative"
+            className="relative flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors"
             style={{ color: isActive ? 'var(--violet-deep)' : 'var(--text-tertiary)' }}
           >
             <span className="relative">
               <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
               {badge && inboxCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[8px] flex items-center justify-center font-bold" style={{ background: 'var(--yellow-solid)', color: '#1A1918' }}>
+                <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold" style={{ background: 'var(--violet-deep)', color: '#fff' }}>
                   {inboxCount > 9 ? '9+' : inboxCount}
                 </span>
               )}
               {timer && timerRunning && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--green-deep)' }} />
+                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 animate-pulse rounded-full" style={{ background: 'var(--green-deep)' }} />
               )}
             </span>
             <span className="text-[10px] font-medium">{label}</span>
@@ -173,7 +140,7 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
       })}
       <button
         onClick={onOpenMenu}
-        className="flex-1 flex flex-col items-center gap-1 py-2.5 transition-colors relative"
+        className="relative flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors"
         style={{ color: 'var(--text-tertiary)' }}
       >
         <Menu size={20} strokeWidth={1.5} />
@@ -185,7 +152,7 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
 
 // ─── Mobile menu drawer (full nav mirror) ─────────────────────────────────────
 
-function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects, user, userInitials, onSignOut, inboxCount, timerRunning }) {
+function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects, user, userInitials, onSignOut }) {
   if (!isOpen) return null
 
   function handlePick(id) {
@@ -201,22 +168,14 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
         { id: 'import',     label: 'Import bulk', Icon: FileJson },
       ],
     },
-    {
-      label: 'Ressources',
-      items: RESSOURCES,
-    },
+    { label: 'Ressources', items: RESSOURCES },
   ]
 
   return (
-    <div className="sm:hidden fixed inset-0 z-[51] flex flex-col animate-fadeIn"
-      style={{ background: 'var(--bg-surface)' }}>
-
-      {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--c-border)' }}>
+    <div className="fixed inset-0 z-[51] flex flex-col animate-fadeIn sm:hidden" style={{ background: 'var(--bg-surface)' }}>
+      <div className="flex flex-shrink-0 items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-soft)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold"
-            style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-semibold" style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}>
             {userInitials}
           </div>
           <div>
@@ -224,28 +183,22 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
             <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</p>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5"
-          style={{ color: 'var(--text-tertiary)' }}>
+        <button onClick={onClose} className="rounded-xl p-2 hover:bg-[rgba(var(--ink),0.05)]" style={{ color: 'var(--text-tertiary)' }}>
           <X size={18} />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 pb-24 space-y-5">
-
+      <div className="flex-1 space-y-5 overflow-y-auto px-4 py-4 pb-24">
         {SECTIONS.map(section => (
           <div key={section.label}>
-            <p className="text-[10px] uppercase tracking-widest font-semibold mb-2 px-2"
-              style={{ color: 'var(--text-tertiary)' }}>{section.label}</p>
+            <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>{section.label}</p>
             <div className="flex flex-col gap-1">
               {section.items.map(item => {
                 const isActive = activePage === item.id
                 return (
                   <button key={item.id} onClick={() => handlePick(item.id)}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-left"
-                    style={{
-                      background: isActive ? 'var(--active-bg)' : 'transparent',
-                      color: isActive ? 'var(--active-text)' : 'var(--text-secondary)',
-                    }}>
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors"
+                    style={{ background: isActive ? 'var(--active-bg)' : 'transparent', color: isActive ? 'var(--active-text)' : 'var(--text-secondary)' }}>
                     <item.Icon size={18} strokeWidth={isActive ? 2 : 1.6} />
                     <span className="text-sm font-medium">{item.label}</span>
                   </button>
@@ -255,29 +208,21 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
           </div>
         ))}
 
-        {/* Projets */}
         <div>
-          <p className="text-[10px] uppercase tracking-widest font-semibold mb-2 px-2"
-            style={{ color: 'var(--text-tertiary)' }}>Projets</p>
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>Projets</p>
           <div className="flex flex-col gap-1">
             {projects.map(p => {
               const isActive = activePage === `projet_${p.id}` || (p.id === 'p1' && activePage === 'ulycom_clients')
               return (
                 <button key={p.id} onClick={() => handlePick(`projet_${p.id}`)}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-left"
-                  style={{
-                    background: isActive ? p.color + '15' : 'transparent',
-                    color: isActive ? p.color : 'var(--text-secondary)',
-                  }}>
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors"
+                  style={{ background: isActive ? p.color + '22' : 'transparent', color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                   <span className="text-lg">{p.emoji}</span>
-                  <span className="text-sm font-medium flex-1 truncate">{p.name}</span>
+                  <span className="flex-1 truncate text-sm font-medium">{p.name}</span>
                   {p.id === 'p1' && (
                     <button onClick={(e) => { e.stopPropagation(); handlePick('ulycom_clients') }}
-                      className="text-[10px] px-2 py-1 rounded-lg transition-colors"
-                      style={{
-                        background: activePage === 'ulycom_clients' ? p.color + '25' : 'rgba(255,255,255,0.05)',
-                        color: activePage === 'ulycom_clients' ? p.color : 'var(--text-tertiary)',
-                      }}>
+                      className="rounded-lg px-2 py-1 text-[10px] transition-colors"
+                      style={{ background: activePage === 'ulycom_clients' ? p.color + '30' : 'rgba(var(--ink),0.05)', color: activePage === 'ulycom_clients' ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
                       Clients
                     </button>
                   )}
@@ -287,13 +232,9 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
           </div>
         </div>
 
-        {/* Compte */}
         <div>
-          <p className="text-[10px] uppercase tracking-widest font-semibold mb-2 px-2"
-            style={{ color: 'var(--text-tertiary)' }}>Compte</p>
-          <button onClick={onSignOut}
-            className="flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-left w-full"
-            style={{ color: '#F87171' }}>
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>Compte</p>
+          <button onClick={onSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors" style={{ color: 'var(--red-deep)' }}>
             <LogOut size={18} strokeWidth={1.6} />
             <span className="text-sm font-medium">Déconnexion</span>
           </button>
@@ -303,18 +244,15 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
   )
 }
 
-// ─── Main floating navbar ─────────────────────────────────────────────────────
+// ─── Fixed full-height sidebar ────────────────────────────────────────────────
 
-export default function FloatingNavbar({ activePage, setActivePage, timerRunning, sidebarLocked = false, onToggleSidebarLock }) {
+export default function FloatingNavbar({ activePage, setActivePage, timerRunning }) {
   const { state, dispatch } = useStore()
   const { user, signOut } = useAuth()
-  const [hovered, setHovered] = useState(false)
   const [addingProject, setAddingProject] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const expanded = sidebarLocked || hovered || addingProject
   const inboxCount = state.inbox.length
 
-  // Project CRUD state
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   function handleProjectDragEnd({ active, over }) {
@@ -371,313 +309,217 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
 
   return (
     <>
-      {/* Desktop floating pill */}
-      <motion.aside
-        className="hidden sm:flex flex-col fixed z-50"
+      {/* Desktop fixed sidebar */}
+      <aside
+        className="fixed left-0 top-0 z-50 hidden flex-col sm:flex"
         style={{
-          left: 20,
-          top: '50%',
-          y: '-50%',
-          background: 'var(--bg-surface)',
-          border: '0.5px solid var(--border-soft)',
-          boxShadow: 'var(--shadow-float)',
-          borderRadius: expanded ? 24 : 9999,
-          padding: '12px 8px',
-          overflowX: 'hidden',
-          overflowY: 'auto',
-          maxHeight: 'calc(100dvh - 32px)',
-          scrollbarWidth: 'none',
-          gap: 2,
+          width: SIDEBAR_WIDTH,
+          height: '100dvh',
+          background: 'var(--bg-sidebar)',
+          borderRight: '1px solid var(--border-medium)',
         }}
-        animate={{ width: expanded ? 220 : 56 }}
-        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-        onMouseEnter={() => !sidebarLocked && setHovered(true)}
-        onMouseLeave={() => !sidebarLocked && setHovered(false)}
       >
-        {/* PILOTAGE */}
-        <SectionDivider label="Pilotage" expanded={expanded} />
-        {PILOTAGE.map(({ id, label, Icon, badge, timer }) => (
-          <NavItem
-            key={id}
-            id={id}
-            label={label}
-            Icon={Icon}
-            isActive={activePage === id}
-            onClick={setActivePage}
-            badgeCount={badge ? inboxCount : 0}
-            timerActive={timer && timerRunning}
-            expanded={expanded}
-          />
-        ))}
-
-        {/* PROJETS — divider with + button */}
-        <div className="flex items-center gap-2 px-1 my-1" style={{ height: 20 }}>
-          <div className="flex-1 h-px" style={{ background: 'var(--border-soft)' }} />
-          <AnimatePresence>
-            {expanded && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.1 }}
-                className="flex items-center gap-1.5"
-              >
-                <span className="text-[9px] uppercase tracking-widest font-semibold whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
-                  Projets
-                </span>
-                <button
-                  onClick={() => { setAddingProject(true); setNewName(''); setNewEmoji('📁') }}
-                  className="flex items-center justify-center w-4 h-4 rounded-full hover:opacity-70 transition-opacity"
-                  style={{ color: 'var(--text-tertiary)', background: 'var(--border-soft)' }}
-                  title="Ajouter un projet"
-                >
-                  <Plus size={9} />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="flex-1 h-px" style={{ background: 'var(--border-soft)' }} />
+        {/* Brand */}
+        <div className="flex h-16 flex-shrink-0 items-center gap-2.5 px-5">
+          <span className="text-lg leading-none">✦</span>
+          <span className="text-[15px] font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            Le Cockpit
+          </span>
         </div>
 
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
-        <SortableContext items={state.projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
-        {state.projects.map(p => {
-          const isActive = activePage === `projet_${p.id}`
-          const isUlycom = p.id === 'p1'
-          const showSub = isUlycom && ulycomExpanded && expanded
-          const isEditing = editingId === p.id
-          const rowActive = isActive || (isUlycom && activePage === 'ulycom_clients')
-
-          return (
-            <SortableProjectItem key={p.id} id={p.id}>
-            <div>
-              {isEditing && expanded ? (
-                /* ── Inline edit form ── */
-                <div
-                  className="flex items-center gap-1.5 w-full rounded-xl px-2 py-1.5"
-                  style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}
-                >
-                  <input
-                    value={editEmoji}
-                    onChange={e => setEditEmoji(e.target.value)}
-                    className="w-7 text-center bg-transparent text-base focus:outline-none"
-                    maxLength={2}
-                  />
-                  <input
-                    autoFocus
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') saveEdit(p.id)
-                      if (e.key === 'Escape') setEditingId(null)
-                    }}
-                    placeholder="Nom..."
-                    className="flex-1 text-sm bg-transparent focus:outline-none min-w-0"
-                    style={{ color: 'var(--text-primary)' }}
-                  />
-                  <button onClick={() => saveEdit(p.id)} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={12} /></button>
-                  <button onClick={() => setEditingId(null)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={12} /></button>
-                </div>
-              ) : (
-                /* ── Normal row ── */
-                <div className="group relative">
-                  <button
-                    onClick={() => setActivePage(`projet_${p.id}`)}
-                    title={!expanded ? `${p.emoji} ${p.name}` : undefined}
-                    className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none"
-                    style={{
-                      padding: expanded ? '7px 12px' : '7px 0',
-                      justifyContent: expanded ? 'flex-start' : 'center',
-                      borderRadius: 12,
-                      background: rowActive ? 'var(--active-bg)' : 'transparent',
-                    }}
-                  >
-                    <span className="flex-shrink-0 flex items-center justify-center text-base" style={{ width: 32, height: 32 }}>
-                      {p.emoji}
-                    </span>
-                    <AnimatePresence>
-                      {expanded && (
-                        <motion.span
-                          initial={{ opacity: 0, x: -6 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -6 }}
-                          transition={{ duration: 0.13 }}
-                          className="flex items-center gap-1 flex-1 min-w-0"
-                        >
-                          <span
-                            className="text-sm truncate"
-                            style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-secondary)', fontWeight: rowActive ? 500 : 400 }}
-                          >
-                            {p.name}
-                          </span>
-                          <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-tertiary)' }}>T{p.tier}</span>
-                          {isUlycom && (
-                            <ChevronDown size={11} style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-tertiary)', flexShrink: 0, transform: ulycomExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                          )}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </button>
-
-                  {/* Edit / delete — visible on hover */}
-                  {expanded && (
-                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
-                      <button
-                        onClick={e => { e.stopPropagation(); startEdit(p) }}
-                        className="p-1 rounded-md"
-                        style={{ color: rowActive ? 'rgba(255,255,255,0.7)' : 'var(--text-tertiary)', background: rowActive ? 'rgba(255,255,255,0.12)' : 'var(--bg-card-soft)' }}
-                        title="Renommer"
-                      >
-                        <Pencil size={10} />
-                      </button>
-                      <button
-                        onClick={e => { e.stopPropagation(); handleDeleteProject(p.id) }}
-                        className="p-1 rounded-md"
-                        style={{ color: 'var(--red-deep)', background: 'var(--red-bg)' }}
-                        title="Supprimer"
-                      >
-                        <Trash2 size={10} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Ulycom sub-nav */}
-              {showSub && !isEditing && (
-                <div className="ml-10 flex flex-col gap-0.5 mt-0.5">
-                  {[
-                    { id: 'projet_p1', label: 'Dashboard', Icon: LayoutDashboard },
-                    { id: 'ulycom_clients', label: 'Clients', Icon: Users },
-                  ].map(sub => (
-                    <button
-                      key={sub.id}
-                      onClick={() => setActivePage(sub.id)}
-                      className="flex items-center gap-2 text-xs transition-colors"
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: 8,
-                        color: activePage === sub.id ? 'var(--violet-deep)' : 'var(--text-tertiary)',
-                        background: activePage === sub.id ? 'var(--violet-bg)' : 'transparent',
-                        fontWeight: activePage === sub.id ? 500 : 400,
-                      }}
-                    >
-                      <sub.Icon size={11} /> {sub.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            </SortableProjectItem>
-          )
-        })}
-        </SortableContext>
-        </DndContext>
-
-        {/* Add project form */}
-        {addingProject && expanded && (
-          <div
-            className="flex items-center gap-1.5 rounded-xl px-2 py-1.5"
-            style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}
-          >
-            <input
-              value={newEmoji}
-              onChange={e => setNewEmoji(e.target.value)}
-              className="w-7 text-center bg-transparent text-base focus:outline-none"
-              maxLength={2}
-            />
-            <input
-              autoFocus
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleAddProject()
-                if (e.key === 'Escape') setAddingProject(false)
-              }}
-              placeholder="Nom du projet..."
-              className="flex-1 text-sm bg-transparent focus:outline-none min-w-0"
-              style={{ color: 'var(--text-primary)' }}
-            />
-            <button onClick={handleAddProject} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={12} /></button>
-            <button onClick={() => setAddingProject(false)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={12} /></button>
+        {/* Scrollable nav */}
+        <div className="flex-1 overflow-y-auto px-3 pb-4" style={{ scrollbarWidth: 'thin' }}>
+          <SectionLabel>Pilotage</SectionLabel>
+          <div className="flex flex-col gap-0.5">
+            {PILOTAGE.map(({ id, label, Icon, badge, timer }) => (
+              <NavRow
+                key={id}
+                id={id}
+                label={label}
+                Icon={Icon}
+                isActive={activePage === id}
+                onClick={setActivePage}
+                badgeCount={badge ? inboxCount : 0}
+                timerActive={timer && timerRunning}
+              />
+            ))}
           </div>
-        )}
 
-        {/* RESSOURCES */}
-        <SectionDivider label="Ressources" expanded={expanded} />
-        {RESSOURCES.map(({ id, label, Icon }) => (
-          <NavItem
-            key={id}
-            id={id}
-            label={label}
-            Icon={Icon}
-            isActive={activePage === id}
-            onClick={setActivePage}
-            expanded={expanded}
-          />
-        ))}
-
-        {/* Bottom controls */}
-        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border-soft)' }}>
-          <button
-            onClick={onToggleSidebarLock}
-            title={sidebarLocked ? 'Réduire la sidebar' : 'Épingler la sidebar ouverte'}
-            className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none"
-            style={{ padding: expanded ? '7px 12px' : '7px 0', justifyContent: expanded ? 'flex-start' : 'center', borderRadius: 12 }}
-          >
-            <span className="flex-shrink-0 flex items-center justify-center" style={{ width: 32, height: 32, color: 'var(--text-tertiary)' }}>
-              {sidebarLocked ? <PanelLeftClose size={17} strokeWidth={1.6} /> : <PanelLeftOpen size={17} strokeWidth={1.6} />}
+          {/* Projets header */}
+          <div className="flex items-center justify-between px-3 pb-1 pt-4">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.09em]" style={{ color: 'var(--text-tertiary)' }}>
+              Projets
             </span>
-            <NavLabel expanded={expanded}>
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{sidebarLocked ? 'Réduire' : 'Épingler'}</span>
-            </NavLabel>
-          </button>
-
-          <button
-            onClick={() => setActivePage('migrate')}
-            title="Migration Supabase"
-            className="flex items-center gap-3 w-full transition-all duration-150 focus:outline-none"
-            style={{ padding: expanded ? '7px 12px' : '7px 0', justifyContent: expanded ? 'flex-start' : 'center', borderRadius: 12, background: activePage === 'migrate' ? 'var(--active-bg)' : 'transparent' }}
-          >
-            <span className="flex-shrink-0 flex items-center justify-center" style={{ width: 32, height: 32, color: 'var(--text-tertiary)' }}>
-              <Database size={15} strokeWidth={1.6} />
-            </span>
-            <NavLabel expanded={expanded}>
-              <span className="text-sm" style={{ color: activePage === 'migrate' ? 'var(--active-text)' : 'var(--text-secondary)' }}>Migration</span>
-            </NavLabel>
-          </button>
-
-          <div
-            className="flex items-center gap-3 w-full mt-1"
-            style={{ padding: expanded ? '7px 12px' : '7px 0', justifyContent: expanded ? 'flex-start' : 'center' }}
-          >
-            <span
-              className="flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold"
-              style={{ width: 32, height: 32, background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}
+            <button
+              onClick={() => { setAddingProject(true); setNewName(''); setNewEmoji('📁') }}
+              className="flex h-5 w-5 items-center justify-center rounded-md transition-colors hover:bg-[rgba(var(--ink),0.08)]"
+              style={{ color: 'var(--text-tertiary)' }}
+              title="Ajouter un projet"
             >
+              <Plus size={13} />
+            </button>
+          </div>
+
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
+            <SortableContext items={state.projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-0.5">
+                {state.projects.map(p => {
+                  const isActive = activePage === `projet_${p.id}`
+                  const isUlycom = p.id === 'p1'
+                  const showSub = isUlycom && ulycomExpanded
+                  const isEditing = editingId === p.id
+                  const rowActive = isActive || (isUlycom && activePage === 'ulycom_clients')
+
+                  return (
+                    <SortableProjectItem key={p.id} id={p.id}>
+                      <div>
+                        {isEditing ? (
+                          <div className="flex items-center gap-1.5 rounded-xl px-2 py-1.5" style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}>
+                            <input
+                              value={editEmoji}
+                              onChange={e => setEditEmoji(e.target.value)}
+                              className="w-7 bg-transparent text-center text-base focus:outline-none"
+                              maxLength={2}
+                            />
+                            <input
+                              autoFocus
+                              value={editName}
+                              onChange={e => setEditName(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') saveEdit(p.id)
+                                if (e.key === 'Escape') setEditingId(null)
+                              }}
+                              placeholder="Nom..."
+                              className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+                              style={{ color: 'var(--text-primary)' }}
+                            />
+                            <button onClick={() => saveEdit(p.id)} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={13} /></button>
+                            <button onClick={() => setEditingId(null)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={13} /></button>
+                          </div>
+                        ) : (
+                          <div className="group relative">
+                            <button
+                              onClick={() => setActivePage(`projet_${p.id}`)}
+                              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)]"
+                              style={{ background: rowActive ? 'var(--active-bg)' : undefined }}
+                            >
+                              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-[15px] leading-none">{p.emoji}</span>
+                              <span className="flex min-w-0 flex-1 items-center gap-1">
+                                <span
+                                  className="truncate text-sm"
+                                  style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-secondary)', fontWeight: rowActive ? 600 : 500 }}
+                                >
+                                  {p.name}
+                                </span>
+                                <span className="ml-auto flex-shrink-0 text-[9px]" style={{ color: rowActive ? 'rgba(255,255,255,0.6)' : 'var(--text-tertiary)' }}>T{p.tier}</span>
+                                {isUlycom && (
+                                  <ChevronDown size={12} style={{ color: rowActive ? 'rgba(255,255,255,0.6)' : 'var(--text-tertiary)', flexShrink: 0, transform: ulycomExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                                )}
+                              </span>
+                            </button>
+
+                            {/* Edit / delete on hover */}
+                            <div className="pointer-events-none absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+                              <button
+                                onClick={e => { e.stopPropagation(); startEdit(p) }}
+                                className="rounded-md p-1"
+                                style={{ color: rowActive ? 'rgba(255,255,255,0.8)' : 'var(--text-tertiary)', background: rowActive ? 'rgba(255,255,255,0.15)' : 'var(--bg-card-soft)' }}
+                                title="Renommer"
+                              >
+                                <Pencil size={10} />
+                              </button>
+                              <button
+                                onClick={e => { e.stopPropagation(); handleDeleteProject(p.id) }}
+                                className="rounded-md p-1"
+                                style={{ color: 'var(--red-deep)', background: 'var(--red-bg)' }}
+                                title="Supprimer"
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Ulycom sub-nav */}
+                        {showSub && !isEditing && (
+                          <div className="ml-8 mt-0.5 flex flex-col gap-0.5">
+                            {[
+                              { id: 'projet_p1', label: 'Dashboard', Icon: LayoutDashboard },
+                              { id: 'ulycom_clients', label: 'Clients', Icon: Users },
+                            ].map(sub => (
+                              <button
+                                key={sub.id}
+                                onClick={() => setActivePage(sub.id)}
+                                className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors hover:bg-[rgba(var(--ink),0.05)]"
+                                style={{
+                                  color: activePage === sub.id ? 'var(--violet-deep)' : 'var(--text-tertiary)',
+                                  background: activePage === sub.id ? 'var(--violet-bg)' : 'transparent',
+                                  fontWeight: activePage === sub.id ? 600 : 500,
+                                }}
+                              >
+                                <sub.Icon size={12} /> {sub.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </SortableProjectItem>
+                  )
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          {/* Add project form */}
+          {addingProject && (
+            <div className="mt-1 flex items-center gap-1.5 rounded-xl px-2 py-1.5" style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}>
+              <input
+                value={newEmoji}
+                onChange={e => setNewEmoji(e.target.value)}
+                className="w-7 bg-transparent text-center text-base focus:outline-none"
+                maxLength={2}
+              />
+              <input
+                autoFocus
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleAddProject()
+                  if (e.key === 'Escape') setAddingProject(false)
+                }}
+                placeholder="Nom du projet..."
+                className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+                style={{ color: 'var(--text-primary)' }}
+              />
+              <button onClick={handleAddProject} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={13} /></button>
+              <button onClick={() => setAddingProject(false)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={13} /></button>
+            </div>
+          )}
+
+          <SectionLabel>Ressources</SectionLabel>
+          <div className="flex flex-col gap-0.5">
+            {RESSOURCES.map(({ id, label, Icon }) => (
+              <NavRow key={id} id={id} label={label} Icon={Icon} isActive={activePage === id} onClick={setActivePage} />
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom: migration + account */}
+        <div className="flex-shrink-0 px-3 py-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
+          <NavRow id="migrate" label="Migration" Icon={Database} isActive={activePage === 'migrate'} onClick={setActivePage} />
+          <div className="mt-1 flex items-center gap-2.5 px-3 py-2">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold" style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}>
               {userInitials}
             </span>
-            <AnimatePresence>
-              {expanded && (
-                <motion.div
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -6 }}
-                  transition={{ duration: 0.13 }}
-                  className="flex items-center gap-2 flex-1 min-w-0"
-                >
-                  <span className="text-xs truncate flex-1" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</span>
-                  <button onClick={signOut} title="Se déconnecter">
-                    <LogOut size={13} style={{ color: 'var(--text-tertiary)' }} />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <span className="min-w-0 flex-1 truncate text-xs" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</span>
+            <button onClick={signOut} title="Se déconnecter" className="flex-shrink-0 rounded-lg p-1.5 transition-colors hover:bg-[rgba(var(--ink),0.06)]">
+              <LogOut size={15} style={{ color: 'var(--text-tertiary)' }} />
+            </button>
           </div>
         </div>
-      </motion.aside>
+      </aside>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile */}
       <MobileNav
         activePage={activePage}
         setActivePage={setActivePage}
@@ -694,8 +536,6 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
         user={user}
         userInitials={userInitials}
         onSignOut={() => { signOut(); setMobileMenuOpen(false) }}
-        inboxCount={inboxCount}
-        timerRunning={timerRunning}
       />
     </>
   )

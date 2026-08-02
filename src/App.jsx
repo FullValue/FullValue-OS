@@ -16,6 +16,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { useShortcuts } from '@/hooks/useShortcuts'
 import { useStore } from '@/store/useStore'
+import AccessCodePage from '@/components/auth/AccessCodePage'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
 import ProjetPage from '@/components/views/ProjetPage'
@@ -28,31 +29,11 @@ import Formation from '@/components/views/Formation'
 import ClientSpace from '@/components/views/ClientSpace'
 import MigratePage from '@/components/views/MigratePage'
 import ImportPage from '@/components/views/ImportPage'
-import LoginPage from '@/components/auth/LoginPage'
-import SignupPage from '@/components/auth/SignupPage'
-import ForgotPasswordPage from '@/components/auth/ForgotPasswordPage'
-import CheckEmailPage from '@/components/auth/CheckEmailPage'
 
 function AuthGate() {
-  const [authPage, setAuthPage] = useState('login')
-  const { user } = useAuth()
+  const { user, signInWithCode } = useAuth()
 
-  if (user === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-page)' }}>
-        <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--border-medium)', borderTopColor: 'var(--violet-deep)' }} />
-      </div>
-    )
-  }
-
-  if (!user) {
-    switch (authPage) {
-      case 'signup':     return <SignupPage onNavigate={setAuthPage} />
-      case 'forgot':     return <ForgotPasswordPage onNavigate={setAuthPage} />
-      case 'check-email': return <CheckEmailPage onNavigate={setAuthPage} />
-      default:           return <LoginPage onNavigate={setAuthPage} />
-    }
-  }
+  if (!user) return <AccessCodePage onUnlock={signInWithCode} />
 
   return (
     <StoreProvider>

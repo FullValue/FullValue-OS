@@ -33,6 +33,7 @@ Crée un fichier `.env.local` à la racine du projet :
 ```bash
 VITE_SUPABASE_URL=https://abcdef.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_ACCESS_CODE=1234
 ```
 
 > `.env.local` est déjà dans le `.gitignore`. Ne commit jamais ce fichier.
@@ -50,7 +51,19 @@ Dans Supabase, va dans **SQL Editor** et exécute dans l'ordre :
 
 ---
 
-## 5. Configurer les emails Supabase
+## 5. Configurer le code d’accès
+
+L’application utilise un code local à 4 chiffres au démarrage, sans écran de connexion email :
+
+```bash
+VITE_ACCESS_CODE=1234
+```
+
+Change cette valeur dans `.env.local` puis redémarre Vite. Ce code protège l’interface locale ; il ne remplace pas une authentification serveur pour une application exposée publiquement.
+
+Supabase reste optionnel pour la migration des données et les uploads.
+
+## 6. Configurer les emails Supabase (optionnel)
 
 Dans **Authentication → Email Templates** :
 
@@ -60,16 +73,13 @@ Dans **Authentication → Email Templates** :
 
 ---
 
-## 6. Premier lancement
+## 7. Premier lancement
 
 1. Lance l'app en dev : `npm run dev`
 2. Va sur `http://localhost:5173`
-3. Tu devrais voir la page de connexion
-4. Crée un compte → tu recevras un email de confirmation
-5. Clique le lien dans l'email
-6. Connecte-toi
-7. Va sur `/migrate` (via le menu ou l'URL directement) pour importer tes données localStorage → Supabase
-8. La migration est one-shot. Une fois faite, toutes les données viennent de Supabase.
+3. Saisis le code à 4 chiffres
+4. Va sur `/migrate` (via le menu ou l'URL directement) pour importer tes données localStorage → Supabase si nécessaire
+5. La migration est one-shot. Les données locales restent disponibles sans Supabase.
 
 ---
 
@@ -85,12 +95,12 @@ npm run build
 
 ---
 
-## Architecture de l'auth (Vite SPA)
+## Architecture de l'accès (Vite SPA)
 
 Contrairement à Next.js, cette app est une SPA Vite sans middleware serveur.  
-La protection des routes est gérée côté client dans `App.jsx` :
+La protection de l’interface est gérée côté client dans `App.jsx` :
 
-- Si **non connecté** → affiche Login / Signup / Forgot Password
-- Si **connecté** → affiche l'app complète avec navbar + sidebar
+- Si le code n’est pas validé → affiche l’écran de code à 4 chiffres
+- Si le code est validé → affiche l’app complète avec navbar + sidebar
 
 La session Supabase est persistée automatiquement dans localStorage par le client Supabase.

@@ -21,6 +21,7 @@ import { NativeSelect } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
 import { UIBadge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogBody } from '@/components/ui/dialog'
 import { toast, toastUndo } from '@/lib/toast'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -98,9 +99,11 @@ function getMonthStart() {
 
 function Widget({ icon, label, main, sub, accent, onClick }) {
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
       onClick={onClick}
-      className="rounded-xl p-4 text-left w-full transition-all hover:scale-[1.02] focus:outline-none"
+      className="h-auto w-full justify-start rounded-xl p-4 text-left transition-all hover:bg-[var(--bg-card)] hover:scale-[1.02]"
       style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}
     >
       <div className="flex items-center gap-2 mb-3">
@@ -109,7 +112,7 @@ function Widget({ icon, label, main, sub, accent, onClick }) {
       </div>
       <p className="font-mono text-2xl font-semibold leading-none" style={{ color: accent }}>{main}</p>
       <p className="text-[11px] text-white/30 mt-1">{sub}</p>
-    </button>
+    </Button>
   )
 }
 
@@ -123,13 +126,13 @@ function InlineDateEditor({ value, onSave, placeholder, color }) {
 
   if (editing) {
     return (
-      <input
+      <Input
         ref={inputRef}
         type="date"
         defaultValue={value || ''}
         onBlur={e => { onSave(e.target.value || null); setEditing(false) }}
         onKeyDown={e => { if (e.key === 'Escape') setEditing(false) }}
-        className="bg-transparent text-xs font-mono focus:outline-none"
+        className="h-7 w-auto rounded-lg bg-transparent px-2 font-mono text-xs shadow-none focus:bg-transparent focus:ring-0"
         style={{ color: 'var(--text-secondary)' }}
       />
     )
@@ -137,18 +140,18 @@ function InlineDateEditor({ value, onSave, placeholder, color }) {
 
   if (!value) {
     return (
-      <button onClick={() => setEditing(true)} className="text-[11px] transition-colors hover:opacity-70"
+      <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)} className="h-auto p-0 text-[11px] text-[var(--text-tertiary)] hover:bg-transparent hover:opacity-70"
         style={{ color: 'var(--text-tertiary)' }}>
         {placeholder}
-      </button>
+      </Button>
     )
   }
 
   return (
-    <button onClick={() => setEditing(true)} className="text-[11px] font-mono transition-colors hover:opacity-70"
+    <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)} className="h-auto p-0 text-[11px] font-mono hover:bg-transparent hover:opacity-70"
       style={{ color: color || 'var(--text-secondary)' }}>
       {new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-    </button>
+    </Button>
   )
 }
 
@@ -170,23 +173,23 @@ function ClientSessionPicker({ client, tasks, accent, onStart, onClose }) {
           </p>
         </div>
         <div className="max-h-56 overflow-y-auto">
-          <button onClick={() => onStart(null, null)}
-            className="w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/5"
+          <Button type="button" variant="ghost" onClick={() => onStart(null, null)}
+            className="h-auto w-full justify-start rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
             style={{ color: 'var(--text-tertiary)' }}>
             — Sans tâche spécifique
-          </button>
+          </Button>
           {sorted.map(task => {
             const icon = task.urgency === 'critical' ? '🚨' : task.urgency === 'very-urgent' ? '🔥' : task.urgency === 'urgent' ? '⚡' : null
             return (
-              <button key={task.id} onClick={() => onStart(null, task.id)}
-                className="w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/5 flex items-center gap-2"
+              <Button key={task.id} type="button" variant="ghost" onClick={() => onStart(null, task.id)}
+                className="h-auto w-full justify-start gap-2 rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
                 style={{ borderTop: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}>
                 {icon && <span className="flex-shrink-0">{icon}</span>}
                 <span className="truncate flex-1">{task.title}</span>
                 {task.status === 'inprogress' && (
                   <UIBadge variant="yellow" className="flex-shrink-0 rounded-full">En cours</UIBadge>
                 )}
-              </button>
+              </Button>
             )
           })}
           {sorted.length === 0 && (
@@ -980,7 +983,7 @@ function ClientForm({ initial = {}, onSubmit, onClose }) {
         <Label className="mb-2">Couleur d'accent</Label>
         <div className="flex gap-2 flex-wrap">
           {ACCENT_COLORS.map(c => (
-            <button key={c} type="button" onClick={() => setAccentColor(c)} className="w-7 h-7 rounded-full transition-all active:scale-[0.98]" style={{ background: c, outline: accentColor === c ? `2px solid ${c}` : 'none', outlineOffset: '2px', opacity: accentColor === c ? 1 : 0.5 }} />
+            <Button key={c} type="button" variant="ghost" size="icon-sm" onClick={() => setAccentColor(c)} aria-label={`Choisir la couleur ${c}`} className="h-7 w-7 rounded-full p-0 transition-all active:scale-[0.98]" style={{ background: c, outline: accentColor === c ? `2px solid ${c}` : 'none', outlineOffset: '2px', opacity: accentColor === c ? 1 : 0.5 }} />
           ))}
         </div>
       </div>
@@ -1106,15 +1109,17 @@ function ClientDashboard({ client, onStartTask }) {
         {/* Tabs */}
         <div className="flex items-center gap-0.5 overflow-x-auto" style={{ borderBottom: '1px solid var(--c-border)' }}>
           {CLIENT_TABS.map(tab => (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition-all whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? '' : 'text-white/40 hover:text-white/70'}`}
+              className={`h-auto flex-shrink-0 gap-1.5 rounded-t-lg px-3 py-2 text-xs font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? '' : 'text-white/40 hover:text-white/70'}`}
               style={activeTab === tab.id ? { borderBottom: `2px solid ${accent}`, marginBottom: '-1px', color: accent } : {}}
             >
               <tab.Icon size={12} />
               {tab.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -1153,28 +1158,12 @@ function ClientDashboard({ client, onStartTask }) {
       </Drawer>
 
       {/* Import bulk modal */}
-      {importOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
-          onClick={() => setImportOpen(false)}>
-          <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden"
-            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-float)' }}
-            onClick={e => e.stopPropagation()}>
-            {/* Modal header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-4 flex-shrink-0"
-              style={{ borderBottom: '1px solid var(--border-soft)' }}>
-              <div>
-                <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                  Import bulk · {client.name}
-                </h3>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                  Les éléments importés seront automatiquement liés à ce client.
-                </p>
-              </div>
-              <Button variant="ghost" size="icon-sm" onClick={() => setImportOpen(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
-                <X size={16} />
-              </Button>
-            </div>
+      <Dialog open={importOpen} onOpenChange={open => { if (!open) setImportOpen(false) }}>
+        <DialogContent hideClose className="flex max-h-[90dvh] max-w-3xl flex-col overflow-hidden p-0">
+          <DialogHeader>
+            <DialogTitle>Import bulk · {client.name}</DialogTitle>
+            <DialogDescription>Les éléments importés seront automatiquement liés à ce client.</DialogDescription>
+          </DialogHeader>
             {/* Success banner */}
             {importSuccess !== null && (
               <div className="mx-6 mt-4 px-4 py-2 rounded-xl text-xs flex items-center gap-2"
@@ -1184,7 +1173,7 @@ function ClientDashboard({ client, onStartTask }) {
               </div>
             )}
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <DialogBody className="flex-1 overflow-y-auto p-4 sm:p-6">
               <BulkImportInterface
                 defaultProjectSlug="ulycom_clients"
                 defaultClientId={client.id}
@@ -1192,10 +1181,9 @@ function ClientDashboard({ client, onStartTask }) {
                 onImportSuccess={n => setImportSuccess(n)}
                 onCancel={() => setImportOpen(false)}
               />
-            </div>
-          </div>
-        </div>
-      )}
+            </DialogBody>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -1246,10 +1234,12 @@ export default function ClientSpace({ onStartTask }) {
       <div className="px-4 pt-4 pb-0 max-w-5xl mx-auto w-full">
         <div className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: 'rgba(0,0,0,0.18)' }}>
           {activeClients.map(c => (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               key={c.id}
               onClick={() => setSelectedClientId(c.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 focus:outline-none"
+              className="h-auto flex-shrink-0 gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap"
               style={
                 (selectedClient?.id === c.id)
                   ? { background: 'var(--c-card)', color: c.accentColor || '#E8E6E3', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }
@@ -1258,7 +1248,7 @@ export default function ClientSpace({ onStartTask }) {
             >
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.accentColor || '#8B7CFF' }} />
               {c.shortName || c.name}
-            </button>
+            </Button>
           ))}
           <Button
             variant="ghost"

@@ -4,7 +4,8 @@ import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import FloatingNavbar, { SIDEBAR_WIDTH } from '@/components/layout/FloatingNavbar'
 import RightSidebar from '@/components/layout/RightSidebar'
-import '@/components/ui/ThemeToggle.css'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import CommandPalette from '@/components/CommandPalette'
 import ShortcutsDialog from '@/components/ShortcutsDialog'
 import StickyTimer from '@/components/ui/StickyTimer'
@@ -215,29 +216,31 @@ function AppInner() {
       {/* Top-right controls — palette + theme toggle */}
       <div className="fixed top-4 right-4 z-40 flex items-center gap-2">
         <SimpleTooltip label="Rechercher & commandes" shortcut="⌘K" side="bottom">
-          <button
+          <Button
+            type="button"
             onClick={() => setCmdOpen(true)}
             aria-label="Ouvrir la palette de commandes"
-            className="hidden h-9 items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-surface)] px-3 text-sm text-[var(--text-tertiary)] shadow-[var(--shadow-card)] transition-all hover:text-[var(--text-secondary)] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.98] sm:flex"
+            variant="outline"
+            size="sm"
+            className="hidden border-[var(--border-soft)] bg-[var(--bg-surface)] text-[var(--text-tertiary)] shadow-[var(--shadow-card)] hover:text-[var(--text-secondary)] hover:shadow-[var(--shadow-card-hover)] sm:flex"
           >
             <Search size={14} />
             <span>Rechercher</span>
             <kbd className="ml-1">⌘K</kbd>
-          </button>
+          </Button>
         </SimpleTooltip>
-        <div>
-          <input
-            type="checkbox"
-            id="cockpit-theme-toggle"
-            className="ttg-input"
+        <SimpleTooltip label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}>
+          <div className="flex h-9 items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-surface)] px-2.5 shadow-[var(--shadow-card)]">
+            <Moon size={13} className="text-[var(--text-tertiary)]" />
+            <Switch
+              id="cockpit-theme-toggle"
             checked={theme === 'dark'}
-            onChange={toggleTheme}
-          />
-          <label htmlFor="cockpit-theme-toggle" className="ttg-label" title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}>
-            <Moon size={14} className="ttg-moon" />
-            <Sun size={14} className="ttg-sun" />
-          </label>
-        </div>
+              onCheckedChange={toggleTheme}
+              aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            />
+            <Sun size={13} className="text-[var(--yellow-deep)]" />
+          </div>
+        </SimpleTooltip>
       </div>
 
       {/* Floating left navbar */}

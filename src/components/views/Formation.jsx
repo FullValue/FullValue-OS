@@ -170,7 +170,7 @@ function VideoDetailPage({ resource, onBack }) {
             <div className="flex flex-col gap-1.5 mb-3">
               {takeaways.map((t, i) => (
                 <div key={i} className="flex items-start gap-2 group">
-                  <span className="text-violet text-xs mt-0.5 flex-shrink-0">•</span>
+                  <span className="text-[var(--violet-deep)] text-xs mt-0.5 flex-shrink-0">•</span>
                   <span className="text-sm text-white/70 flex-1 leading-relaxed">{t}</span>
                   <Button variant="ghost" size="icon-sm" onClick={() => { const u = takeaways.filter((_, j) => j !== i); setTakeaways(u); save({ takeaways: u }) }} className="opacity-0 group-hover:opacity-100 shrink-0 text-white/20 hover:text-[var(--red-deep)]">
                     <X size={11} />
@@ -247,7 +247,7 @@ function LearningDrawer({ resource, onClose }) {
         <div className="flex-1 min-w-0">
           <h3 className="text-white font-semibold">{resource.title}</h3>
           {resource.author && <p className="text-white/40 text-sm">{resource.author}</p>}
-          {resource.url && <a href={resource.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-violet mt-1 hover:text-violet/80 transition-colors"><ExternalLink size={11} /> Ouvrir</a>}
+          {resource.url && <a href={resource.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-[var(--violet-deep)] mt-1 hover:opacity-80 transition-opacity"><ExternalLink size={11} /> Ouvrir</a>}
         </div>
       </div>
 
@@ -272,7 +272,7 @@ function LearningDrawer({ resource, onClose }) {
         <div className="flex flex-col gap-1.5 mb-2">
           {takeaways.map((t, i) => (
             <div key={i} className="flex items-start gap-2 group">
-              <span className="text-violet text-xs mt-0.5">•</span>
+              <span className="text-[var(--violet-deep)] text-xs mt-0.5">•</span>
               <span className="text-sm text-white/70 flex-1">{t}</span>
               <Button variant="ghost" size="icon-sm" onClick={() => { const u = takeaways.filter((_, j) => j !== i); setTakeaways(u); save({ takeaways: u }) }} className="opacity-0 group-hover:opacity-100 shrink-0 text-white/20 hover:text-[var(--red-deep)]"><X size={11} /></Button>
             </div>

@@ -82,10 +82,9 @@ export default function StickyTimer({
           </div>
         </div>
       ) : (
-        // Pastille repliée : déclencheur pilule sur-mesure (dot + chrono + projet) —
-        // la hauteur/padding fixes du Button casseraient la forme, gardé natif.
-        <button onClick={() => setExpanded(true)}
-          className="flex items-center gap-2 rounded-full py-2.5 pl-3 pr-4 shadow-2xl transition-all hover:scale-105 active:scale-100"
+        // Pastille repliée : déclencheur pilule sur-mesure (dot + chrono + projet).
+        <Button type="button" variant="ghost" onClick={() => setExpanded(true)}
+          className="h-auto gap-2 rounded-full py-2.5 pl-3 pr-4 shadow-2xl transition-all hover:scale-105 active:scale-100"
           style={{ background: 'var(--bg-surface)', border: `1px solid ${accent}50` }}>
           <div className={`h-2 w-2 rounded-full ${timerRunning ? 'animate-pulse' : ''}`}
             style={{ background: accent }} />
@@ -97,7 +96,7 @@ export default function StickyTimer({
               · {project.name}
             </span>
           )}
-        </button>
+        </Button>
       )}
     </div>
   )

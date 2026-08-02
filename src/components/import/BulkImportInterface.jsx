@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { CheckCircle, AlertCircle, AlertTriangle, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { CheckCircle, AlertCircle, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
 import { BulkImportSchema, formatZodError } from '@/lib/import/schema'
 import { useBulkImport, countEntities, normalizeSlug, ID_TO_SLUG } from '@/hooks/useBulkImport'
 import { useStore } from '@/store/useStore'
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from '@/lib/toast'
@@ -285,10 +286,12 @@ function ImportPreview({ data, excluded, onToggle, defaultProjectSlug }) {
                   const slug = meta.slug(item) || data.project_slug || defaultProjectSlug
 
                   return (
-                    <label key={i} onClick={() => onToggle(key)} className="flex items-center gap-2.5 px-4 py-1.5 cursor-pointer hover:bg-[rgba(var(--ink),0.04)] transition-colors">
+                    <div key={i} className="flex items-center gap-2.5 px-4 py-1.5 hover:bg-[rgba(var(--ink),0.04)] transition-colors">
                       <Checkbox
                         checked={!isExcluded}
-                        className="pointer-events-none flex-shrink-0"
+                        onCheckedChange={() => onToggle(key)}
+                        aria-label={`Inclure ${meta.name(item)}`}
+                        className="flex-shrink-0"
                       />
                       <span
                         className="text-xs flex-1 truncate"
@@ -301,7 +304,7 @@ function ImportPreview({ data, excluded, onToggle, defaultProjectSlug }) {
                       </span>
                       {meta.extra?.(item)}
                       {slug && <ProjectBadge slug={slug} />}
-                    </label>
+                    </div>
                   )
                 })}
               </div>
@@ -334,6 +337,8 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
 
   // Debounced validation
   useEffect(() => {
+    // Resetting derived validation state is intentional when the input changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setResult(null)
     if (!rawJson.trim()) {
       setParsed(null)
@@ -499,11 +504,11 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
 
       {/* Footer */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1">
-        <label onClick={() => setDryRun(v => !v)} className="flex items-center gap-2 text-xs cursor-pointer select-none w-full sm:w-auto" style={{ color: 'var(--text-tertiary)' }}>
-          <Checkbox checked={dryRun} className="pointer-events-none" />
+        <div className="flex w-full items-center gap-2 text-xs select-none sm:w-auto" style={{ color: 'var(--text-tertiary)' }}>
+          <Switch checked={dryRun} onCheckedChange={setDryRun} aria-label="Activer le mode dry-run" />
           <span className="hidden sm:inline">Mode dry-run (simuler sans créer)</span>
           <span className="sm:hidden">Dry-run (simulation)</span>
-        </label>
+        </div>
 
         <div className="hidden sm:block flex-1" />
 

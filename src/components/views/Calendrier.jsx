@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { NativeSelect } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { toast, toastUndo } from '@/lib/toast'
 
 export const EVENT_TYPES = {
@@ -683,7 +684,7 @@ export default function Calendrier() {
               { id: 'month', label: 'Mois' },
             ].map(v => (
               <Button key={v.id} variant="ghost" onClick={() => setView(v.id)}
-                className={`h-auto px-3 py-1.5 rounded-lg text-xs font-medium ${view === v.id ? 'bg-violet/20 text-violet hover:bg-violet/20' : 'text-white/40 hover:text-white/70 hover:bg-transparent'}`}>
+                className={`h-auto px-3 py-1.5 rounded-lg text-xs font-medium ${view === v.id ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] hover:bg-[var(--violet-bg)]' : 'text-white/40 hover:text-white/70 hover:bg-transparent'}`}>
                 {v.label}
               </Button>
             ))}
@@ -761,9 +762,9 @@ export default function Calendrier() {
                     const isToday = isSameDay(d.date, today)
                     const intensity = Math.min(1, d.hours / maxHours)
                     return (
-                      <button key={i}
+                      <Button type="button" variant="ghost" key={i}
                         onClick={() => { setReferenceDate(d.date); setView('week') }}
-                        className="aspect-square rounded-xl p-2 text-left transition-all hover:scale-[1.03] flex flex-col"
+                        className="h-auto aspect-square flex-col items-stretch rounded-xl p-2 text-left transition-all hover:scale-[1.03]"
                         style={{
                           background: isToday
                             ? 'rgba(139,124,255,0.18)'
@@ -795,7 +796,7 @@ export default function Calendrier() {
                             {d.eventCount} event{d.eventCount > 1 ? 's' : ''}
                           </p>
                         )}
-                      </button>
+                      </Button>
                     )
                   })}
                 </div>
@@ -829,7 +830,7 @@ export default function Calendrier() {
                   onClick={() => setAddingOnDate({ date: day, startTime: '09:00', endTime: '10:00' })}
                 >
                   <span className="text-[10px] text-white/30 uppercase">{DAYS_FR[day.getDay()]}</span>
-                  <span className={`font-mono text-sm font-semibold tabular ${isToday ? 'text-violet' : 'text-white/60'}`}>{day.getDate()}</span>
+                  <span className={`font-mono text-sm font-semibold tabular ${isToday ? 'text-[var(--violet-deep)]' : 'text-white/60'}`}>{day.getDate()}</span>
                 </div>
 
                 {/* Events area */}
@@ -933,12 +934,11 @@ export default function Calendrier() {
       )}
 
       {/* Add event modal */}
-      {addingOnDate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setAddingOnDate(null)} />
-          <div className="relative w-full max-w-md rounded-2xl shadow-[var(--shadow-modal)]" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)' }}>
-            <Button variant="ghost" size="icon-sm" onClick={() => setAddingOnDate(null)} className="absolute right-3 top-3 z-10"><X size={14} /></Button>
-            <EventForm
+      <Dialog open={!!addingOnDate} onOpenChange={open => { if (!open) setAddingOnDate(null) }}>
+        <DialogContent hideClose className="max-w-md overflow-hidden p-0">
+          <DialogTitle className="sr-only">Nouvel événement</DialogTitle>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={() => setAddingOnDate(null)} className="absolute right-3 top-3 z-10"><X size={14} /></Button>
+          {addingOnDate && <EventForm
               date={addingOnDate.date}
               initial={addingOnDate.startTime ? { startTime: addingOnDate.startTime, endTime: addingOnDate.endTime } : null}
               projects={state.projects}
@@ -969,18 +969,17 @@ export default function Calendrier() {
                 }
                 setAddingOnDate(null)
               }}
-            />
-          </div>
-        </div>
-      )}
+          />}
+        </DialogContent>
+      </Dialog>
 
       {/* Event detail / edit modal */}
-      {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)} />
-          <div className="relative w-full max-w-md rounded-2xl shadow-[var(--shadow-modal)]" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)', borderLeft: `3px solid ${selectedEvent.color}` }}>
-            <Button variant="ghost" size="icon-sm" onClick={() => setSelectedEvent(null)} className="absolute right-3 top-3 z-10"><X size={14} /></Button>
-            {selectedEvent.source === 'manual' ? (
+      <Dialog open={!!selectedEvent} onOpenChange={open => { if (!open) setSelectedEvent(null) }}>
+        <DialogContent hideClose className="max-w-md overflow-hidden p-0" style={{ borderLeft: selectedEvent ? `3px solid ${selectedEvent.color}` : undefined }}>
+          <DialogTitle className="sr-only">Détail de l'événement</DialogTitle>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={() => setSelectedEvent(null)} className="absolute right-3 top-3 z-10"><X size={14} /></Button>
+          {selectedEvent && (
+            selectedEvent.source === 'manual' ? (
               <EventForm
                 initial={{ ...selectedEvent.raw, emoji: selectedEvent.raw.emoji, eventType: selectedEvent.raw.eventType || 'meeting' }}
                 projects={state.projects}
@@ -1046,30 +1045,26 @@ export default function Calendrier() {
               />
             ) : (
               <ReadOnlyEventCard event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-            )}
-          </div>
-        </div>
-      )}
+            )
+          )}
+        </DialogContent>
+      </Dialog>
 
       <PlanMyDayModal isOpen={planOpen} onClose={() => setPlanOpen(false)} />
 
       {/* Bulk import modal */}
-      {importOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setImportOpen(false)} />
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 shadow-[var(--shadow-modal)]"
-            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)' }}>
-            <Button variant="ghost" size="icon-sm" onClick={() => setImportOpen(false)} className="absolute right-3 top-3 z-10">
+      <Dialog open={importOpen} onOpenChange={open => { if (!open) setImportOpen(false) }}>
+        <DialogContent hideClose className="max-w-3xl overflow-y-auto p-4 sm:p-6">
+            <DialogTitle className="mb-4 text-lg font-semibold tracking-tight">Import bulk — événements calendrier</DialogTitle>
+            <Button type="button" variant="ghost" size="icon-sm" onClick={() => setImportOpen(false)} className="absolute right-3 top-3 z-10">
               <X size={14} />
             </Button>
-            <h2 className="text-lg font-semibold tracking-tight mb-4" style={{ color: 'var(--text-primary)' }}>Import bulk — événements calendrier</h2>
             <BulkImportInterface
               onImportSuccess={() => setImportOpen(false)}
               onCancel={() => setImportOpen(false)}
             />
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -12,8 +12,8 @@ export const Checkbox = forwardRef(function Checkbox({ className, ...props }, re
         'hover:border-[var(--violet-deep)]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        'data-[state=checked]:border-violet data-[state=checked]:bg-violet data-[state=checked]:text-white',
-        'data-[state=indeterminate]:border-violet data-[state=indeterminate]:bg-violet data-[state=indeterminate]:text-white',
+        'data-[state=checked]:border-[var(--violet-deep)] data-[state=checked]:bg-[var(--violet-deep)] data-[state=checked]:text-[var(--text-inverse)]',
+        'data-[state=indeterminate]:border-[var(--violet-deep)] data-[state=indeterminate]:bg-[var(--violet-deep)] data-[state=indeterminate]:text-[var(--text-inverse)]',
         className
       )}
       {...props}

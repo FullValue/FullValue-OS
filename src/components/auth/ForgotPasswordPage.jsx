@@ -61,9 +61,9 @@ export default function ForgotPasswordPage({ onNavigate }) {
       )}
 
       <div className="mt-6 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
-        <button type="button" onClick={() => onNavigate('login')} className="transition-colors hover:text-[var(--text-secondary)]">
+        <Button type="button" variant="ghost" size="sm" onClick={() => onNavigate('login')} className="h-auto p-0 text-[var(--text-tertiary)] hover:bg-transparent hover:text-[var(--text-secondary)]">
           ← Retour à la connexion
-        </button>
+        </Button>
       </div>
     </AuthLayout>
   )

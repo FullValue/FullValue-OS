@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { NativeSelect } from '@/components/ui/select'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast, toastUndo } from '@/lib/toast'
 
 const FILTERS = ['Tous', 'High impact', 'Aujourd\'hui', 'En retard']
@@ -292,13 +293,12 @@ export default function Taches() {
                 }`}
               >
                 {/* Checkbox */}
-                <button
-                  onClick={() => dispatch({ type: 'TOGGLE_TASK_DONE', payload: task.id })}
-                  className={`mt-0.5 flex-shrink-0 transition-colors ${done ? 'text-[var(--green-deep)]' : 'text-[var(--text-tertiary)] hover:text-[var(--green-deep)]'}`}
+                <Checkbox
+                  checked={done}
+                  onCheckedChange={() => dispatch({ type: 'TOGGLE_TASK_DONE', payload: task.id })}
                   aria-label={done ? 'Marquer non terminée' : 'Marquer terminée'}
-                >
-                  {done ? <Check size={16} /> : <div className="h-4 w-4 rounded border border-[var(--border-strong)] transition-colors hover:border-[var(--green-deep)]" />}
-                </button>
+                  className={`mt-0.5 h-4 w-4 flex-shrink-0 ${done ? 'border-[var(--green-deep)] bg-[var(--green-deep)]' : 'border-[var(--border-strong)]'}`}
+                />
 
                 {/* Content */}
                 <div className="min-w-0 flex-1">

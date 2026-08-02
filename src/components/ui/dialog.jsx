@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { forwardRef } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
@@ -19,7 +20,7 @@ export const DialogOverlay = forwardRef(function DialogOverlay({ className, ...p
 })
 
 export const DialogContent = forwardRef(function DialogContent(
-  { className, children, hideClose = false, ...props },
+  { className, children, hideClose = false, motion = true, ...props },
   ref
 ) {
   return (
@@ -31,7 +32,7 @@ export const DialogContent = forwardRef(function DialogContent(
           'fixed left-1/2 top-1/2 z-[95] w-full max-w-lg -translate-x-1/2 -translate-y-1/2',
           'rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-surface)] shadow-[var(--shadow-modal)]',
           'max-h-[88dvh] overflow-y-auto',
-          'data-[state=open]:animate-contentShow data-[state=closed]:animate-contentHide',
+          motion && 'data-[state=open]:animate-contentShow data-[state=closed]:animate-contentHide',
           className
         )}
         {...props}

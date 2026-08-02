@@ -78,8 +78,8 @@ function ChecklistInline({ items, onToggle }) {
   return (
     <div className="space-y-1.5">
       {visible.map(item => (
-        <button key={item.id} onClick={e => { e.stopPropagation(); onToggle(item.id) }}
-          className="flex items-center gap-2 w-full text-left">
+        <Button type="button" variant="ghost" key={item.id} onClick={e => { e.stopPropagation(); onToggle(item.id) }}
+          className="h-auto w-full justify-start gap-2 rounded-none p-0 text-left hover:bg-transparent">
           <div className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
             style={item.done
               ? { background: '#5DAA7C', borderColor: '#5DAA7C' }
@@ -94,7 +94,7 @@ function ChecklistInline({ items, onToggle }) {
             }}>
             {item.label}
           </span>
-        </button>
+        </Button>
       ))}
       {rest > 0 && (
         <p className="text-[10px] pl-5" style={{ color: 'var(--text-tertiary)' }}>+{rest} de plus</p>

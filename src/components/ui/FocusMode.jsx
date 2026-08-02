@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { Play, Pause, Square, X, Coffee } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 function formatTime(s) {
   const m = Math.floor(s / 60)
@@ -13,7 +15,7 @@ const POMODORO_BREAK = 5 * 60
 
 export default function FocusMode({
   isOpen, onClose,
-  elapsed, timerRunning, timerPaused, timerProject, timerTask,
+  elapsed, timerRunning, timerProject, timerTask,
   onPause, onResume, onStop,
 }) {
   const { state } = useStore()
@@ -24,18 +26,13 @@ export default function FocusMode({
   const audioRef = useRef(null)
 
   useEffect(() => {
-    if (!isOpen) return
-    const handler = e => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [isOpen, onClose])
-
-  useEffect(() => {
     if (!pomodoroOn || !timerRunning) return
     const targetSec = mode === 'work' ? POMODORO_WORK : POMODORO_BREAK
     if (elapsed - cycleStart >= targetSec) {
-      try { audioRef.current?.play() } catch {}
+      try { audioRef.current?.play() } catch { /* Browsers may block autoplay. */ }
       if (mode === 'work') {
+        // The timer crossing a pomodoro boundary is an external clock event.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMode('break')
         setCycles(c => c + 1)
       } else {
@@ -44,8 +41,6 @@ export default function FocusMode({
       setCycleStart(elapsed)
     }
   }, [elapsed, pomodoroOn, mode, cycleStart, timerRunning])
-
-  if (!isOpen) return null
 
   const project = state.projects.find(p => p.id === timerProject)
   const task = state.tasks.find(t => t.id === timerTask)
@@ -74,18 +69,25 @@ export default function FocusMode({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)' }}>
+    <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
+      <DialogContent
+        hideClose
+        motion={false}
+        className="inset-0 left-0 top-0 flex h-[100dvh] max-h-none max-w-none translate-x-0 translate-y-0 flex-col items-center justify-center rounded-none border-0 p-0"
+        style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)' }}
+      >
+        <DialogTitle className="sr-only">Mode focus</DialogTitle>
 
       <audio ref={audioRef} preload="auto">
         <source src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" />
       </audio>
 
-      <button onClick={onClose}
-        className="absolute top-6 right-6 text-white/40 hover:text-white/80 transition-colors flex items-center gap-2 text-xs">
+      <Button type="button" variant="ghost" size="sm" onClick={onClose}
+        className="absolute right-6 top-6 h-auto gap-2 px-2 py-1 text-xs hover:bg-white/5 hover:text-white/80"
+        style={{ color: 'rgba(255,255,255,0.4)' }}>
         <X size={16} />
         <span className="hidden sm:inline">Quitter (Esc)</span>
-      </button>
+      </Button>
 
       {project && (
         <div className="absolute top-6 left-6 flex items-center gap-2">
@@ -147,27 +149,27 @@ export default function FocusMode({
 
         <div className="flex items-center gap-3 mt-8">
           {timerRunning ? (
-            <button onClick={onPause}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-all hover:scale-105"
+            <Button type="button" variant="ghost" onClick={onPause}
+              className="h-auto gap-2 rounded-2xl px-6 py-3 text-sm font-semibold hover:scale-105"
               style={{ background: 'rgba(255,214,107,0.15)', color: '#FFD66B' }}>
               <Pause size={14} /> Pause
-            </button>
+            </Button>
           ) : (
-            <button onClick={onResume}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-all hover:scale-105"
+            <Button type="button" variant="ghost" onClick={onResume}
+              className="h-auto gap-2 rounded-2xl px-6 py-3 text-sm font-semibold hover:scale-105"
               style={{ background: accent, color: '#0a0a0a' }}>
               <Play size={14} /> Reprendre
-            </button>
+            </Button>
           )}
-          <button onClick={handleStop}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-all hover:scale-105"
+          <Button type="button" variant="ghost" onClick={handleStop}
+            className="h-auto gap-2 rounded-2xl px-6 py-3 text-sm font-semibold hover:scale-105"
             style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171' }}>
             <Square size={14} /> Terminer
-          </button>
+          </Button>
         </div>
 
-        <button onClick={handleTogglePomodoro}
-          className="mt-6 flex items-center gap-2 text-xs px-4 py-2 rounded-xl transition-colors"
+        <Button type="button" variant="ghost" onClick={handleTogglePomodoro}
+          className="mt-6 h-auto gap-2 rounded-xl px-4 py-2 text-xs"
           style={{
             background: pomodoroOn ? accent + '15' : 'rgba(255,255,255,0.05)',
             color: pomodoroOn ? accent : 'var(--text-tertiary)',
@@ -184,8 +186,9 @@ export default function FocusMode({
           {pomodoroOn && cycles > 0 && (
             <span className="font-mono">· {cycles} cycle{cycles > 1 ? 's' : ''}</span>
           )}
-        </button>
+        </Button>
       </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

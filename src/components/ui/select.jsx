@@ -1,4 +1,5 @@
-import { forwardRef } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { Children, forwardRef } from 'react'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -106,28 +107,44 @@ export const SelectSeparator = forwardRef(function SelectSeparator({ className, 
 })
 
 /**
- * Select natif stylé — migration rapide des <select> existants sans changer la logique.
- * Même API qu'un <select> HTML.
+ * Compatibility adapter for the existing HTML-like API.
+ * Runtime rendering uses the Radix Select primitive, so legacy forms keep
+ * their simple `onChange={e => ...}` handlers while sharing the same behavior.
  */
-export const NativeSelect = forwardRef(function NativeSelect({ className, children, ...props }, ref) {
+export const NativeSelect = forwardRef(function NativeSelect(
+  { className, children, value, defaultValue, onChange, placeholder, ...props },
+  ref
+) {
+  const options = Children.toArray(children).filter(child => child?.type === 'option')
+  const emptyOption = options.find(option => String(option.props.value ?? '') === '')
+  const EMPTY_VALUE = '__cockpit_empty__'
+  const optionValue = option => String(option.props.value ?? '') || EMPTY_VALUE
+  const currentValue = value === '' ? EMPTY_VALUE : value == null ? undefined : String(value)
+
+  function handleValueChange(nextValue) {
+    onChange?.({ target: { value: nextValue === EMPTY_VALUE ? '' : nextValue } })
+  }
+
   return (
-    <div className="relative">
-      <select
-        ref={ref}
-        className={cn(
-          'h-9 w-full cursor-pointer appearance-none rounded-xl border border-transparent bg-[var(--bg-input)] pl-3 pr-8 text-sm text-[var(--text-primary)] transition-all',
-          'focus:border-[var(--violet-deep)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </select>
-      <ChevronDown
-        size={14}
-        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]"
-      />
-    </div>
+    <Select
+      value={currentValue}
+      defaultValue={defaultValue === '' ? EMPTY_VALUE : defaultValue == null ? undefined : String(defaultValue)}
+      onValueChange={handleValueChange}
+      disabled={props.disabled}
+    >
+      <SelectTrigger ref={ref} className={className} {...props}>
+        <SelectValue placeholder={placeholder || emptyOption?.props.children} />
+      </SelectTrigger>
+      <SelectContent>
+        {emptyOption && <SelectItem value={EMPTY_VALUE}>{emptyOption.props.children}</SelectItem>}
+        {options
+          .filter(option => String(option.props.value ?? '') !== '')
+          .map(option => (
+            <SelectItem key={option.props.value} value={optionValue(option)} disabled={option.props.disabled}>
+              {option.props.children}
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
   )
 })

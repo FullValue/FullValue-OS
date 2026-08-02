@@ -62,12 +62,12 @@ export default function DailyClosingModal({ isOpen, onClose }) {
             <span className={SECTION_LABEL}>Comment était ta journée ?</span>
             <div className="flex items-center gap-1.5">
               {[1, 2, 3, 4, 5].map(n => (
-                <button key={n} type="button" onClick={() => setRating(n)}
-                  className="transition-transform hover:scale-110 active:scale-95">
+                <Button key={n} type="button" variant="ghost" size="icon" onClick={() => setRating(n)}
+                  aria-label={`${n} étoile${n > 1 ? 's' : ''}`} className="h-auto w-auto rounded-lg p-1 hover:bg-transparent hover:scale-110">
                   <Star size={28}
                     fill={n <= rating ? 'var(--violet-deep)' : 'transparent'}
                     style={{ color: n <= rating ? 'var(--violet-deep)' : 'var(--text-tertiary)' }} />
-                </button>
+                </Button>
               ))}
             </div>
           </div>

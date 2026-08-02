@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { forwardRef } from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import { cva } from 'class-variance-authority'
@@ -9,7 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-violet text-white shadow-sm hover:bg-[#7A6BF0]',
+        default: 'bg-[var(--violet-deep)] text-[var(--text-inverse)] shadow-sm hover:bg-[#7A6BF0]',
         secondary: 'bg-[var(--active-bg)] text-[var(--active-text)] hover:opacity-88',
         ghost: 'bg-transparent text-[var(--text-secondary)] hover:bg-[rgba(var(--ink),0.05)] hover:text-[var(--text-primary)]',
         outline: 'border border-[var(--border-medium)] bg-transparent text-[var(--text-secondary)] hover:bg-[rgba(var(--ink),0.04)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]',

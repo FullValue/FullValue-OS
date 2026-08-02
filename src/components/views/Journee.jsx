@@ -264,10 +264,14 @@ function StatsRow({ state, nowMinutes, onNavigate, dispatch }) {
         <p className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.06em' }}>Énergie</p>
         <div className="flex gap-1.5 mt-0.5">
           {[1, 2, 3, 4, 5].map(n => (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
               key={n}
               onClick={() => dispatch({ type: 'SET_ENERGY', payload: n })}
-              className="rounded-full border-2 transition-all focus:outline-none"
+              aria-label={`Énergie ${n} sur 5`}
+              className="h-[18px] w-[18px] rounded-full border-2 p-0 transition-all"
               style={{
                 width: 18,
                 height: 18,
@@ -454,10 +458,12 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
                     {p.emoji} {p.name}
                   </p>
                   {p.items.map(task => (
-                    <button
+                    <Button
+                      type="button"
+                      variant="ghost"
                       key={task.id}
                       onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, today: true } })}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-left"
+                      className="h-auto w-full justify-start gap-2 rounded-xl px-3 py-2 text-left text-sm"
                       style={{ color: 'var(--text-primary)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--violet-bg)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -466,22 +472,24 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
                       <span className="flex-1 truncate">{task.title}</span>
                       {task.impact === 'high' && <Zap size={10} style={{ color: 'var(--yellow-deep)', flexShrink: 0 }} />}
                       {task.ship80 && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0" style={{ background: 'var(--pink-bg)', color: 'var(--pink-deep)' }}>80%</span>}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               ))}
               {orphaned.map(task => (
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
                   key={task.id}
                   onClick={() => dispatch({ type: 'UPDATE_TASK', payload: { id: task.id, today: true } })}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-left"
+                  className="h-auto w-full justify-start gap-2 rounded-xl px-3 py-2 text-left text-sm"
                   style={{ color: 'var(--text-primary)' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--violet-bg)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <Plus size={10} style={{ color: 'var(--violet-deep)', flexShrink: 0 }} />
                   <span className="flex-1 truncate">{task.title}</span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -506,15 +514,17 @@ function SortableWidget({ id, children }) {
     >
       <div className="relative group">
         {/* Drag handle */}
-        <button
+        <Button
+          type="button"
+          variant="ghost"
           {...attributes}
           {...listeners}
-          className="absolute top-3 left-3 z-10 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          className="absolute left-3 top-3 z-10 h-7 w-7 cursor-grab rounded-lg p-1 opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
           style={{ background: 'var(--bg-card-soft)', color: 'var(--text-tertiary)' }}
           title="Réorganiser"
         >
           <GripVertical size={14} />
-        </button>
+        </Button>
         {children}
       </div>
     </div>

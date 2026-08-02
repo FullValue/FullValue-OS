@@ -46,13 +46,16 @@ export default function ViewFilters({ filters, onChange, compact = false }) {
           className="h-8 pl-8 pr-8 text-xs"
         />
         {filters.search && (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={() => onChange({ ...filters, search: '' })}
             aria-label="Effacer la recherche"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+            className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 p-0 text-[var(--text-tertiary)] hover:bg-transparent hover:text-[var(--text-secondary)]"
           >
             <X size={12} />
-          </button>
+          </Button>
         )}
       </div>
 

@@ -11,6 +11,9 @@ import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast, toastUndo } from '@/lib/toast'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 
 export const SIDEBAR_WIDTH = 248
 
@@ -58,9 +61,11 @@ function SectionLabel({ children, className = '' }) {
 // Rangée de navigation (toujours ouverte). Fond actif = inverse ; sinon hover neutre.
 function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActive = false }) {
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
       onClick={() => onClick(id)}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+      className="h-auto w-full justify-start gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)]"
       style={{ background: isActive ? 'var(--active-bg)' : undefined }}
     >
       <span className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
@@ -90,7 +95,7 @@ function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActiv
       >
         {label}
       </span>
-    </button>
+    </Button>
   )
 }
 
@@ -117,10 +122,12 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
       {MOBILE_ITEMS.map(({ id, label, Icon, badge, timer }) => {
         const isActive = activePage === id
         return (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
             key={id}
             onClick={() => setActivePage(id)}
-            className="relative flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors"
+            className="relative h-auto flex-1 flex-col gap-1 rounded-none py-2.5 transition-colors"
             style={{ color: isActive ? 'var(--violet-deep)' : 'var(--text-tertiary)' }}
           >
             <span className="relative">
@@ -135,17 +142,19 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
               )}
             </span>
             <span className="text-[10px] font-medium">{label}</span>
-          </button>
+          </Button>
         )
       })}
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={onOpenMenu}
-        className="relative flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors"
+        className="relative h-auto flex-1 flex-col gap-1 rounded-none py-2.5 transition-colors"
         style={{ color: 'var(--text-tertiary)' }}
       >
         <Menu size={20} strokeWidth={1.5} />
         <span className="text-[10px] font-medium">Plus</span>
-      </button>
+      </Button>
     </nav>
   )
 }
@@ -153,7 +162,6 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
 // ─── Mobile menu drawer (full nav mirror) ─────────────────────────────────────
 
 function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects, user, userInitials, onSignOut }) {
-  if (!isOpen) return null
 
   function handlePick(id) {
     setActivePage(id)
@@ -172,7 +180,9 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
   ]
 
   return (
-    <div className="fixed inset-0 z-[51] flex flex-col animate-fadeIn sm:hidden" style={{ background: 'var(--bg-surface)' }}>
+    <Sheet open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
+      <SheetContent hideClose side="left" className="w-full max-w-none border-0 p-0 sm:hidden">
+        <SheetTitle className="sr-only">Menu principal</SheetTitle>
       <div className="flex flex-shrink-0 items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-soft)' }}>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-semibold" style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}>
@@ -183,9 +193,9 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
             <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</p>
           </div>
         </div>
-        <button onClick={onClose} className="rounded-xl p-2 hover:bg-[rgba(var(--ink),0.05)]" style={{ color: 'var(--text-tertiary)' }}>
+        <Button type="button" variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 text-[var(--text-tertiary)] hover:bg-[rgba(var(--ink),0.05)]">
           <X size={18} />
-        </button>
+        </Button>
       </div>
 
       <div className="flex-1 space-y-5 overflow-y-auto px-4 py-4 pb-24">
@@ -196,12 +206,12 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
               {section.items.map(item => {
                 const isActive = activePage === item.id
                 return (
-                  <button key={item.id} onClick={() => handlePick(item.id)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors"
+                  <Button key={item.id} type="button" variant="ghost" onClick={() => handlePick(item.id)}
+                    className="h-auto w-full justify-start gap-3 rounded-xl px-3 py-3 text-left transition-colors"
                     style={{ background: isActive ? 'var(--active-bg)' : 'transparent', color: isActive ? 'var(--active-text)' : 'var(--text-secondary)' }}>
                     <item.Icon size={18} strokeWidth={isActive ? 2 : 1.6} />
                     <span className="text-sm font-medium">{item.label}</span>
-                  </button>
+                  </Button>
                 )
               })}
             </div>
@@ -214,19 +224,22 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
             {projects.map(p => {
               const isActive = activePage === `projet_${p.id}` || (p.id === 'p1' && activePage === 'ulycom_clients')
               return (
-                <button key={p.id} onClick={() => handlePick(`projet_${p.id}`)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors"
-                  style={{ background: isActive ? p.color + '22' : 'transparent', color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                <div key={p.id} className="flex items-center gap-1 rounded-xl transition-colors"
+                  style={{ background: isActive ? p.color + '22' : 'transparent' }}>
+                  <Button type="button" variant="ghost" onClick={() => handlePick(`projet_${p.id}`)}
+                    className="h-auto min-w-0 flex-1 justify-start gap-3 rounded-xl px-3 py-3 text-left"
+                    style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                   <span className="text-lg">{p.emoji}</span>
                   <span className="flex-1 truncate text-sm font-medium">{p.name}</span>
+                  </Button>
                   {p.id === 'p1' && (
-                    <button onClick={(e) => { e.stopPropagation(); handlePick('ulycom_clients') }}
-                      className="rounded-lg px-2 py-1 text-[10px] transition-colors"
+                    <Button type="button" variant="ghost" onClick={() => handlePick('ulycom_clients')}
+                      className="mr-1 h-auto rounded-lg px-2 py-1 text-[10px] transition-colors"
                       style={{ background: activePage === 'ulycom_clients' ? p.color + '30' : 'rgba(var(--ink),0.05)', color: activePage === 'ulycom_clients' ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
                       Clients
-                    </button>
+                    </Button>
                   )}
-                </button>
+                </div>
               )
             })}
           </div>
@@ -234,13 +247,14 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
 
         <div>
           <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>Compte</p>
-          <button onClick={onSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors" style={{ color: 'var(--red-deep)' }}>
+          <Button type="button" variant="ghost" onClick={onSignOut} className="h-auto w-full justify-start gap-3 rounded-xl px-3 py-3 text-left text-[var(--red-deep)] transition-colors">
             <LogOut size={18} strokeWidth={1.6} />
             <span className="text-sm font-medium">Déconnexion</span>
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -350,14 +364,17 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
             <span className="text-[10px] font-semibold uppercase tracking-[0.09em]" style={{ color: 'var(--text-tertiary)' }}>
               Projets
             </span>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={() => { setAddingProject(true); setNewName(''); setNewEmoji('📁') }}
-              className="flex h-5 w-5 items-center justify-center rounded-md transition-colors hover:bg-[rgba(var(--ink),0.08)]"
+              className="h-5 w-5 rounded-md p-0 text-[var(--text-tertiary)] transition-colors hover:bg-[rgba(var(--ink),0.08)]"
               style={{ color: 'var(--text-tertiary)' }}
               title="Ajouter un projet"
             >
               <Plus size={13} />
-            </button>
+            </Button>
           </div>
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
@@ -375,13 +392,13 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                       <div>
                         {isEditing ? (
                           <div className="flex items-center gap-1.5 rounded-xl px-2 py-1.5" style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}>
-                            <input
+                            <Input
                               value={editEmoji}
                               onChange={e => setEditEmoji(e.target.value)}
-                              className="w-7 bg-transparent text-center text-base focus:outline-none"
+                              className="h-7 w-7 rounded-lg bg-transparent p-0 text-center text-base shadow-none focus:bg-transparent focus:ring-0"
                               maxLength={2}
                             />
-                            <input
+                            <Input
                               autoFocus
                               value={editName}
                               onChange={e => setEditName(e.target.value)}
@@ -390,17 +407,19 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                                 if (e.key === 'Escape') setEditingId(null)
                               }}
                               placeholder="Nom..."
-                              className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+                              className="h-7 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm shadow-none focus:bg-transparent focus:ring-0"
                               style={{ color: 'var(--text-primary)' }}
                             />
-                            <button onClick={() => saveEdit(p.id)} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={13} /></button>
-                            <button onClick={() => setEditingId(null)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={13} /></button>
+                            <Button type="button" variant="ghost" size="icon-sm" onClick={() => saveEdit(p.id)} className="h-6 w-6 p-0 text-[var(--green-deep)]"><Check size={13} /></Button>
+                            <Button type="button" variant="ghost" size="icon-sm" onClick={() => setEditingId(null)} className="h-6 w-6 p-0 text-[var(--text-tertiary)]"><X size={13} /></Button>
                           </div>
                         ) : (
                           <div className="group relative">
-                            <button
+                            <Button
+                              type="button"
+                              variant="ghost"
                               onClick={() => setActivePage(`projet_${p.id}`)}
-                              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)]"
+                              className="h-auto w-full justify-start gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)]"
                               style={{ background: rowActive ? 'var(--active-bg)' : undefined }}
                             >
                               <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-[15px] leading-none">{p.emoji}</span>
@@ -416,26 +435,32 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                                   <ChevronDown size={12} style={{ color: rowActive ? 'rgba(255,255,255,0.6)' : 'var(--text-tertiary)', flexShrink: 0, transform: ulycomExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                                 )}
                               </span>
-                            </button>
+                            </Button>
 
                             {/* Edit / delete on hover */}
                             <div className="pointer-events-none absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
-                              <button
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
                                 onClick={e => { e.stopPropagation(); startEdit(p) }}
-                                className="rounded-md p-1"
+                                className="h-6 w-6 rounded-md p-1"
                                 style={{ color: rowActive ? 'rgba(255,255,255,0.8)' : 'var(--text-tertiary)', background: rowActive ? 'rgba(255,255,255,0.15)' : 'var(--bg-card-soft)' }}
                                 title="Renommer"
                               >
                                 <Pencil size={10} />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
                                 onClick={e => { e.stopPropagation(); handleDeleteProject(p.id) }}
-                                className="rounded-md p-1"
+                                className="h-6 w-6 rounded-md p-1"
                                 style={{ color: 'var(--red-deep)', background: 'var(--red-bg)' }}
                                 title="Supprimer"
                               >
                                 <Trash2 size={10} />
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -447,10 +472,12 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                               { id: 'projet_p1', label: 'Dashboard', Icon: LayoutDashboard },
                               { id: 'ulycom_clients', label: 'Clients', Icon: Users },
                             ].map(sub => (
-                              <button
+                              <Button
+                                type="button"
+                                variant="ghost"
                                 key={sub.id}
                                 onClick={() => setActivePage(sub.id)}
-                                className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors hover:bg-[rgba(var(--ink),0.05)]"
+                                className="h-auto justify-start gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors hover:bg-[rgba(var(--ink),0.05)]"
                                 style={{
                                   color: activePage === sub.id ? 'var(--violet-deep)' : 'var(--text-tertiary)',
                                   background: activePage === sub.id ? 'var(--violet-bg)' : 'transparent',
@@ -458,7 +485,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                                 }}
                               >
                                 <sub.Icon size={12} /> {sub.label}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}
@@ -473,13 +500,13 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
           {/* Add project form */}
           {addingProject && (
             <div className="mt-1 flex items-center gap-1.5 rounded-xl px-2 py-1.5" style={{ background: 'var(--bg-card-soft)', border: '1px solid var(--border-soft)' }}>
-              <input
+              <Input
                 value={newEmoji}
                 onChange={e => setNewEmoji(e.target.value)}
-                className="w-7 bg-transparent text-center text-base focus:outline-none"
+                className="h-7 w-7 rounded-lg bg-transparent p-0 text-center text-base shadow-none focus:bg-transparent focus:ring-0"
                 maxLength={2}
               />
-              <input
+              <Input
                 autoFocus
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
@@ -488,11 +515,11 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                   if (e.key === 'Escape') setAddingProject(false)
                 }}
                 placeholder="Nom du projet..."
-                className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+                className="h-7 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm shadow-none focus:bg-transparent focus:ring-0"
                 style={{ color: 'var(--text-primary)' }}
               />
-              <button onClick={handleAddProject} style={{ color: 'var(--green-deep)', flexShrink: 0 }}><Check size={13} /></button>
-              <button onClick={() => setAddingProject(false)} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}><X size={13} /></button>
+              <Button type="button" variant="ghost" size="icon-sm" onClick={handleAddProject} className="h-6 w-6 p-0 text-[var(--green-deep)]"><Check size={13} /></Button>
+              <Button type="button" variant="ghost" size="icon-sm" onClick={() => setAddingProject(false)} className="h-6 w-6 p-0 text-[var(--text-tertiary)]"><X size={13} /></Button>
             </div>
           )}
 
@@ -512,9 +539,9 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
               {userInitials}
             </span>
             <span className="min-w-0 flex-1 truncate text-xs" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</span>
-            <button onClick={signOut} title="Se déconnecter" className="flex-shrink-0 rounded-lg p-1.5 transition-colors hover:bg-[rgba(var(--ink),0.06)]">
+            <Button type="button" variant="ghost" size="icon-sm" onClick={signOut} title="Se déconnecter" className="h-7 w-7 flex-shrink-0 rounded-lg p-1.5 transition-colors hover:bg-[rgba(var(--ink),0.06)]">
               <LogOut size={15} style={{ color: 'var(--text-tertiary)' }} />
-            </button>
+            </Button>
           </div>
         </div>
       </aside>

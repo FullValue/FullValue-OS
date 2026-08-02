@@ -143,6 +143,9 @@
 [data-theme="light"] .text-white\/85       { color: rgba(var(--ink), 0.85) !important; }
 [data-theme="light"] .text-white\/90       { color: rgba(var(--ink), 0.90) !important; }
 
+/* Text on semantic buttons must stay readable on colored surfaces. */
+[data-theme="light"] button.text-white { color: var(--text-inverse) !important; }
+
 [data-theme="light"] .bg-white\/3          { background-color: rgba(var(--ink), 0.03) !important; }
 [data-theme="light"] .bg-white\/4          { background-color: rgba(var(--ink), 0.04) !important; }
 [data-theme="light"] .bg-white\/5          { background-color: rgba(var(--ink), 0.05) !important; }
@@ -264,3 +267,54 @@ html {
     scroll-behavior: auto !important;
   }
 }
+
+/* Small motion vocabulary shared by the Radix-based UI primitives. */
+@keyframes cockpit-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cockpit-pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cockpit-content-show {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes cockpit-content-hide {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
+}
+
+@keyframes cockpit-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes cockpit-sheet-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes cockpit-sheet-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes cockpit-pulse-ring {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0; transform: scale(1.18); }
+}
+
+.animate-fadeIn { animation: cockpit-fade-in 220ms ease-out both; }
+.animate-popIn { animation: cockpit-pop-in 160ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-contentShow { animation: cockpit-content-show 220ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-contentHide { animation: cockpit-content-hide 160ms ease-in both; }
+.animate-overlayShow { animation: cockpit-fade-in 180ms ease-out both; }
+.animate-slideUp { animation: cockpit-slide-up 260ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.animate-sheetIn { animation: cockpit-sheet-in 280ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.animate-sheetOut { animation: cockpit-sheet-out 220ms ease-in both; }
+.animate-pulse_ring { animation: cockpit-pulse-ring 1.8s ease-in-out infinite; }

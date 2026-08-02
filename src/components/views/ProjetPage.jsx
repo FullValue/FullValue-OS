@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { Slider } from '@/components/ui/slider'
 import { EmptyState } from '@/components/ui/empty-state'
 import { UIBadge } from '@/components/ui/Badge'
 import { toast, toastUndo } from '@/lib/toast'
@@ -50,8 +51,8 @@ function NorthStarBanner({ project }) {
     setEditing(false)
   }
 
-  function handleProgress(e) {
-    dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, northStarProgress: Number(e.target.value) } })
+  function handleProgress(value) {
+    dispatch({ type: 'UPDATE_PROJECT', payload: { id: project.id, northStarProgress: Number(value) } })
   }
 
   return (
@@ -65,13 +66,13 @@ function NorthStarBanner({ project }) {
       <Flag size={14} style={{ color: project.color }} className="flex-shrink-0" />
       <div className="flex-1 min-w-0 flex items-center gap-2">
         {editing ? (
-          <input
+          <Input
             autoFocus
             value={draft}
             onChange={e => setDraft(e.target.value)}
             onBlur={commitEdit}
             onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') { setDraft(project.northStar); setEditing(false) } }}
-            className="flex-1 bg-transparent text-sm font-medium focus:outline-none min-w-0"
+            className="h-7 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm font-medium shadow-none focus:bg-transparent focus:ring-0"
             style={{ color: project.color }}
           />
         ) : (
@@ -89,14 +90,14 @@ function NorthStarBanner({ project }) {
         </div>
 
         {/* Slider trigger */}
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={project.northStarProgress}
-          onChange={handleProgress}
-          className="w-16 h-1 opacity-40 hover:opacity-80 transition-opacity cursor-pointer"
-          style={{ accentColor: project.color }}
+        <Slider
+          min={0}
+          max={100}
+          step={1}
+          value={[project.northStarProgress]}
+          onValueChange={([value]) => handleProgress(value)}
+          className="w-16 opacity-60 transition-opacity hover:opacity-100"
+          aria-label="Progression North Star"
         />
 
         <Button
@@ -121,13 +122,13 @@ function InlineDateEditor({ value, onSave, placeholder, color }) {
 
   if (editing) {
     return (
-      <input
+      <Input
         ref={inputRef}
         type="date"
         defaultValue={value || ''}
         onBlur={e => { onSave(e.target.value || null); setEditing(false) }}
         onKeyDown={e => { if (e.key === 'Escape') setEditing(false) }}
-        className="bg-transparent text-xs font-mono focus:outline-none"
+        className="h-7 w-auto rounded-lg bg-transparent px-2 font-mono text-xs shadow-none focus:bg-transparent focus:ring-0"
         style={{ color: 'var(--text-secondary)' }}
       />
     )
@@ -135,18 +136,18 @@ function InlineDateEditor({ value, onSave, placeholder, color }) {
 
   if (!value) {
     return (
-      <button onClick={() => setEditing(true)} className="text-[11px] transition-colors hover:opacity-70"
+      <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)} className="h-auto p-0 text-[11px] text-[var(--text-tertiary)] hover:bg-transparent hover:opacity-70"
         style={{ color: 'var(--text-tertiary)' }}>
         {placeholder}
-      </button>
+      </Button>
     )
   }
 
   return (
-    <button onClick={() => setEditing(true)} className="text-[11px] font-mono transition-colors hover:opacity-70"
+    <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)} className="h-auto p-0 text-[11px] font-mono hover:bg-transparent hover:opacity-70"
       style={{ color: color || 'var(--text-secondary)' }}>
       {new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-    </button>
+    </Button>
   )
 }
 
@@ -168,23 +169,23 @@ function SessionTaskPicker({ project, tasks, onStart, onClose }) {
           </p>
         </div>
         <div className="max-h-56 overflow-y-auto">
-          <button onClick={() => onStart(project.id, null)}
-            className="w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/5"
+          <Button type="button" variant="ghost" onClick={() => onStart(project.id, null)}
+            className="h-auto w-full justify-start rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
             style={{ color: 'var(--text-tertiary)' }}>
             — Sans tâche spécifique
-          </button>
+          </Button>
           {sorted.map(task => {
             const icon = task.urgency === 'critical' ? '🚨' : task.urgency === 'very-urgent' ? '🔥' : task.urgency === 'urgent' ? '⚡' : null
             return (
-              <button key={task.id} onClick={() => onStart(project.id, task.id)}
-                className="w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/5 flex items-center gap-2"
+              <Button key={task.id} type="button" variant="ghost" onClick={() => onStart(project.id, task.id)}
+                className="h-auto w-full justify-start gap-2 rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
                 style={{ borderTop: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}>
                 {icon && <span className="flex-shrink-0">{icon}</span>}
                 <span className="truncate flex-1">{task.title}</span>
                 {task.status === 'inprogress' && (
                   <UIBadge variant="yellow" className="flex-shrink-0">En cours</UIBadge>
                 )}
-              </button>
+              </Button>
             )
           })}
           {sorted.length === 0 && (
@@ -664,10 +665,12 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
         {/* Tabs */}
         <div className="flex items-center gap-1 border-b border-white/6">
           {TABS.map(tab => (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               key={tab.id}
               onClick={() => !tab.soon && setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition-all relative ${
+              className={`relative h-auto gap-1.5 rounded-t-lg px-3 py-2 text-xs font-medium transition-all ${
                 tab.soon
                   ? 'text-white/20 cursor-default'
                   : activeTab === tab.id
@@ -681,7 +684,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
               {tab.soon && (
                 <span className="text-[9px] bg-white/8 text-white/25 px-1 py-0.5 rounded ml-0.5">Bientôt</span>
               )}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

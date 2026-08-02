@@ -85,12 +85,12 @@ export default function LoginPage({ onNavigate }) {
       </Button>
 
       <div className="mt-6 flex items-center justify-between text-sm" style={{ color: 'var(--text-tertiary)' }}>
-        <button type="button" onClick={() => onNavigate('forgot')} className="transition-colors hover:text-[var(--text-secondary)]">
+        <Button type="button" variant="ghost" size="sm" onClick={() => onNavigate('forgot')} className="h-auto p-0 text-[var(--text-tertiary)] hover:bg-transparent hover:text-[var(--text-secondary)]">
           Mot de passe oublié
-        </button>
-        <button type="button" onClick={() => onNavigate('signup')} className="font-medium transition-colors hover:text-[var(--text-secondary)]">
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onNavigate('signup')} className="h-auto p-0 font-medium text-[var(--text-tertiary)] hover:bg-transparent hover:text-[var(--text-secondary)]">
           Créer un compte
-        </button>
+        </Button>
       </div>
     </AuthLayout>
   )

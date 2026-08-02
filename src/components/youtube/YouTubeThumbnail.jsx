@@ -1,11 +1,14 @@
 import { Play } from 'lucide-react'
 import { buildThumbnailUrl } from '@/lib/youtube'
+import { Button } from '@/components/ui/button'
 
 export default function YouTubeThumbnail({ youtubeId, title, onClick }) {
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
       onClick={onClick}
-      className="group relative w-full overflow-hidden rounded-xl bg-black transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+      className="group relative h-auto w-full overflow-hidden rounded-xl bg-black p-0 transition-all duration-150 active:scale-[0.98] hover:bg-black"
       style={{ aspectRatio: '16/9' }}
     >
       <img
@@ -18,6 +21,6 @@ export default function YouTubeThumbnail({ youtubeId, title, onClick }) {
           <Play size={16} className="fill-red-600 text-red-600 ml-0.5" />
         </div>
       </div>
-    </button>
+    </Button>
   )
 }

@@ -3,6 +3,7 @@ import { X, Calendar, Sparkles, CheckCircle2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/lib/toast'
 
 const START_HOUR = 6
@@ -26,12 +27,14 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
   const gridRef = useRef(null)
   const today = todayStr()
 
-  useEffect(() => {
-    if (!isOpen) return
-    const handler = e => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [isOpen, onClose])
+  function computeDropHour(x, y) {
+    if (!gridRef.current) return null
+    const rect = gridRef.current.getBoundingClientRect()
+    if (x < rect.left || x > rect.right) return null
+    const relY = y - rect.top
+    if (relY < 0 || relY > HOUR_SPAN * HOUR_PX) return null
+    return Math.max(START_HOUR, Math.min(END_HOUR - 0.25, snap15(START_HOUR + relY / HOUR_PX)))
+  }
 
   useEffect(() => {
     if (!drag) return
@@ -45,7 +48,6 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
         const t = drag.task
         const durationH = (t.estimatedMinutes && t.estimatedMinutes > 0) ? t.estimatedMinutes / 60 : 1
         const endH = Math.min(END_HOUR, target + durationH)
-        const project = state.projects.find(p => p.id === t.projectId)
         dispatch({
           type: 'ADD_CALENDAR_EVENT',
           payload: {
@@ -73,21 +75,10 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drag])
 
-  function computeDropHour(x, y) {
-    if (!gridRef.current) return null
-    const rect = gridRef.current.getBoundingClientRect()
-    if (x < rect.left || x > rect.right) return null
-    const relY = y - rect.top
-    if (relY < 0 || relY > HOUR_SPAN * HOUR_PX) return null
-    return Math.max(START_HOUR, Math.min(END_HOUR - 0.25, snap15(START_HOUR + relY / HOUR_PX)))
-  }
-
   function startDrag(e, task) {
     e.preventDefault()
     setDrag({ task, mouseX: e.clientX, mouseY: e.clientY, dropTarget: null })
   }
-
-  if (!isOpen) return null
 
   // Today's unplanned tasks: today=true, status!=done, NOT already in calendar today
   const eventTaskIds = new Set(state.calendarEvents.filter(e => e.date === today && e.taskId).map(e => e.taskId))
@@ -125,8 +116,14 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
   const nowH = now.getHours() + now.getMinutes() / 60
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col"
-      style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)' }}>
+    <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
+      <DialogContent
+        hideClose
+        motion={false}
+        className="inset-0 left-0 top-0 flex h-[100dvh] max-h-none max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden rounded-none border-0 p-0"
+        style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)' }}
+      >
+      <DialogTitle className="sr-only">Plan ma journée</DialogTitle>
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
@@ -295,6 +292,7 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
           </div>
         </div>
       )}
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

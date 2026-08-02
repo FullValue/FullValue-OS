@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Trash2, Plus, Check, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import { useStore } from '@/store/useStore'
-import { ImpactBadge, StatusBadge } from './TaskBadge'
 import { TAG_PALETTE, getTagColor, URGENCY_OPTIONS, getUrgencyStyle } from './taskColors'
 import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
 import { Button } from '@/components/ui/button'
@@ -11,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { NativeSelect } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { toast, toastUndo } from '@/lib/toast'
 
 const nanoid = () => Math.random().toString(36).slice(2, 10)
@@ -128,9 +128,16 @@ function TagInput({ tags, tagStyles, onTagsChange, onSetTagStyle }) {
             <span key={t} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium"
               style={{ background: c.bg, color: c.text }}>
               #{t}
-              <button onClick={() => removeTag(t)} className="opacity-60 hover:opacity-100">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => removeTag(t)}
+                aria-label={`Supprimer le tag ${t}`}
+                className="h-4 w-4 rounded-full p-0 opacity-60 hover:bg-transparent hover:opacity-100"
+              >
                 <X size={9} />
-              </button>
+              </Button>
             </span>
           )
         })}
@@ -156,11 +163,11 @@ function TagInput({ tags, tagStyles, onTagsChange, onSetTagStyle }) {
           </p>
           <div className="flex gap-1.5 flex-wrap">
             {TAG_PALETTE.map(p => (
-              <button key={p.name} onClick={() => confirmTagColor(p.name)}
-                className="text-[10px] px-2 py-0.5 rounded-full font-medium transition-all hover:scale-105"
+              <Button key={p.name} type="button" variant="ghost" onClick={() => confirmTagColor(p.name)}
+                className="h-auto rounded-full px-2 py-0.5 text-[10px] font-medium transition-all hover:scale-105"
                 style={{ background: p.bg, color: p.text }}>
                 {p.name}
-              </button>
+              </Button>
             ))}
           </div>
           <Button variant="ghost" size="xs" onClick={() => { onTagsChange([...tags, pendingTag]); setPendingTag(null) }}
@@ -299,35 +306,22 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
     }
   }
 
-  // ── Backdrop click ────────────────────────────────────────────────────────
-  function handleBackdrop(e) {
-    if (e.target === e.currentTarget) handleClose()
-  }
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-      onClick={handleBackdrop}
-    >
-      <div
-        className="relative w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col"
-        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-modal)', maxHeight: '90vh' }}
-        onClick={e => e.stopPropagation()}
-      >
+    <Dialog open onOpenChange={open => { if (!open) handleClose() }}>
+      <DialogContent hideClose className="max-w-2xl overflow-hidden p-0">
         {/* Header */}
         <div className="flex items-start gap-3 p-5 flex-shrink-0"
           style={{ borderBottom: '1px solid var(--border-soft)' }}>
           {project && (
             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: project.color }} />
           )}
-          <input
+          <Input
             value={title}
             onChange={e => { setTitle(e.target.value); setTitleDirty(true) }}
             onBlur={() => {
               if (titleDirty) { save({ title }); setTitleDirty(false) }
             }}
-            className="flex-1 text-lg font-semibold tracking-tight bg-transparent focus:outline-none"
+            className="h-auto flex-1 rounded-none border-0 bg-transparent px-0 text-lg font-semibold tracking-tight shadow-none focus:bg-transparent focus:ring-0"
             style={{ color: 'var(--text-primary)' }}
           />
           {/* Save state indicator */}
@@ -432,14 +426,16 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
 
           {/* ─── Apparence de la carte ─────────────────────────────────────────── */}
           <div style={{ borderTop: '1px solid var(--border-soft)' }}>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               onClick={() => setShowAppearance(!showAppearance)}
-              className="w-full flex items-center justify-between px-5 py-3 text-xs font-medium transition-colors hover:bg-[rgba(var(--ink),0.03)]"
+              className="h-auto w-full justify-between rounded-none px-5 py-3 text-xs font-medium hover:bg-[rgba(var(--ink),0.03)]"
               style={{ color: 'var(--text-secondary)' }}
             >
               <span>Apparence de la carte</span>
               {showAppearance ? <ChevronUp size={14} style={{ color: 'var(--text-tertiary)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />}
-            </button>
+            </Button>
 
             {showAppearance && (
               <div className="px-5 pb-5 space-y-4">
@@ -450,10 +446,13 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
                   </Label>
                   <div className="flex gap-2 flex-wrap">
                     {CARD_BG_OPTIONS.map(opt => (
-                      <button
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
                         key={opt.name}
                         onClick={() => handleCardColor(opt.color)}
-                        className="relative w-7 h-7 rounded-full transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                        className="relative h-7 w-7 rounded-full p-0 transition-all hover:scale-110"
                         style={{
                           background: opt.color || 'var(--bg-card)',
                           border: `2px solid ${cardColor === opt.color ? 'var(--violet-deep)' : 'var(--border-medium)'}`,
@@ -465,7 +464,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
                         {((opt.color === null && cardColor === null) || (opt.color !== null && cardColor === opt.color)) && (
                           <Check size={11} color={opt.color ? 'rgba(255,255,255,0.7)' : 'var(--text-tertiary)'} strokeWidth={3} />
                         )}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -574,7 +573,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete }) {
             {hasUnsaved ? 'Enregistrer' : '✓ À jour'}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

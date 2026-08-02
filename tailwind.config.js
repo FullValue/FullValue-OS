@@ -5,7 +5,6 @@ export default {
     extend: {
       colors: {
         // Semantic theme colors — backed by CSS variables, swap with data-theme
-        base: 'var(--c-base)',
         surface: 'var(--c-surface)',
         card: 'var(--c-card)',
         // accents (unchanged in both themes)

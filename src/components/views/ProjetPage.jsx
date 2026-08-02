@@ -320,12 +320,8 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
                 />
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-colors hover:bg-white/8"
-                style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(255,255,255,0.1)' }}
-                onClick={() => {
-                  const d = document.querySelector('[data-deadline-input]')
-                  d?.click()
-                }}>
+              <div className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs"
+                style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(255,255,255,0.1)' }}>
                 <CalendarDays size={12} />
                 <InlineDateEditor
                   value={project.deadline}

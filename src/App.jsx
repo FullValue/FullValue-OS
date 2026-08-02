@@ -259,7 +259,7 @@ function AppInner() {
         style={{
           marginLeft: isMobile ? 0 : SIDEBAR_WIDTH,
           marginRight: isMobile ? 0 : (isJournee ? 'clamp(0px, calc(300px + 2.5rem), 340px)' : 'clamp(0px, 5vw, 40px)'),
-          padding: isMobile ? '16px 16px 80px' : '24px 32px 80px',
+          padding: isMobile ? '64px 16px 80px' : '24px 32px 80px',
         }}
       >
         <div className="mx-auto animate-fadeIn" style={{ maxWidth: isMobile ? '100%' : (isJournee ? 760 : 1024) }}>

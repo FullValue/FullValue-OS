@@ -519,7 +519,7 @@ function SortableWidget({ id, children }) {
           variant="ghost"
           {...attributes}
           {...listeners}
-          className="absolute left-3 top-3 z-10 h-7 w-7 cursor-grab rounded-lg p-1 opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+          className="absolute left-3 top-3 z-10 hidden h-7 w-7 cursor-grab rounded-lg p-1 opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing sm:flex"
           style={{ background: 'var(--bg-card-soft)', color: 'var(--text-tertiary)' }}
           title="Réorganiser"
         >
@@ -606,7 +606,7 @@ export default function Journee({ onStartTask, onNavigate }) {
     switch (id) {
       case 'hero':
         return (
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)' }}>
+          <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
             <DeadlinesCard tasks={state.tasks} projects={state.projects} onNavigate={onNavigate} />
             <MomentumCard projects={state.projects} tasks={state.tasks} />
           </div>

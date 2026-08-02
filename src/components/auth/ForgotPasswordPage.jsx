@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getAuthErrorMessage } from '@/lib/authErrors'
 import AuthLayout from './AuthLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,10 +20,10 @@ export default function ForgotPasswordPage({ onNavigate }) {
       const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
-      if (err) { setError(err.message); return }
+      if (err) { setError(getAuthErrorMessage(err)); return }
       setSent(true)
-    } catch {
-      setError('Connexion au serveur impossible. Réessaie plus tard.')
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'Connexion au serveur impossible.'))
     } finally {
       setLoading(false)
     }

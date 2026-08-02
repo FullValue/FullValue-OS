@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { LogIn, UserRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { getAuthErrorMessage } from '@/lib/authErrors'
 import AuthLayout from './AuthLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,9 +21,9 @@ export default function LoginPage({ onNavigate }) {
     setLoading(true)
     try {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-      if (err) setError(err.message)
-    } catch {
-      setError('Connexion au serveur impossible. Utilise l’accès invité ci-dessous.')
+      if (err) setError(getAuthErrorMessage(err))
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'Connexion au serveur impossible.'))
     } finally {
       setLoading(false)
     }

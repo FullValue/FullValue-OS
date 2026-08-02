@@ -1,11 +1,15 @@
 import { useState } from 'react'
+import { UserRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuthErrorMessage } from '@/lib/authErrors'
 import AuthLayout from './AuthLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export default function SignupPage({ onNavigate }) {
+  const { signInAsGuest } = useAuth()
   const [fullName, setFullName] = useState('')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -25,10 +29,10 @@ export default function SignupPage({ onNavigate }) {
         password,
         options: { data: { full_name: fullName } },
       })
-      if (err) { setError(err.message); return }
+      if (err) { setError(getAuthErrorMessage(err)); return }
       onNavigate('check-email')
-    } catch {
-      setError('Connexion au serveur impossible. Réessaie plus tard.')
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'Connexion au serveur impossible.'))
     } finally {
       setLoading(false)
     }
@@ -62,9 +66,19 @@ export default function SignupPage({ onNavigate }) {
         </div>
 
         {error && (
-          <p className="rounded-lg px-3 py-2 text-xs" style={{ background: 'var(--red-bg)', color: 'var(--red-deep)' }}>
-            {error}
-          </p>
+          <div className="space-y-2 rounded-lg px-3 py-2" style={{ background: 'var(--red-bg)', color: 'var(--red-deep)' }}>
+            <p className="text-xs">{error}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={signInAsGuest}
+              className="w-full border-[var(--red-solid)] text-[var(--red-deep)] hover:bg-[var(--red-solid)]/20 hover:text-[var(--red-deep)]"
+            >
+              <UserRound size={14} />
+              Continuer en invité
+            </Button>
+          </div>
         )}
 
         <Button type="submit" variant="secondary" size="lg" loading={loading} className="w-full">

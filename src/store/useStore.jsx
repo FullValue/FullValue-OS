@@ -1,4 +1,6 @@
-import { createContext, useContext, useReducer, useEffect } from 'react'
+import { createContext, useContext, useReducer, useEffect, useRef } from 'react'
+import { keepCorruptCopy, snapshotDaily } from '@/lib/backup'
+import { toast } from '@/lib/toast'
 
 const STATE_VERSION = 3
 const nanoid = () => Math.random().toString(36).slice(2, 10)
@@ -60,6 +62,11 @@ const INITIAL_STATE = {
   dailyReviews: [],
 }
 
+// Champs par défaut d'une tâche, partagés par toutes les actions qui en créent une.
+function taskDefaults() {
+  return { ship80Delivered: false, tags: [], startDate: null, coverUrl: null, orderIndex: Date.now(), checklist: [], cardColor: null, cardImageUrl: null, cardImagePath: null, cardImageName: null, inlineNote: null, progressPercentage: null, commentsCount: 0, attachmentsCount: 0, id: nanoid(), createdAt: new Date().toISOString(), completedAt: null }
+}
+
 function reducer(state, action) {
   switch (action.type) {
     case 'SET_ENERGY': return { ...state, energy: action.payload }
@@ -68,7 +75,7 @@ function reducer(state, action) {
       return { ...state, tagStyles: { ...state.tagStyles, [action.payload.tag]: action.payload.color } }
 
     case 'ADD_TASK':
-      return { ...state, tasks: [...state.tasks, { ship80Delivered: false, tags: [], startDate: null, coverUrl: null, orderIndex: Date.now(), checklist: [], cardColor: null, cardImageUrl: null, cardImagePath: null, cardImageName: null, inlineNote: null, progressPercentage: null, commentsCount: 0, attachmentsCount: 0, id: nanoid(), createdAt: new Date().toISOString(), completedAt: null, ...action.payload }] }
+      return { ...state, tasks: [...state.tasks, { ...taskDefaults(), ...action.payload }] }
     case 'UPDATE_TASK':
       return { ...state, tasks: state.tasks.map(t => t.id === action.payload.id ? { ...t, ...action.payload } : t) }
     case 'REORDER_TASKS': {
@@ -102,7 +109,7 @@ function reducer(state, action) {
       const { inboxId, projectId } = action.payload
       const item = state.inbox.find(i => i.id === inboxId)
       if (!item) return state
-      return { ...state, inbox: state.inbox.filter(i => i.id !== inboxId), tasks: [...state.tasks, { id: nanoid(), title: item.text, projectId, status: 'todo', impact: 'low', ship80: false, ship80Delivered: false, today: false, dueDate: null, notes: '', createdAt: new Date().toISOString(), completedAt: null }] }
+      return { ...state, inbox: state.inbox.filter(i => i.id !== inboxId), tasks: [...state.tasks, { ...taskDefaults(), title: item.text, projectId, status: 'todo', impact: 'low', ship80: false, today: false, dueDate: null, notes: '' }] }
     }
 
     case 'UPDATE_PROJECT':
@@ -213,15 +220,22 @@ function reducer(state, action) {
 
     case 'HYDRATE_STATE':
       // Replace entire state with data loaded from Supabase (post-migration)
-      return { ...action.payload, _version: STATE_VERSION }
+      // Les clés absentes (sauvegarde ancienne) repartent vides plutôt qu'avec les données de démo.
+      return {
+        ...Object.fromEntries(Object.entries(INITIAL_STATE).map(([k, v]) => [k, Array.isArray(v) ? [] : v])),
+        ...action.payload,
+        settings: { ...INITIAL_STATE.settings, ...(action.payload.settings || {}) },
+        _version: STATE_VERSION,
+      }
 
     default: return state
   }
 }
 
 function loadState() {
+  let raw = null
   try {
-    const raw = localStorage.getItem('cockpit_state')
+    raw = localStorage.getItem('cockpit_state')
     if (raw) {
       const parsed = JSON.parse(raw)
       const storedVersion = parsed._version || 0
@@ -244,7 +258,10 @@ function loadState() {
         }
       }
     }
-  } catch {}
+  } catch {
+    // State illisible : on le met de côté (récupérable depuis la page Données) avant qu'il soit écrasé.
+    if (raw) keepCorruptCopy(raw)
+  }
   return INITIAL_STATE
 }
 
@@ -252,8 +269,18 @@ const StoreContext = createContext(null)
 
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
+  const warnedRef = useRef(false)
   useEffect(() => {
-    try { localStorage.setItem('cockpit_state', JSON.stringify(state)) } catch {}
+    try {
+      localStorage.setItem('cockpit_state', JSON.stringify(state))
+      warnedRef.current = false
+    } catch {
+      if (!warnedRef.current) {
+        warnedRef.current = true
+        toast.error('Sauvegarde locale impossible : le stockage du navigateur est plein. Exporte tes données depuis la page Données.')
+      }
+    }
+    snapshotDaily(state)
   }, [state])
   return <StoreContext.Provider value={{ state, dispatch }}>{children}</StoreContext.Provider>
 }

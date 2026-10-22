@@ -2,8 +2,8 @@ import { useState } from 'react'
 import {
   Home, Inbox, Calendar, CheckSquare, Timer,
   BookOpen, GraduationCap,
-  Users, LayoutDashboard, ChevronDown, LogOut, Database, FileJson,
-  Pencil, Trash2, Check, X, Plus, Menu, Building2,
+  Users, LayoutDashboard, ChevronDown, LogOut, HardDrive,
+  Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
@@ -17,14 +17,25 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 
 export const SIDEBAR_WIDTH = 248
 
-const PILOTAGE = [
-  { id: 'journee',    label: 'Journée',     Icon: Home },
-  { id: 'open-space', label: 'Open space',  Icon: Building2 },
-  { id: 'inbox',      label: 'Inbox',       Icon: Inbox,       badge: true },
-  { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
-  { id: 'taches',     label: 'Tâches',      Icon: CheckSquare },
-  { id: 'sessions',   label: 'Sessions',    Icon: Timer,       timer: true },
-  { id: 'import',     label: 'Import bulk', Icon: FileJson },
+// Navigation par moment d'usage : la journée d'abord, puis le pilotage de fond.
+const NAV_GROUPS = [
+  {
+    label: "Aujourd'hui",
+    items: [
+      { id: 'journee',    label: 'Journée',     Icon: Home },
+      { id: 'inbox',      label: 'Inbox',       Icon: Inbox,       badge: true },
+      { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
+      { id: 'sessions',   label: 'Sessions',    Icon: Timer,       timer: true },
+    ],
+  },
+  {
+    label: 'Piloter',
+    items: [
+      { id: 'open-space', label: 'Open space',  Icon: Building2 },
+      { id: 'taches',     label: 'Tâches',      Icon: CheckSquare },
+      { id: 'revue',      label: 'Revue hebdo', Icon: ClipboardCheck },
+    ],
+  },
 ]
 
 const RESSOURCES = [
@@ -177,7 +188,8 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
       items: [
         { id: 'open-space', label: 'Open space',  Icon: Building2 },
         { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
-        { id: 'import',     label: 'Import bulk', Icon: FileJson },
+        { id: 'revue',      label: 'Revue hebdo', Icon: ClipboardCheck },
+        { id: 'donnees',    label: 'Données',     Icon: HardDrive },
       ],
     },
     { label: 'Ressources', items: RESSOURCES },
@@ -347,21 +359,25 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
 
         {/* Scrollable nav */}
         <div className="flex-1 overflow-y-auto px-3 pb-4" style={{ scrollbarWidth: 'thin' }}>
-          <SectionLabel>Pilotage</SectionLabel>
-          <div className="flex flex-col gap-0.5">
-            {PILOTAGE.map(({ id, label, Icon, badge, timer }) => (
-              <NavRow
-                key={id}
-                id={id}
-                label={label}
-                Icon={Icon}
-                isActive={activePage === id}
-                onClick={setActivePage}
-                badgeCount={badge ? inboxCount : 0}
-                timerActive={timer && timerRunning}
-              />
-            ))}
-          </div>
+          {NAV_GROUPS.map(group => (
+            <div key={group.label}>
+              <SectionLabel>{group.label}</SectionLabel>
+              <div className="flex flex-col gap-0.5">
+                {group.items.map(({ id, label, Icon, badge, timer }) => (
+                  <NavRow
+                    key={id}
+                    id={id}
+                    label={label}
+                    Icon={Icon}
+                    isActive={activePage === id}
+                    onClick={setActivePage}
+                    badgeCount={badge ? inboxCount : 0}
+                    timerActive={timer && timerRunning}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
 
           {/* Projets header */}
           <div className="flex items-center justify-between px-3 pb-1 pt-4">
@@ -537,7 +553,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
 
         {/* Bottom: migration + account */}
         <div className="flex-shrink-0 px-3 py-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
-          <NavRow id="migrate" label="Migration" Icon={Database} isActive={activePage === 'migrate'} onClick={setActivePage} />
+          <NavRow id="donnees" label="Données" Icon={HardDrive} isActive={['donnees', 'import', 'migrate'].includes(activePage)} onClick={setActivePage} />
           <div className="mt-1 flex items-center gap-2.5 px-3 py-2">
             <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold" style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}>
               {userInitials}

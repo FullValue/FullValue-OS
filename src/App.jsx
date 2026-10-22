@@ -17,6 +17,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { useShortcuts } from '@/hooks/useShortcuts'
 import { useStore } from '@/store/useStore'
+import { localDateStr } from '@/lib/backup'
 import AccessCodePage from '@/components/auth/AccessCodePage'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
@@ -30,9 +31,31 @@ import Formation from '@/components/views/Formation'
 import ClientSpace from '@/components/views/ClientSpace'
 import MigratePage from '@/components/views/MigratePage'
 import ImportPage from '@/components/views/ImportPage'
+import RevueHebdo from '@/components/views/RevueHebdo'
+import Donnees from '@/components/views/Donnees'
 
 // three.js est lourd : la page 3D vit dans son propre chunk.
 const OpenSpace = lazy(() => import('@/components/views/OpenSpace'))
+
+const TIMER_KEY = 'cockpit_timer'
+const CLOSING_SNOOZE_KEY = 'cockpit:closing-snoozed'
+const EMPTY_TIMER = { accumulated: 0, startedAt: null, project: '', task: '' }
+
+function readStored(key) {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+
+function readTimer() {
+  try { return { ...EMPTY_TIMER, ...JSON.parse(readStored(TIMER_KEY) || '{}') } } catch { return EMPTY_TIMER }
+}
+
+function writeTimer(timer) {
+  try { localStorage.setItem(TIMER_KEY, JSON.stringify(timer)) } catch { /* ignore */ }
+}
+
+function timerElapsed(timer) {
+  return timer.accumulated + (timer.startedAt ? Math.floor((Date.now() - timer.startedAt) / 1000) : 0)
+}
 
 function AuthGate() {
   const { user, signInWithCode } = useAuth()
@@ -65,14 +88,37 @@ function AppInner() {
   const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
   // Timer
-  const [elapsed, setElapsed] = useState(0)
-  const [timerRunning, setTimerRunning] = useState(false)
-  const [timerPaused, setTimerPaused] = useState(false)
-  const [timerProject, setTimerProject] = useState('')
-  const [timerTask, setTimerTask] = useState('')
+  // Le chrono survit à un rechargement : son état est rejoué depuis localStorage.
+  const [savedTimer] = useState(readTimer)
+  const [elapsed, setElapsed] = useState(() => timerElapsed(savedTimer))
+  const [timerRunning, setTimerRunning] = useState(!!savedTimer.startedAt)
+  const [timerPaused, setTimerPaused] = useState(!savedTimer.startedAt && savedTimer.accumulated > 0)
+  const [timerProject, setTimerProject] = useState(savedTimer.project)
+  const [timerTask, setTimerTask] = useState(savedTimer.task)
   const intervalRef = useRef(null)
-  const elapsedRef = useRef(0)
-  const startTimeRef = useRef(null)
+  const elapsedRef = useRef(savedTimer.accumulated)
+  const startTimeRef = useRef(savedTimer.startedAt)
+
+  useEffect(() => {
+    if (!savedTimer.startedAt) return
+    intervalRef.current = setInterval(() => {
+      setElapsed(elapsedRef.current + Math.floor((Date.now() - startTimeRef.current) / 1000))
+    }, 1000)
+  }, [savedTimer])
+
+  useEffect(() => {
+    writeTimer({
+      accumulated: elapsedRef.current,
+      startedAt: timerRunning ? startTimeRef.current : null,
+      project: timerProject,
+      task: timerTask,
+    })
+  }, [timerRunning, timerPaused, timerProject, timerTask])
+
+  const closeClosing = useCallback(() => {
+    try { localStorage.setItem(CLOSING_SNOOZE_KEY, localDateStr()) } catch { /* ignore */ }
+    setClosingOpen(false)
+  }, [])
 
   // Daily closing auto-trigger: at endOfWorkday, if no review for today, open modal once
   useEffect(() => {
@@ -82,7 +128,7 @@ function AppInner() {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       })()
       const alreadyDone = state.dailyReviews?.some(r => r.date === todayStr)
-      if (alreadyDone) return
+      if (alreadyDone || readStored(CLOSING_SNOOZE_KEY) === todayStr) return
       const endStr = state.settings?.endOfWorkday || '20:00'
       const [eh, em] = endStr.split(':').map(Number)
       const now = new Date()
@@ -175,6 +221,8 @@ function AppInner() {
       case 'projets':        return <Projets onNavigate={setActivePage} />
       case 'migrate':        return <MigratePage />
       case 'import':         return <ImportPage />
+      case 'revue':          return <RevueHebdo onNavigate={setActivePage} />
+      case 'donnees':        return <Donnees onNavigate={setActivePage} />
       case 'open-space':     return (
         <Suspense fallback={<p className="py-20 text-center text-sm text-[var(--text-tertiary)]">Chargement de l'open space…</p>}>
           <OpenSpace onNavigate={setActivePage} />
@@ -278,7 +326,7 @@ function AppInner() {
         onStop={stopTimer}
       />
 
-      <DailyClosingModal isOpen={closingOpen} onClose={() => setClosingOpen(false)} />
+      <DailyClosingModal isOpen={closingOpen} onClose={closeClosing} />
 
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 

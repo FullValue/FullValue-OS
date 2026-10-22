@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti'
 import {
   Play, AlertTriangle, Inbox, ChevronRight,
   TrendingUp, TrendingDown, Minus, Zap, GripVertical,
-  Plus, X,
+  Plus, X, Check, Target, ClipboardCheck,
 } from 'lucide-react'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -294,6 +294,64 @@ function StatsRow({ state, nowMinutes, onNavigate, dispatch }) {
 }
 
 // ── PrioritiesCard ────────────────────────────────────────────────────────────
+
+// ── Prochaine action ─────────────────────────────────────────────────────────
+// Une seule tâche mise en avant : en cours > fort impact > échéance la plus proche.
+
+function pickNextAction(tasks, today) {
+  const rank = t => [
+    t.status === 'inprogress' ? 0 : 1,
+    t.today ? 0 : 1,
+    t.impact === 'high' ? 0 : 1,
+    t.dueDate || '9999',
+  ]
+  const candidates = tasks.filter(t => t.status !== 'done' && (t.today || (t.dueDate && t.dueDate <= today)))
+  return candidates.sort((a, b) => {
+    const ra = rank(a), rb = rank(b)
+    for (let i = 0; i < ra.length; i++) if (ra[i] !== rb[i]) return ra[i] < rb[i] ? -1 : 1
+    return 0
+  })[0] || null
+}
+
+function NextActionCard({ tasks, projects, dispatch, onStartTask }) {
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const task = pickNextAction(tasks, today)
+  const project = task && projects.find(p => p.id === task.projectId)
+
+  if (!task) {
+    return (
+      <Card className="flex items-center gap-3 p-4">
+        <Target size={18} className="shrink-0 text-[var(--text-tertiary)]" />
+        <p className="text-sm text-[var(--text-secondary)]">Aucune priorité pour aujourd'hui. Choisis 1 à 3 tâches dans « Priorités du jour » pour démarrer.</p>
+      </Card>
+    )
+  }
+
+  const overdue = task.dueDate && task.dueDate < today
+  return (
+    <Card className="p-4" style={{ borderColor: project?.color }}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Target size={18} className="shrink-0" style={{ color: 'var(--violet-deep)' }} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+            Ta prochaine action{project ? ` · ${project.emoji || ''} ${project.name}` : ''}
+          </p>
+          <p className="truncate text-base font-semibold text-[var(--text-primary)]">{task.title}</p>
+          <p className="text-xs text-[var(--text-tertiary)]">
+            {task.status === 'inprogress' ? 'En cours' : 'À faire'}
+            {task.impact === 'high' ? ' · fort impact' : ''}
+            {task.dueDate ? ` · ${overdue ? 'en retard depuis le' : 'échéance'} ${new Date(task.dueDate + 'T12:00:00').toLocaleDateString('fr-FR')}` : ''}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => onStartTask(task.projectId, task.id)}><Play size={13} /> Focus</Button>
+          <Button size="sm" variant="outline" onClick={() => dispatch({ type: 'TOGGLE_TASK_DONE', payload: task.id })}><Check size={13} /> Terminé</Button>
+        </div>
+      </div>
+    </Card>
+  )
+}
 
 function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
   const [picking, setPicking] = useState(false)
@@ -672,26 +730,7 @@ export default function Journee({ onStartTask, onNavigate }) {
         </div>
       </div>
 
-      {/* Draggable widgets */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={widgetOrder} strategy={verticalListSortingStrategy}>
-          <div className="space-y-4">
-            {widgetOrder.map(id => (
-              <SortableWidget key={id} id={id}>
-                {renderWidget(id)}
-              </SortableWidget>
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-
-      {/* Sidebar widgets — mobile only (on desktop they live in RightSidebar) */}
-      <div className="lg:hidden space-y-4">
-        <StatistiqueWidget />
-        <PrayerWidget nowMinutes={nowMinutes} />
-      </div>
-
-      {/* Capture bar */}
+      {/* Capture rapide : en haut pour vider sa tête sans scroller */}
       <div
         className="rounded-2xl px-4 py-3 flex items-center gap-3"
         style={{ background: 'var(--violet-bg)', border: '1px solid var(--violet-solid)' }}
@@ -715,6 +754,41 @@ export default function Journee({ onStartTask, onNavigate }) {
           </kbd>
         )}
       </div>
+      <NextActionCard tasks={state.tasks} projects={state.projects} dispatch={dispatch} onStartTask={onStartTask} />
+
+      {/* Rappel de revue hebdo, du vendredi après-midi au dimanche */}
+      {(now.getDay() === 0 || now.getDay() === 6 || (now.getDay() === 5 && now.getHours() >= 14)) && (
+        <button
+          type="button"
+          onClick={() => onNavigate('revue')}
+          className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-[rgba(var(--ink),0.04)]"
+          style={{ border: '1px dashed var(--border-medium)' }}
+        >
+          <ClipboardCheck size={15} className="shrink-0 text-[var(--violet-deep)]" />
+          <span className="flex-1 text-sm text-[var(--text-secondary)]">Fin de semaine : 10 minutes de revue hebdo pour trier ce qui traîne et préparer lundi.</span>
+          <ChevronRight size={15} className="text-[var(--text-tertiary)]" />
+        </button>
+      )}
+
+      {/* Draggable widgets */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={widgetOrder} strategy={verticalListSortingStrategy}>
+          <div className="space-y-4">
+            {widgetOrder.map(id => (
+              <SortableWidget key={id} id={id}>
+                {renderWidget(id)}
+              </SortableWidget>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {/* Sidebar widgets — mobile only (on desktop they live in RightSidebar) */}
+      <div className="lg:hidden space-y-4">
+        <StatistiqueWidget />
+        <PrayerWidget nowMinutes={nowMinutes} />
+      </div>
+
     </div>
   )
 }

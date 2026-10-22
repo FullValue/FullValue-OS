@@ -12,6 +12,7 @@ const GO_MAP = {
   u: 'ulycom_clients',
   r: 'hub-ressources',
   f: 'formation',
+  o: 'open-space',
 }
 
 /**

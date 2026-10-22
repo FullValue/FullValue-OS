@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import { Search } from 'lucide-react'
 import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
@@ -30,6 +30,9 @@ import Formation from '@/components/views/Formation'
 import ClientSpace from '@/components/views/ClientSpace'
 import MigratePage from '@/components/views/MigratePage'
 import ImportPage from '@/components/views/ImportPage'
+
+// three.js est lourd : la page 3D vit dans son propre chunk.
+const OpenSpace = lazy(() => import('@/components/views/OpenSpace'))
 
 function AuthGate() {
   const { user, signInWithCode } = useAuth()
@@ -147,6 +150,7 @@ function AppInner() {
 
   const projectPageMatch = activePage.startsWith('projet_') ? activePage.replace('projet_', '') : null
   const isJournee = activePage === 'journee'
+  const isOpenSpace = activePage === 'open-space'
 
   function renderPage() {
     if (projectPageMatch) {
@@ -171,6 +175,11 @@ function AppInner() {
       case 'projets':        return <Projets onNavigate={setActivePage} />
       case 'migrate':        return <MigratePage />
       case 'import':         return <ImportPage />
+      case 'open-space':     return (
+        <Suspense fallback={<p className="py-20 text-center text-sm text-[var(--text-tertiary)]">Chargement de l'open space…</p>}>
+          <OpenSpace onNavigate={setActivePage} />
+        </Suspense>
+      )
       default:               return <Journee onStartTask={goToSessionsWithTask} onNavigate={setActivePage} />
     }
   }
@@ -227,7 +236,7 @@ function AppInner() {
           padding: isMobile ? '64px 16px 80px' : '24px 32px 80px',
         }}
       >
-        <div className="mx-auto animate-fadeIn" style={{ maxWidth: isMobile ? '100%' : (isJournee ? 760 : 1024) }}>
+        <div className="mx-auto animate-fadeIn" style={{ maxWidth: isMobile || isOpenSpace ? '100%' : (isJournee ? 760 : 1024) }}>
           {renderPage()}
         </div>
       </main>

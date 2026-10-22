@@ -3,7 +3,7 @@ import {
   Home, Inbox, Calendar, CheckSquare, Timer,
   BookOpen, GraduationCap,
   Users, LayoutDashboard, ChevronDown, LogOut, Database, FileJson,
-  Pencil, Trash2, Check, X, Plus, Menu,
+  Pencil, Trash2, Check, X, Plus, Menu, Building2,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
@@ -19,6 +19,7 @@ export const SIDEBAR_WIDTH = 248
 
 const PILOTAGE = [
   { id: 'journee',    label: 'Journée',     Icon: Home },
+  { id: 'open-space', label: 'Open space',  Icon: Building2 },
   { id: 'inbox',      label: 'Inbox',       Icon: Inbox,       badge: true },
   { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
   { id: 'taches',     label: 'Tâches',      Icon: CheckSquare },
@@ -174,6 +175,7 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
     {
       label: 'Pilotage',
       items: [
+        { id: 'open-space', label: 'Open space',  Icon: Building2 },
         { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
         { id: 'import',     label: 'Import bulk', Icon: FileJson },
       ],

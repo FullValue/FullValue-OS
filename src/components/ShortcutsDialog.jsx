@@ -23,6 +23,7 @@ const GROUPS = [
       { keys: ['G', 'U'], label: 'Espace Clients' },
       { keys: ['G', 'R'], label: 'Hub Ressources' },
       { keys: ['G', 'F'], label: 'Formation' },
+      { keys: ['G', 'O'], label: 'Open space 3D' },
     ],
   },
   {

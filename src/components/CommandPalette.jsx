@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import {
   Home, Inbox, Calendar, CheckSquare, Timer, BookOpen, GraduationCap,
   Users, FileJson, Sun, Moon, Plus, Zap, Focus, ClipboardCheck,
-  Keyboard, Folder, LayoutGrid, Play, Database,
+  Keyboard, Folder, LayoutGrid, Play, Database, Building2,
 } from 'lucide-react'
 import {
   CommandDialog, CommandInput, CommandList, CommandEmpty,
@@ -14,6 +14,7 @@ import { toast } from '@/lib/toast'
 
 const PAGES = [
   { id: 'journee', label: 'Journée', Icon: Home, kbd: 'G J' },
+  { id: 'open-space', label: 'Open space 3D', Icon: Building2, kbd: 'G O' },
   { id: 'inbox', label: 'Inbox', Icon: Inbox, kbd: 'G I' },
   { id: 'calendrier', label: 'Calendrier', Icon: Calendar, kbd: 'G C' },
   { id: 'taches', label: 'Tâches', Icon: CheckSquare, kbd: 'G T' },

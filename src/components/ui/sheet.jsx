@@ -16,7 +16,7 @@ export const SheetOverlay = forwardRef(function SheetOverlay({ className, ...pro
   return (
     <DialogPrimitive.Overlay
       ref={ref}
-      className={cn('fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px] animate-overlayShow', className)}
+      className={cn('fixed inset-0 z-[90] bg-[var(--overlay)] backdrop-blur-[4px] animate-overlayShow', className)}
       {...props}
     />
   )
@@ -46,7 +46,7 @@ export const SheetContent = forwardRef(function SheetContent(
       >
         {children}
         {!hideClose && (
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[rgba(var(--ink),0.06)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
+          <DialogPrimitive.Close aria-label="Fermer" className="absolute right-4 top-4 rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[rgba(var(--ink),0.06)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
             <X size={16} />
           </DialogPrimitive.Close>
         )}

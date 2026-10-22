@@ -449,7 +449,7 @@ export default function BulkImportInterface({ defaultProjectSlug, defaultClientI
                   ? { background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', color: '#F87171' }
                   : parsed
                   ? { background: 'rgba(168,230,189,0.08)', border: '1px solid rgba(168,230,189,0.2)', color: '#A8E6BD' }
-                  : { background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-soft)', color: 'var(--text-tertiary)' }
+                  : { background: 'rgba(var(--ink),0.04)', border: '1px solid var(--border-soft)', color: 'var(--text-tertiary)' }
               }>
               {parseError
                 ? <><AlertCircle size={13} className="flex-shrink-0 mt-0.5" /><span>{parseError}</span></>

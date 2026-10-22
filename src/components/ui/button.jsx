@@ -10,10 +10,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-[var(--violet-deep)] text-[var(--text-inverse)] shadow-sm hover:bg-[#7A6BF0]',
-        secondary: 'bg-[var(--active-bg)] text-[var(--active-text)] hover:opacity-88',
+        default: 'bg-[var(--accent)] text-[var(--on-accent)] shadow-[var(--shadow-control)] hover:bg-[var(--accent-hover)]',
+        secondary: 'bg-[var(--active-bg)] text-[var(--active-text)] hover:opacity-90',
         ghost: 'bg-transparent text-[var(--text-secondary)] hover:bg-[rgba(var(--ink),0.05)] hover:text-[var(--text-primary)]',
-        outline: 'border border-[var(--border-medium)] bg-transparent text-[var(--text-secondary)] hover:bg-[rgba(var(--ink),0.04)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]',
+        outline: 'border border-[var(--border-medium)] bg-[var(--bg-surface)] text-[var(--text-secondary)] shadow-[var(--shadow-control)] hover:bg-[var(--bg-card-soft)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]',
         danger: 'bg-[var(--red-bg)] text-[var(--red-deep)] hover:bg-[var(--red-solid)]',
         subtle: 'bg-[rgba(var(--ink),0.05)] text-[var(--text-secondary)] hover:bg-[rgba(var(--ink),0.09)] hover:text-[var(--text-primary)]',
       },

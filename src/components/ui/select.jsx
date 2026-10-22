@@ -16,9 +16,9 @@ export const SelectTrigger = forwardRef(function SelectTrigger(
     <SelectPrimitive.Trigger
       ref={ref}
       className={cn(
-        'flex h-9 w-full items-center justify-between gap-2 rounded-xl border border-transparent bg-[var(--bg-input)] px-3 text-sm text-[var(--text-primary)] transition-all',
+        'flex h-9 w-full items-center justify-between gap-2 rounded-xl border border-[var(--border-medium)] bg-[var(--bg-input)] shadow-[var(--shadow-control)] px-3 text-sm text-[var(--text-primary)] transition-all',
         'placeholder:text-[var(--text-tertiary)] data-[placeholder]:text-[var(--text-tertiary)]',
-        'focus:border-[var(--violet-deep)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
+        'focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
         'disabled:cursor-not-allowed disabled:opacity-50 [&>span]:truncate',
         className
       )}
@@ -42,7 +42,7 @@ export const SelectContent = forwardRef(function SelectContent(
         ref={ref}
         position={position}
         className={cn(
-          'relative z-[120] max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[8rem] overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-surface)] shadow-[var(--shadow-float)] animate-popIn',
+          'relative z-[120] max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[8rem] overflow-hidden rounded-xl border border-[var(--border-soft)] cockpit-material bg-[var(--bg-material)] backdrop-blur-xl shadow-[var(--shadow-float)] animate-popIn',
           position === 'popper' && 'w-full min-w-[var(--radix-select-trigger-width)]',
           className
         )}
@@ -89,7 +89,7 @@ export const SelectItem = forwardRef(function SelectItem(
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
       <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <Check size={13} strokeWidth={2.5} className="text-[var(--violet-deep)]" />
+          <Check size={13} strokeWidth={2.5} className="text-[var(--accent)]" />
         </SelectPrimitive.ItemIndicator>
       </span>
     </SelectPrimitive.Item>

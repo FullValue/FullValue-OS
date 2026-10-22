@@ -53,7 +53,7 @@ export default function AddYouTubeForm({ onSubmit, onCancel, extraFields, extraD
       </div>
 
       {loading && (
-        <div className="flex items-center gap-2 text-white/40 text-sm">
+        <div className="flex items-center gap-2 text-[var(--text-tertiary)] text-sm">
           <Loader2 size={14} className="animate-spin" /> Récupération des infos…
         </div>
       )}
@@ -61,15 +61,15 @@ export default function AddYouTubeForm({ onSubmit, onCancel, extraFields, extraD
       {error && <p className="text-xs text-red/80">{error}</p>}
 
       {metadata && (
-        <div className="flex gap-3 p-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex gap-3 p-3 rounded-2xl" style={{ background: 'rgba(var(--ink),0.04)', border: '1px solid rgba(var(--ink),0.08)' }}>
           <img
             src={metadata.thumbnail || buildThumbnailUrl(extractYouTubeId(url))}
             alt={metadata.title}
             className="w-24 h-14 object-cover rounded-lg flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-white/80 font-medium line-clamp-2 leading-tight">{metadata.title}</p>
-            <p className="text-xs text-white/35 mt-1">{metadata.channel}</p>
+            <p className="text-sm text-[var(--text-primary)] font-medium line-clamp-2 leading-tight">{metadata.title}</p>
+            <p className="text-xs text-[var(--text-tertiary)] mt-1">{metadata.channel}</p>
           </div>
         </div>
       )}

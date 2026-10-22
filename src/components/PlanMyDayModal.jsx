@@ -214,10 +214,10 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
 
           <div className="flex h-full overflow-auto">
             {/* Time gutter */}
-            <div className="w-14 flex-shrink-0 pt-0" style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="w-14 flex-shrink-0 pt-0" style={{ borderRight: '1px solid rgba(var(--ink),0.05)' }}>
               {hourLabels.map(h => (
                 <div key={h} className="flex items-start justify-end pr-2 pt-1" style={{ height: `${HOUR_PX}px` }}>
-                  <span className="font-mono text-[10px] tabular text-white/20">{h}h</span>
+                  <span className="font-mono text-[10px] tabular text-[var(--text-tertiary)]">{h}h</span>
                 </div>
               ))}
             </div>
@@ -227,7 +227,7 @@ export default function PlanMyDayModal({ isOpen, onClose }) {
               {/* Hour lines */}
               {hourLabels.map(h => (
                 <div key={h} className="absolute w-full"
-                  style={{ top: `${(h - START_HOUR) * HOUR_PX}px`, borderTop: '1px solid rgba(255,255,255,0.03)', height: `${HOUR_PX}px` }} />
+                  style={{ top: `${(h - START_HOUR) * HOUR_PX}px`, borderTop: '1px solid rgba(var(--ink),0.03)', height: `${HOUR_PX}px` }} />
               ))}
 
               {/* Existing events */}

@@ -14,12 +14,12 @@ export const Slider = forwardRef(function Slider({ className, value, defaultValu
       {...props}
     >
       <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-[rgba(var(--ink),0.10)]">
-        <SliderPrimitive.Range className="absolute h-full bg-[var(--violet-deep)]" />
+        <SliderPrimitive.Range className="absolute h-full bg-[var(--accent)]" />
       </SliderPrimitive.Track>
       {Array.from({ length: thumbCount }, (_, index) => (
         <SliderPrimitive.Thumb
           key={index}
-          className="block h-4 w-4 rounded-full border-2 border-[var(--bg-surface)] bg-[var(--violet-deep)] shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:pointer-events-none disabled:opacity-50"
+          className="block h-4 w-4 rounded-full border-2 border-[var(--bg-surface)] bg-[var(--accent)] shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

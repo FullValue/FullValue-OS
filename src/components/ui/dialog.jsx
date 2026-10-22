@@ -13,7 +13,7 @@ export const DialogOverlay = forwardRef(function DialogOverlay({ className, ...p
   return (
     <DialogPrimitive.Overlay
       ref={ref}
-      className={cn('fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px] animate-overlayShow', className)}
+      className={cn('fixed inset-0 z-[90] bg-[var(--overlay)] backdrop-blur-[4px] animate-overlayShow', className)}
       {...props}
     />
   )
@@ -29,7 +29,7 @@ export const DialogContent = forwardRef(function DialogContent(
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'fixed left-1/2 top-1/2 z-[95] w-full max-w-lg -translate-x-1/2 -translate-y-1/2',
+          'fixed left-1/2 top-1/2 z-[95] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
           'rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-surface)] shadow-[var(--shadow-modal)]',
           'max-h-[88dvh] overflow-y-auto',
           motion && 'data-[state=open]:animate-contentShow data-[state=closed]:animate-contentHide',
@@ -39,7 +39,7 @@ export const DialogContent = forwardRef(function DialogContent(
       >
         {children}
         {!hideClose && (
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[rgba(var(--ink),0.06)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
+          <DialogPrimitive.Close aria-label="Fermer" className="absolute right-4 top-4 rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[rgba(var(--ink),0.06)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
             <X size={16} />
           </DialogPrimitive.Close>
         )}

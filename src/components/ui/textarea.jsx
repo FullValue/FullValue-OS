@@ -6,9 +6,9 @@ export const Textarea = forwardRef(function Textarea({ className, ...props }, re
     <textarea
       ref={ref}
       className={cn(
-        'flex min-h-[72px] w-full resize-y rounded-xl border border-transparent bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] transition-all duration-150',
+        'flex min-h-[72px] w-full resize-y rounded-xl border border-[var(--border-medium)] bg-[var(--bg-input)] shadow-[var(--shadow-control)] px-3 py-2 text-sm text-[var(--text-primary)] transition-all duration-150',
         'placeholder:text-[var(--text-tertiary)]',
-        'focus:border-[var(--violet-deep)] focus:bg-[var(--bg-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
+        'focus:border-[var(--accent)] focus:bg-[var(--bg-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}

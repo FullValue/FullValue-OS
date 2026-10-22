@@ -1,3 +1,4 @@
+import { accentText } from '@/lib/colors'
 import { useState } from 'react'
 import { Plus, Copy, Check, Trash2, ChevronDown, ChevronUp, ExternalLink, FileCode, FileText, Layout, Link, File, Paperclip, X } from 'lucide-react'
 import { useStore } from '@/store/useStore'
@@ -50,13 +51,13 @@ function ResourceCard({ resource, project, onDelete }) {
       <div className="p-4">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: config.color + '15' }}>
-            <Icon size={16} style={{ color: config.color }} />
+            <Icon size={16} style={{ color: accentText(config.color) }} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: config.color + '15', color: config.color }}>{config.label}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: config.color + '15', color: accentText(config.color) }}>{config.label}</span>
               {resource.category && <UIBadge variant="default" className="text-[10px]">{resource.category}</UIBadge>}
-              {project && <span className="text-[10px]" style={{ color: project.color }}>{project.emoji} {project.name}</span>}
+              {project && <span className="text-[10px]" style={{ color: accentText(project.color) }}>{project.emoji} {project.name}</span>}
             </div>
             <h3 className="text-[var(--text-primary)] text-sm font-medium leading-tight">{resource.title}</h3>
             {resource.description && <p className="text-[var(--text-tertiary)] text-xs mt-0.5 line-clamp-1">{resource.description}</p>}
@@ -117,12 +118,12 @@ function YouTubeCard({ resource, project, onDelete, onPlay }) {
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <UIBadge variant="red" className="text-[10px]">▶ YouTube</UIBadge>
           {resource.category && <UIBadge variant="default" className="text-[10px]">{resource.category}</UIBadge>}
-          {project && <span className="text-[10px]" style={{ color: project.color }}>{project.emoji} {project.name}</span>}
+          {project && <span className="text-[10px]" style={{ color: accentText(project.color) }}>{project.emoji} {project.name}</span>}
         </div>
         <h3 className="text-[var(--text-primary)] text-sm font-medium line-clamp-2 leading-tight">{resource.title}</h3>
         {resource.youtubeChannel && <p className="text-[var(--text-tertiary)] text-xs mt-0.5">{resource.youtubeChannel}</p>}
       </div>
-      <Button size="icon-sm" variant="ghost" onClick={() => onDelete(resource.id)} className="absolute top-2 right-2 bg-black/60 text-white/70 hover:text-[var(--red-deep)] opacity-0 group-hover:opacity-100">
+      <Button size="icon-sm" variant="ghost" onClick={() => onDelete(resource.id)} className="absolute top-2 right-2 bg-black/60 text-white hover:text-[var(--red-deep)] opacity-0 group-hover:opacity-100">
         <Trash2 size={12} />
       </Button>
     </Card>
@@ -229,7 +230,7 @@ function ResourceForm({ onSubmit, onClose, projects }) {
                 {Object.entries(TYPE_CONFIG).filter(([k]) => k !== 'fichier' && k !== 'youtube').map(([k, v]) => (
                   <Button key={k} variant="ghost" type="button" onClick={() => setType(k)}
                     className="h-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                    style={type === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(var(--ink),0.05)', color: 'var(--text-secondary)' }}>
+                    style={type === k ? { background: v.color + '20', color: accentText(v.color), border: `1px solid ${v.color}40` } : { background: 'rgba(var(--ink),0.05)', color: 'var(--text-secondary)' }}>
                     {v.label}
                   </Button>
                 ))}
@@ -327,7 +328,7 @@ export default function HubRessources() {
           <Button variant="ghost" size="sm" onClick={() => setTypeFilter('all')} className={typeFilter === 'all' ? 'bg-[var(--active-bg)] text-[var(--active-text)]' : ''}>Tous</Button>
           {Object.entries(TYPE_CONFIG).map(([k, v]) => (
             <Button key={k} variant="ghost" onClick={() => setTypeFilter(k)} className="h-auto px-3 py-1.5 rounded-lg text-xs font-medium"
-              style={typeFilter === k ? { background: v.color + '20', color: v.color } : { color: 'var(--text-tertiary)' }}>
+              style={typeFilter === k ? { background: v.color + '20', color: accentText(v.color) } : { color: 'var(--text-tertiary)' }}>
               {v.label}
             </Button>
           ))}

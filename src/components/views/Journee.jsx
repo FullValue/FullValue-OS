@@ -349,7 +349,7 @@ function PrioritiesCard({ tasks, projects, dispatch, onStartTask }) {
         className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl"
         style={{ background: 'rgba(10,8,20,0.82)', backdropFilter: 'blur(8px)' }}
       >
-        <p className="text-3xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Mission accomplie</p>
+        <p className="text-3xl font-bold text-[var(--text-primary)]" style={{ letterSpacing: '-0.02em' }}>Mission accomplie</p>
         <p className="text-4xl mt-2">🎉</p>
       </div>
     )}

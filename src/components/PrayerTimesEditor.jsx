@@ -57,7 +57,7 @@ export default function PrayerTimesEditor({ isOpen, onClose }) {
           <div className="flex flex-col gap-2">
             {PRAYER_FIELDS.map(f => (
               <div key={f.key} className="flex items-center gap-3 rounded-xl px-3 py-2"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--c-border)' }}>
+                style={{ background: 'rgba(var(--ink),0.03)', border: '1px solid var(--c-border)' }}>
                 <span className="flex-1 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                   {f.label}
                 </span>

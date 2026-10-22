@@ -20,7 +20,7 @@ export const DropdownMenuContent = forwardRef(function DropdownMenuContent(
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
-          'z-[110] min-w-[10rem] overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-surface)] p-1 shadow-[var(--shadow-float)] animate-popIn',
+          'z-[110] min-w-[10rem] overflow-hidden rounded-xl border border-[var(--border-soft)] cockpit-material bg-[var(--bg-material)] backdrop-blur-xl p-1 shadow-[var(--shadow-float)] animate-popIn',
           className
         )}
         {...props}
@@ -66,7 +66,7 @@ export const DropdownMenuCheckboxItem = forwardRef(function DropdownMenuCheckbox
     >
       <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
         <DropdownMenuPrimitive.ItemIndicator>
-          <Check size={13} strokeWidth={2.5} className="text-[var(--violet-deep)]" />
+          <Check size={13} strokeWidth={2.5} className="text-[var(--accent)]" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -89,7 +89,7 @@ export const DropdownMenuRadioItem = forwardRef(function DropdownMenuRadioItem(
     >
       <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
         <DropdownMenuPrimitive.ItemIndicator>
-          <Circle size={7} className="fill-[var(--violet-deep)] text-[var(--violet-deep)]" />
+          <Circle size={7} className="fill-[var(--accent)] text-[var(--accent)]" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -159,7 +159,7 @@ export const DropdownMenuSubContent = forwardRef(function DropdownMenuSubContent
     <DropdownMenuPrimitive.SubContent
       ref={ref}
       className={cn(
-        'z-[110] min-w-[9rem] overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-surface)] p-1 shadow-[var(--shadow-float)] animate-popIn',
+        'z-[110] min-w-[9rem] overflow-hidden rounded-xl border border-[var(--border-soft)] cockpit-material bg-[var(--bg-material)] backdrop-blur-xl p-1 shadow-[var(--shadow-float)] animate-popIn',
         className
       )}
       {...props}

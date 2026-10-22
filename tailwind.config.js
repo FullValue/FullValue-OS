@@ -8,7 +8,7 @@ export default {
         surface: 'var(--c-surface)',
         card: 'var(--c-card)',
         // accents (unchanged in both themes)
-        accent: '#8B7CFF',
+        accent: 'var(--accent)',
         violet: '#8B7CFF',
         green: '#A8E6BD',
         yellow: '#FFD66B',
@@ -22,9 +22,9 @@ export default {
         cyan: '#7DD3D8',
       },
       fontFamily: {
-        sans: ['Geist Variable', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono Variable', '"JetBrains Mono"', '"DM Mono"', 'monospace'],
-        heading: ['Geist Variable', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)'],
+        mono: ['var(--font-mono)'],
+        heading: ['var(--font-sans)'],
       },
       keyframes: {
         pulse_ring: {

@@ -96,7 +96,7 @@ function WeekRecapSidebar({ weekDays, state, getProject }) {
         </div>
 
         <div className="h-2 rounded-full overflow-hidden mb-1"
-          style={{ background: 'rgba(255,255,255,0.04)' }}>
+          style={{ background: 'rgba(var(--ink),0.04)' }}>
           <div className="h-full transition-all"
             style={{
               width: `${usedPct}%`,
@@ -134,7 +134,7 @@ function WeekRecapSidebar({ weekDays, state, getProject }) {
                       {b.hours.toFixed(1)}h
                     </span>
                   </div>
-                  <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(var(--ink),0.04)' }}>
                     <div className="h-full" style={{ width: `${(b.hours / maxProjectHours) * 100}%`, background: color }} />
                   </div>
                 </div>
@@ -158,7 +158,7 @@ function WeekRecapSidebar({ weekDays, state, getProject }) {
 function SidebarStat({ label, value, color }) {
   return (
     <div className="rounded-xl p-2 text-center"
-      style={{ background: 'rgba(255,255,255,0.03)' }}>
+      style={{ background: 'rgba(var(--ink),0.03)' }}>
       <p className="font-mono text-lg font-semibold leading-none mb-1 tabular"
         style={{ color: color || 'var(--text-secondary)' }}>{value}</p>
       <p className="text-[9px] uppercase tracking-wider"
@@ -678,13 +678,13 @@ export default function Calendrier() {
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4 flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-[var(--text-primary)]">Calendrier</h1>
-          <div className="flex gap-1 bg-white/5 rounded-xl p-1">
+          <div className="flex gap-1 bg-[rgba(var(--ink),0.05)] rounded-xl p-1">
             {[
               { id: 'week', label: 'Semaine' },
               { id: 'month', label: 'Mois' },
             ].map(v => (
               <Button key={v.id} variant="ghost" onClick={() => setView(v.id)}
-                className={`h-auto px-3 py-1.5 rounded-lg text-xs font-medium ${view === v.id ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] hover:bg-[var(--violet-bg)]' : 'text-white/40 hover:text-white/70 hover:bg-transparent'}`}>
+                className={`h-auto px-3 py-1.5 rounded-lg text-xs font-medium ${view === v.id ? 'bg-[var(--violet-bg)] text-[var(--violet-deep)] hover:bg-[var(--violet-bg)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-transparent'}`}>
                 {v.label}
               </Button>
             ))}
@@ -730,7 +730,7 @@ export default function Calendrier() {
               ? { background: p.color + '20', color: p.color, border: `1px solid ${p.color}40` }
               : { background: 'rgba(var(--ink),0.03)', color: 'var(--text-tertiary)', border: '1px solid var(--border-soft)' }}
           >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: visibleProjects.has(p.id) ? p.color : 'rgba(255,255,255,0.2)' }} />
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: visibleProjects.has(p.id) ? p.color : 'rgba(var(--ink),0.2)' }} />
             {p.name}
           </Button>
         ))}
@@ -771,7 +771,7 @@ export default function Calendrier() {
                             : `rgba(139,124,255,${0.04 + intensity * 0.22})`,
                           border: isToday
                             ? '1px solid var(--violet-deep)'
-                            : `1px solid rgba(255,255,255,${0.04 + intensity * 0.08})`,
+                            : `1px solid rgba(var(--ink),${0.04 + intensity * 0.08})`,
                           opacity: inMonth ? 1 : 0.35,
                         }}>
                         <div className="flex items-center justify-between mb-1">
@@ -809,10 +809,10 @@ export default function Calendrier() {
       <div className="flex-1 overflow-auto rounded-2xl shadow-[var(--shadow-card)]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)' }}>
         <div ref={gridRef} className="flex sm:min-w-[700px]">
           {/* Time gutter */}
-          <div className="w-14 flex-shrink-0 pt-10" style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="w-14 flex-shrink-0 pt-10" style={{ borderRight: '1px solid rgba(var(--ink),0.05)' }}>
             {hourLabels.map(h => (
               <div key={h} className="h-14 flex items-start justify-end pr-2 pt-1">
-                <span className="font-mono text-[10px] tabular text-white/20">{h}h</span>
+                <span className="font-mono text-[10px] tabular text-[var(--text-tertiary)]">{h}h</span>
               </div>
             ))}
           </div>
@@ -822,15 +822,15 @@ export default function Calendrier() {
             const isToday = isSameDay(day, today)
             const events = getEventsForDay(day)
             return (
-              <div key={di} className="flex-1 min-w-0" style={{ borderRight: di < 6 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+              <div key={di} className="flex-1 min-w-0" style={{ borderRight: di < 6 ? '1px solid rgba(var(--ink),0.05)' : 'none' }}>
                 {/* Day header */}
                 <div
-                  className={`h-10 flex flex-col items-center justify-center border-b cursor-pointer hover:bg-white/2 transition-colors ${isToday ? '' : ''}`}
-                  style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+                  className={`h-10 flex flex-col items-center justify-center border-b cursor-pointer hover:bg-[rgba(var(--ink),0.02)] transition-colors ${isToday ? '' : ''}`}
+                  style={{ borderColor: 'rgba(var(--ink),0.05)' }}
                   onClick={() => setAddingOnDate({ date: day, startTime: '09:00', endTime: '10:00' })}
                 >
-                  <span className="text-[10px] text-white/30 uppercase">{DAYS_FR[day.getDay()]}</span>
-                  <span className={`font-mono text-sm font-semibold tabular ${isToday ? 'text-[var(--violet-deep)]' : 'text-white/60'}`}>{day.getDate()}</span>
+                  <span className="text-[10px] text-[var(--text-tertiary)] uppercase">{DAYS_FR[day.getDay()]}</span>
+                  <span className={`font-mono text-sm font-semibold tabular ${isToday ? 'text-[var(--violet-deep)]' : 'text-[var(--text-secondary)]'}`}>{day.getDate()}</span>
                 </div>
 
                 {/* Events area */}
@@ -838,8 +838,8 @@ export default function Calendrier() {
                   {/* Hour lines — clickable to create event at that hour */}
                   {hourLabels.map(h => (
                     <div key={h}
-                      className="absolute w-full cursor-pointer hover:bg-white/3 transition-colors"
-                      style={{ top: `${(h - START_HOUR) * 56}px`, borderTop: '1px solid rgba(255,255,255,0.03)', height: '56px' }}
+                      className="absolute w-full cursor-pointer hover:bg-[rgba(var(--ink),0.03)] transition-colors"
+                      style={{ top: `${(h - START_HOUR) * 56}px`, borderTop: '1px solid rgba(var(--ink),0.03)', height: '56px' }}
                       onClick={e => {
                         if (e.target !== e.currentTarget) return
                         const endH = Math.min(END_HOUR, h + 1)
@@ -900,7 +900,7 @@ export default function Calendrier() {
                         {/* Resize handle */}
                         {isDraggable && dragHeight >= 24 && (
                           <div
-                            className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize flex items-center justify-center hover:bg-white/10"
+                            className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize flex items-center justify-center hover:bg-[rgba(var(--ink),0.1)]"
                             onMouseDown={(e) => startDrag(e, ev, di, 'resize')}>
                             <div className="w-6 h-0.5 rounded-full" style={{ background: ev.color, opacity: 0.5 }} />
                           </div>

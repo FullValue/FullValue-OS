@@ -58,21 +58,22 @@ function SectionLabel({ children, className = '' }) {
   )
 }
 
-// Rangée de navigation (toujours ouverte). Fond actif = inverse ; sinon hover neutre.
+// Navigation sélectionnée : teinte système, indépendante des boutons d’action.
 function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActive = false }) {
   return (
     <Button
       type="button"
       variant="ghost"
       onClick={() => onClick(id)}
+      aria-current={isActive ? 'page' : undefined}
       className="h-auto w-full justify-start gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)]"
-      style={{ background: isActive ? 'var(--active-bg)' : undefined }}
+      style={{ background: isActive ? 'var(--bg-selection)' : undefined }}
     >
       <span className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
         <Icon
           size={18}
           strokeWidth={isActive ? 2 : 1.7}
-          style={{ color: isActive ? 'var(--active-text)' : 'var(--text-tertiary)' }}
+          style={{ color: isActive ? 'var(--text-selection)' : 'var(--text-tertiary)' }}
         />
         {badgeCount > 0 && (
           <span
@@ -89,7 +90,7 @@ function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActiv
       <span
         className="text-sm"
         style={{
-          color: isActive ? 'var(--active-text)' : 'var(--text-secondary)',
+          color: isActive ? 'var(--text-selection)' : 'var(--text-secondary)',
           fontWeight: isActive ? 600 : 500,
         }}
       >
@@ -111,9 +112,10 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 flex sm:hidden"
+      className="cockpit-material fixed bottom-0 left-0 right-0 z-50 flex sm:hidden"
       style={{
-        background: 'var(--bg-surface)',
+        background: 'var(--bg-material)',
+        backdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border-soft)',
         boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
         paddingBottom: 'env(safe-area-inset-bottom)',
@@ -128,7 +130,7 @@ function MobileNav({ activePage, setActivePage, timerRunning, inboxCount, onOpen
             key={id}
             onClick={() => setActivePage(id)}
             className="relative h-auto flex-1 flex-col gap-1 rounded-none py-2.5 transition-colors"
-            style={{ color: isActive ? 'var(--violet-deep)' : 'var(--text-tertiary)' }}
+            style={{ color: isActive ? 'var(--blue-deep)' : 'var(--text-tertiary)' }}
           >
             <span className="relative">
               <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
@@ -208,7 +210,7 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
                 return (
                   <Button key={item.id} type="button" variant="ghost" onClick={() => handlePick(item.id)}
                     className="h-auto w-full justify-start gap-3 rounded-xl px-3 py-3 text-left transition-colors"
-                    style={{ background: isActive ? 'var(--active-bg)' : 'transparent', color: isActive ? 'var(--active-text)' : 'var(--text-secondary)' }}>
+                    style={{ background: isActive ? 'var(--bg-selection)' : 'transparent', color: isActive ? 'var(--text-selection)' : 'var(--text-secondary)' }}>
                     <item.Icon size={18} strokeWidth={isActive ? 2 : 1.6} />
                     <span className="text-sm font-medium">{item.label}</span>
                   </Button>
@@ -420,19 +422,19 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                               variant="ghost"
                               onClick={() => setActivePage(`projet_${p.id}`)}
                               className="h-auto w-full justify-start gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)]"
-                              style={{ background: rowActive ? 'var(--active-bg)' : undefined }}
+                              style={{ background: rowActive ? 'var(--bg-selection)' : undefined }}
                             >
                               <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center text-[15px] leading-none">{p.emoji}</span>
                               <span className="flex min-w-0 flex-1 items-center gap-1">
                                 <span
                                   className="truncate text-sm"
-                                  style={{ color: rowActive ? 'var(--active-text)' : 'var(--text-secondary)', fontWeight: rowActive ? 600 : 500 }}
+                                  style={{ color: rowActive ? 'var(--text-selection)' : 'var(--text-secondary)', fontWeight: rowActive ? 600 : 500 }}
                                 >
                                   {p.name}
                                 </span>
-                                <span className="ml-auto flex-shrink-0 text-[9px]" style={{ color: rowActive ? 'rgba(255,255,255,0.6)' : 'var(--text-tertiary)' }}>T{p.tier}</span>
+                                <span className="ml-auto flex-shrink-0 text-[9px]" style={{ color: rowActive ? 'var(--text-selection)' : 'var(--text-tertiary)' }}>T{p.tier}</span>
                                 {isUlycom && (
-                                  <ChevronDown size={12} style={{ color: rowActive ? 'rgba(255,255,255,0.6)' : 'var(--text-tertiary)', flexShrink: 0, transform: ulycomExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                                  <ChevronDown size={12} style={{ color: rowActive ? 'var(--text-selection)' : 'var(--text-tertiary)', flexShrink: 0, transform: ulycomExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                                 )}
                               </span>
                             </Button>
@@ -445,7 +447,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                                 size="icon-sm"
                                 onClick={e => { e.stopPropagation(); startEdit(p) }}
                                 className="h-6 w-6 rounded-md p-1"
-                                style={{ color: rowActive ? 'rgba(255,255,255,0.8)' : 'var(--text-tertiary)', background: rowActive ? 'rgba(255,255,255,0.15)' : 'var(--bg-card-soft)' }}
+                                style={{ color: rowActive ? 'var(--text-selection)' : 'var(--text-tertiary)', background: rowActive ? 'rgba(var(--ink),0.15)' : 'var(--bg-card-soft)' }}
                                 title="Renommer"
                               >
                                 <Pencil size={10} />

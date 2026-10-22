@@ -1,3 +1,4 @@
+import { accentText } from '@/lib/colors'
 import { useState, useRef, useEffect } from 'react'
 import { ArrowLeft, Clock, CheckSquare, BarChart2, Kanban, FileText, Calendar, Flag, Edit2, Check, Plus, Trash2, FileJson, Play, CalendarDays } from 'lucide-react'
 import { useStore } from '@/store/useStore'
@@ -63,7 +64,7 @@ function NorthStarBanner({ project }) {
         borderColor: project.color + '25',
       }}
     >
-      <Flag size={14} style={{ color: project.color }} className="flex-shrink-0" />
+      <Flag size={14} style={{ color: accentText(project.color) }} className="flex-shrink-0" />
       <div className="flex-1 min-w-0 flex items-center gap-2">
         {editing ? (
           <Input
@@ -73,10 +74,10 @@ function NorthStarBanner({ project }) {
             onBlur={commitEdit}
             onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') { setDraft(project.northStar); setEditing(false) } }}
             className="h-7 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm font-medium shadow-none focus:bg-transparent focus:ring-0"
-            style={{ color: project.color }}
+            style={{ color: accentText(project.color) }}
           />
         ) : (
-          <span className="text-sm font-medium truncate" style={{ color: project.color }}>
+          <span className="text-sm font-medium truncate" style={{ color: accentText(project.color) }}>
             North Star : {project.northStar || 'Définir un objectif…'}
           </span>
         )}
@@ -86,7 +87,7 @@ function NorthStarBanner({ project }) {
       <div className="flex items-center gap-2 flex-shrink-0">
         <div className="flex items-center gap-1.5">
           <Progress value={project.northStarProgress} color={project.color} className="w-24" />
-          <span className="font-mono text-[11px] tabular" style={{ color: project.color }}>{project.northStarProgress}%</span>
+          <span className="font-mono text-[11px] tabular" style={{ color: accentText(project.color) }}>{project.northStarProgress}%</span>
         </div>
 
         {/* Slider trigger */}
@@ -105,7 +106,7 @@ function NorthStarBanner({ project }) {
           size="icon-sm"
           onClick={() => { setDraft(project.northStar); setEditing(!editing) }}
         >
-          {editing ? <Check size={12} style={{ color: project.color }} /> : <Edit2 size={12} />}
+          {editing ? <Check size={12} style={{ color: accentText(project.color) }} /> : <Edit2 size={12} />}
         </Button>
       </div>
     </div>
@@ -170,7 +171,7 @@ function SessionTaskPicker({ project, tasks, onStart, onClose }) {
         </div>
         <div className="max-h-56 overflow-y-auto">
           <Button type="button" variant="ghost" onClick={() => onStart(project.id, null)}
-            className="h-auto w-full justify-start rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
+            className="h-auto w-full justify-start rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-[rgba(var(--ink),0.05)]"
             style={{ color: 'var(--text-tertiary)' }}>
             — Sans tâche spécifique
           </Button>
@@ -178,7 +179,7 @@ function SessionTaskPicker({ project, tasks, onStart, onClose }) {
             const icon = task.urgency === 'critical' ? '🚨' : task.urgency === 'very-urgent' ? '🔥' : task.urgency === 'urgent' ? '⚡' : null
             return (
               <Button key={task.id} type="button" variant="ghost" onClick={() => onStart(project.id, task.id)}
-                className="h-auto w-full justify-start gap-2 rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
+                className="h-auto w-full justify-start gap-2 rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-[rgba(var(--ink),0.05)]"
                 style={{ borderTop: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}>
                 {icon && <span className="flex-shrink-0">{icon}</span>}
                 <span className="truncate flex-1">{task.title}</span>
@@ -275,7 +276,7 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
             {project.emoji}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold leading-tight mb-1" style={{ color: project.color }}>
+            <h2 className="text-xl font-bold leading-tight mb-1" style={{ color: accentText(project.color) }}>
               {project.name}
             </h2>
             <div className="flex items-center gap-2 flex-wrap">
@@ -321,7 +322,7 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
               </div>
             ) : (
               <div className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs"
-                style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(var(--ink),0.1)' }}>
                 <CalendarDays size={12} />
                 <InlineDateEditor
                   value={project.deadline}
@@ -365,11 +366,11 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
         ].map((s, i) => (
           <Card key={i} className="p-3">
             <div className="flex items-center gap-1.5 mb-2">
-              {s.Icon ? <s.Icon size={12} className="text-white/30" /> : <span className="text-[10px]">{s.emoji}</span>}
-              <span className="text-[10px] text-white/30 uppercase tracking-wider">{s.label}</span>
+              {s.Icon ? <s.Icon size={12} className="text-[var(--text-tertiary)]" /> : <span className="text-[10px]">{s.emoji}</span>}
+              <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">{s.label}</span>
             </div>
             <p className="font-mono text-2xl font-medium tabular" style={{ color: s.color || 'var(--text-primary)' }}>{s.value}</p>
-            <p className="text-[10px] text-white/25 mt-0.5">{s.sub}</p>
+            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{s.sub}</p>
           </Card>
         ))}
       </div>
@@ -396,7 +397,7 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
           </span>
           <div className="ml-auto flex flex-col gap-0.5">
             {overdueTasks.slice(0, 3).map(t => (
-              <span key={t.id} className="text-[10px] text-white/40 truncate max-w-[200px]">{t.title}</span>
+              <span key={t.id} className="text-[10px] text-[var(--text-tertiary)] truncate max-w-[200px]">{t.title}</span>
             ))}
           </div>
         </div>
@@ -415,7 +416,7 @@ function DashboardTab({ project, tasks, sessions, onStartTask }) {
                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: project.color }} />
                 <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{s.note || '—'}</span>
                 <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{formatDuration(s.duration)}</span>
-                <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
                   {new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                 </span>
               </div>
@@ -462,11 +463,11 @@ function NotesTab({ project }) {
   return (
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
+        <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
         <Button
           size="sm"
           onClick={() => setShowNew(true)}
-          style={{ background: project.color + '18', color: project.color }}
+          style={{ background: project.color + '18', color: accentText(project.color) }}
         >
           <Plus size={12} /> Nouvelle note
         </Button>
@@ -482,7 +483,7 @@ function NotesTab({ project }) {
             placeholder="Titre de la note..."
           />
           <div className="flex gap-2 mt-2">
-            <Button size="sm" onClick={addNote} className="text-white" style={{ background: project.color }}>Créer</Button>
+            <Button size="sm" onClick={addNote} >Créer</Button>
             <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Annuler</Button>
           </div>
         </Card>
@@ -495,8 +496,8 @@ function NotesTab({ project }) {
       {notes.map(note => (
         <Card key={note.id} className="overflow-hidden group">
           <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: editing === note.id ? '1px solid var(--c-border)' : 'none' }}>
-            <span className="flex-1 text-sm font-medium text-white/80">{note.title}</span>
-            <span className="font-mono text-[10px] text-white/25">
+            <span className="flex-1 text-sm font-medium text-[var(--text-primary)]">{note.title}</span>
+            <span className="font-mono text-[10px] text-[var(--text-tertiary)]">
               {new Date(note.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
             </span>
             <Button
@@ -510,7 +511,7 @@ function NotesTab({ project }) {
               variant="ghost"
               size="icon-sm"
               onClick={() => deleteNote(note.id)}
-              className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red"
+              className="opacity-0 group-hover:opacity-100 text-[var(--text-tertiary)] hover:text-red"
             >
               <Trash2 size={12} />
             </Button>
@@ -526,13 +527,13 @@ function NotesTab({ project }) {
                 placeholder="Écris ta note en Markdown..."
                 className="border-transparent bg-transparent focus:bg-transparent resize-none font-mono leading-relaxed"
               />
-              <Button size="sm" onClick={() => saveNote(note.id)} className="mt-2 text-white" style={{ background: project.color }}>
+              <Button size="sm" onClick={() => saveNote(note.id)} className="mt-2">
                 Enregistrer
               </Button>
             </div>
           ) : note.content ? (
             <div className="px-4 py-3">
-              <p className="text-white/50 text-xs leading-relaxed whitespace-pre-wrap line-clamp-3">{note.content}</p>
+              <p className="text-[var(--text-secondary)] text-xs leading-relaxed whitespace-pre-wrap line-clamp-3">{note.content}</p>
             </div>
           ) : null}
         </Card>
@@ -563,8 +564,8 @@ function SessionsTab({ project, sessions }) {
           { label: 'Total', value: formatDuration(allTotal) },
         ].map(stat => (
           <Card key={stat.label} className="p-3 text-center">
-            <p className="font-mono text-xl font-medium tabular" style={{ color: project.color }}>{stat.value}</p>
-            <p className="text-[10px] text-white/30 mt-0.5">{stat.label}</p>
+            <p className="font-mono text-xl font-medium tabular" style={{ color: accentText(project.color) }}>{stat.value}</p>
+            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{stat.label}</p>
           </Card>
         ))}
       </div>
@@ -576,9 +577,9 @@ function SessionsTab({ project, sessions }) {
           {projectSessions.map(s => (
             <div key={s.id} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: project.color }} />
-              <span className="flex-1 text-sm text-white/65 truncate">{s.note || '—'}</span>
-              <span className="font-mono text-sm font-medium" style={{ color: project.color }}>{formatDuration(s.duration)}</span>
-              <span className="font-mono text-[10px] text-white/25 flex-shrink-0">
+              <span className="flex-1 text-sm text-[var(--text-secondary)] truncate">{s.note || '—'}</span>
+              <span className="font-mono text-sm font-medium" style={{ color: accentText(project.color) }}>{formatDuration(s.duration)}</span>
+              <span className="font-mono text-[10px] text-[var(--text-tertiary)] flex-shrink-0">
                 {new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
               </span>
             </div>
@@ -629,7 +630,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
             variant="ghost"
             size="icon"
             onClick={() => onNavigate('projets')}
-            className="text-white/30 hover:text-white/70"
+            className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
           >
             <ArrowLeft size={16} />
           </Button>
@@ -637,14 +638,14 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
             {project.emoji}
           </div>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-white leading-none">{project.name}</h1>
-            <span className="text-[11px] text-white/30">{TIER_LABELS[project.tier]}</span>
+            <h1 className="text-lg font-semibold text-[var(--text-primary)] leading-none">{project.name}</h1>
+            <span className="text-[11px] text-[var(--text-tertiary)]">{TIER_LABELS[project.tier]}</span>
           </div>
           <Button
             size="sm"
             onClick={() => { setImportOpen(true); setImportSuccessCount(null) }}
             className="rounded-xl"
-            style={{ background: project.color + '15', color: project.color, border: `1px solid ${project.color}25` }}
+            style={{ background: project.color + '15', color: accentText(project.color), border: `1px solid ${project.color}25` }}
           >
             <FileJson size={13} />
             Import bulk
@@ -659,7 +660,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
         )}
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-white/6">
+        <div className="flex items-center gap-1 border-b border-[rgba(var(--ink),0.06)]">
           {TABS.map(tab => (
             <Button
               type="button"
@@ -668,17 +669,17 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
               onClick={() => !tab.soon && setActiveTab(tab.id)}
               className={`relative h-auto gap-1.5 rounded-t-lg px-3 py-2 text-xs font-medium transition-all ${
                 tab.soon
-                  ? 'text-white/20 cursor-default'
+                  ? 'text-[var(--text-tertiary)] cursor-default'
                   : activeTab === tab.id
-                  ? 'text-white border-b-2 -mb-px'
-                  : 'text-white/40 hover:text-white/70'
+                  ? 'text-[var(--text-primary)] border-b-2 -mb-px'
+                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
               }`}
-              style={activeTab === tab.id && !tab.soon ? { borderBottomColor: project.color, color: project.color } : {}}
+              style={activeTab === tab.id && !tab.soon ? { borderBottomColor: project.color, color: accentText(project.color) } : {}}
             >
               <tab.Icon size={12} />
               {tab.label}
               {tab.soon && (
-                <span className="text-[9px] bg-white/8 text-white/25 px-1 py-0.5 rounded ml-0.5">Bientôt</span>
+                <span className="text-[9px] bg-[rgba(var(--ink),0.08)] text-[var(--text-tertiary)] px-1 py-0.5 rounded ml-0.5">Bientôt</span>
               )}
             </Button>
           ))}

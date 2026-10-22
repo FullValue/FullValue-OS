@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Sun, Moon, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import FloatingNavbar, { SIDEBAR_WIDTH } from '@/components/layout/FloatingNavbar'
 import RightSidebar from '@/components/layout/RightSidebar'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
+import AppearanceMenu from '@/components/ui/AppearanceMenu'
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
 import CommandPalette from '@/components/CommandPalette'
 import ShortcutsDialog from '@/components/ShortcutsDialog'
 import StickyTimer from '@/components/ui/StickyTimer'
@@ -50,13 +51,7 @@ function AppInner() {
   const [closingOpen, setClosingOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
-  // Theme — light mode is the new default
-  const [theme, setTheme] = useState(() => localStorage.getItem('cockpit_theme') || 'light')
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('cockpit_theme', theme)
-  }, [theme])
-  const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), [])
+  const { theme, setThemePreference } = useTheme()
 
   // Live clock for right sidebar prayer widget
   const [now, setNow] = useState(new Date())
@@ -210,18 +205,7 @@ function AppInner() {
             <kbd className="ml-1">⌘K</kbd>
           </Button>
         </SimpleTooltip>
-        <SimpleTooltip label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}>
-          <div className="flex h-9 items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-surface)] px-2.5 shadow-[var(--shadow-card)]">
-            <Moon size={13} className="text-[var(--text-tertiary)]" />
-            <Switch
-              id="cockpit-theme-toggle"
-            checked={theme === 'dark'}
-              onCheckedChange={toggleTheme}
-              aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
-            />
-            <Sun size={13} className="text-[var(--yellow-deep)]" />
-          </div>
-        </SimpleTooltip>
+        <AppearanceMenu />
       </div>
 
       {/* Floating left navbar */}
@@ -253,7 +237,7 @@ function AppInner() {
         onOpenChange={setCmdOpen}
         onNavigate={setActivePage}
         theme={theme}
-        onToggleTheme={toggleTheme}
+        onToggleTheme={() => setThemePreference(theme === 'dark' ? 'light' : 'dark')}
         onOpenFocus={() => setFocusOpen(true)}
         onOpenClosing={() => setClosingOpen(true)}
         onOpenShortcuts={() => setShortcutsOpen(true)}
@@ -297,8 +281,10 @@ function AppInner() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AuthGate />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AuthGate />
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

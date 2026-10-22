@@ -128,7 +128,7 @@ export default function ImageOrFileInput({
         className="rounded-xl p-4 text-center transition-all"
         style={{
           border: `2px dashed ${isDragActive ? 'var(--violet-deep, #8B7CFF)' : 'var(--c-border)'}`,
-          background: isDragActive ? 'rgba(139,124,255,0.06)' : 'rgba(255,255,255,0.03)',
+          background: isDragActive ? 'rgba(139,124,255,0.06)' : 'rgba(var(--ink),0.03)',
           cursor: uploading ? 'not-allowed' : 'pointer',
           opacity: uploading ? 0.7 : 1,
         }}

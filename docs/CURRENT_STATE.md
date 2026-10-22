@@ -8,7 +8,7 @@ Généré le 2026-05-11. Référence pour la Phase 3A.
 **Persistence** : `localStorage` via une seule clé `cockpit_state` (JSON sérialisé)  
 **State management** : `useReducer` + Context (`src/store/useStore.jsx`)  
 **Preferences locales** (resteront en localStorage, ne migrent PAS) :
-- `cockpit_theme` — `'light'` | `'dark'`
+- `cockpit_theme` — `'light'` | `'dark'` | `'system'` (par défaut : système ; les choix explicites existants sont conservés)
 - `cockpit:dashboard:layout:journee` — ordre des widgets drag & drop
 - `cockpit:view:{contextId}` — vue active par contexte (kanban/list/etc.)
 

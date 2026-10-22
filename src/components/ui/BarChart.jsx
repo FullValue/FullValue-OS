@@ -29,7 +29,7 @@ export default function BarChart({ data }) {
                 title={formatDuration(d.seconds)}
               />
             </div>
-            <span className="text-white/30 text-[10px] font-mono uppercase">{label}</span>
+            <span className="text-[var(--text-tertiary)] text-[10px] font-mono uppercase">{label}</span>
           </div>
         )
       })}

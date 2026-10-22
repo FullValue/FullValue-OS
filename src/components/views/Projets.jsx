@@ -1,3 +1,4 @@
+import { accentText } from '@/lib/colors'
 import { TrendingUp, Clock, CheckSquare } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { Card } from '@/components/ui/card'
@@ -27,7 +28,7 @@ export default function Projets({ onNavigate }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-heading font-bold text-white text-2xl mb-6">Projets</h1>
+      <h1 className="font-heading font-bold text-[var(--text-primary)] text-2xl mb-6">Projets</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {state.projects.map(project => {
@@ -55,13 +56,13 @@ export default function Projets({ onNavigate }) {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-heading font-bold flex-shrink-0"
-                    style={{ backgroundColor: project.color + '25', color: project.color }}
+                    style={{ backgroundColor: project.color + '25', color: accentText(project.color) }}
                   >
                     {project.name.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm group-hover:text-white/90">{project.name}</h3>
-                    <span className="text-[10px] text-white/30">{TIER_LABELS[project.tier]}</span>
+                    <h3 className="font-semibold text-[var(--text-primary)] text-sm group-hover:text-[var(--text-primary)]">{project.name}</h3>
+                    <span className="text-[10px] text-[var(--text-tertiary)]">{TIER_LABELS[project.tier]}</span>
                   </div>
                 </div>
                 {hasMomentum && (
@@ -73,23 +74,23 @@ export default function Projets({ onNavigate }) {
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="bg-white/3 rounded-lg p-2">
-                  <p className="text-white/30 text-[10px] flex items-center gap-1">
+                <div className="bg-[rgba(var(--ink),0.03)] rounded-lg p-2">
+                  <p className="text-[var(--text-tertiary)] text-[10px] flex items-center gap-1">
                     <CheckSquare size={9} /> Tâches actives
                   </p>
-                  <p className="font-mono text-white text-lg font-medium mt-0.5">{activeTasks.length}</p>
+                  <p className="font-mono text-[var(--text-primary)] text-lg font-medium mt-0.5">{activeTasks.length}</p>
                 </div>
-                <div className="bg-white/3 rounded-lg p-2">
-                  <p className="text-white/30 text-[10px] flex items-center gap-1">
+                <div className="bg-[rgba(var(--ink),0.03)] rounded-lg p-2">
+                  <p className="text-[var(--text-tertiary)] text-[10px] flex items-center gap-1">
                     <Clock size={9} /> Cette semaine
                   </p>
-                  <p className="font-mono text-white text-lg font-medium mt-0.5">{formatDuration(weekTime)}</p>
+                  <p className="font-mono text-[var(--text-primary)] text-lg font-medium mt-0.5">{formatDuration(weekTime)}</p>
                 </div>
               </div>
 
               {/* North star progress */}
               <div>
-                <div className="flex justify-between text-[10px] text-white/30 mb-1">
+                <div className="flex justify-between text-[10px] text-[var(--text-tertiary)] mb-1">
                   <span className="truncate max-w-[70%]">{project.northStar}</span>
                   <span>{project.northStarProgress}%</span>
                 </div>

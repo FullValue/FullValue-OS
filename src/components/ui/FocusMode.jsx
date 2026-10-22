@@ -1,3 +1,4 @@
+import { accentText, tint } from '@/lib/colors'
 import { useEffect, useState, useRef } from 'react'
 import { Play, Pause, Square, X, Coffee } from 'lucide-react'
 import { useStore } from '@/store/useStore'
@@ -73,8 +74,8 @@ export default function FocusMode({
       <DialogContent
         hideClose
         motion={false}
-        className="inset-0 left-0 top-0 flex h-[100dvh] max-h-none max-w-none translate-x-0 translate-y-0 flex-col items-center justify-center rounded-none border-0 p-0"
-        style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)' }}
+        className="inset-0 left-0 top-0 flex h-[100dvh] w-full max-h-none max-w-none translate-x-0 translate-y-0 flex-col items-center justify-center rounded-none border-0 p-0"
+        style={{ background: 'var(--bg-page)', backdropFilter: 'blur(20px)' }}
       >
         <DialogTitle className="sr-only">Mode focus</DialogTitle>
 
@@ -83,8 +84,8 @@ export default function FocusMode({
       </audio>
 
       <Button type="button" variant="ghost" size="sm" onClick={onClose}
-        className="absolute right-6 top-6 h-auto gap-2 px-2 py-1 text-xs hover:bg-white/5 hover:text-white/80"
-        style={{ color: 'rgba(255,255,255,0.4)' }}>
+        className="absolute right-6 top-6 h-auto gap-2 px-2 py-1 text-xs hover:bg-[rgba(var(--ink),0.05)] hover:text-[var(--text-primary)]"
+        style={{ color: 'var(--text-tertiary)' }}>
         <X size={16} />
         <span className="hidden sm:inline">Quitter (Esc)</span>
       </Button>
@@ -113,10 +114,10 @@ export default function FocusMode({
 
         {pomodoroOn && (
           <div className="mb-4 flex items-center gap-2 px-3 py-1 rounded-full"
-            style={{ background: mode === 'work' ? accent + '20' : 'rgba(168,230,189,0.20)' }}>
-            {mode === 'break' && <Coffee size={11} style={{ color: '#A8E6BD' }} />}
+            style={{ background: mode === 'work' ? tint(accent, 12) : 'rgba(168,230,189,0.20)' }}>
+            {mode === 'break' && <Coffee size={11} style={{ color: 'var(--green-deep)' }} />}
             <span className="text-[10px] uppercase tracking-wider font-bold"
-              style={{ color: mode === 'work' ? accent : '#A8E6BD' }}>
+              style={{ color: mode === 'work' ? accentText(accent) : 'var(--green-deep)' }}>
               {mode === 'work' ? `Pomodoro · Cycle ${cycles + 1}` : 'Pause'}
             </span>
           </div>
@@ -125,14 +126,14 @@ export default function FocusMode({
         <p className="font-mono font-bold leading-none mb-2 tabular-nums"
           style={{
             fontSize: 'clamp(80px, 18vw, 180px)',
-            color: pomodoroOn && mode === 'break' ? '#A8E6BD' : accent,
+            color: pomodoroOn && mode === 'break' ? 'var(--green-deep)' : accentText(accent),
           }}>
           {pomodoroOn ? formatTime(remaining) : formatTime(elapsed)}
         </p>
 
         {pomodoroOn && (
           <div className="w-64 h-1 rounded-full overflow-hidden mb-2"
-            style={{ background: 'rgba(255,255,255,0.06)' }}>
+            style={{ background: 'rgba(var(--ink),0.06)' }}>
             <div className="h-full transition-all"
               style={{
                 width: `${cycleProgress}%`,
@@ -151,34 +152,35 @@ export default function FocusMode({
           {timerRunning ? (
             <Button type="button" variant="ghost" onClick={onPause}
               className="h-auto gap-2 rounded-2xl px-6 py-3 text-sm font-semibold hover:scale-105"
-              style={{ background: 'rgba(255,214,107,0.15)', color: '#FFD66B' }}>
+              style={{ background: 'rgba(255,214,107,0.15)', color: 'var(--yellow-deep)' }}>
               <Pause size={14} /> Pause
             </Button>
           ) : (
             <Button type="button" variant="ghost" onClick={onResume}
               className="h-auto gap-2 rounded-2xl px-6 py-3 text-sm font-semibold hover:scale-105"
-              style={{ background: accent, color: '#0a0a0a' }}>
+              style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
               <Play size={14} /> Reprendre
             </Button>
           )}
           <Button type="button" variant="ghost" onClick={handleStop}
             className="h-auto gap-2 rounded-2xl px-6 py-3 text-sm font-semibold hover:scale-105"
-            style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171' }}>
+            style={{ background: 'rgba(248,113,113,0.15)', color: 'var(--red-deep)' }}>
             <Square size={14} /> Terminer
           </Button>
         </div>
 
         <Button type="button" variant="ghost" onClick={handleTogglePomodoro}
+          aria-pressed={pomodoroOn}
           className="mt-6 h-auto gap-2 rounded-xl px-4 py-2 text-xs"
           style={{
-            background: pomodoroOn ? accent + '15' : 'rgba(255,255,255,0.05)',
-            color: pomodoroOn ? accent : 'var(--text-tertiary)',
-            border: `1px solid ${pomodoroOn ? accent + '40' : 'rgba(255,255,255,0.08)'}`,
+            background: pomodoroOn ? tint(accent, 8) : 'rgba(var(--ink),0.05)',
+            color: pomodoroOn ? accentText(accent) : 'var(--text-tertiary)',
+            border: `1px solid ${pomodoroOn ? tint(accent, 25) : 'rgba(var(--ink),0.08)'}`,
           }}>
           <span className="w-3 h-3 rounded-full flex items-center justify-center"
             style={{
               background: pomodoroOn ? accent : 'transparent',
-              border: `1.5px solid ${pomodoroOn ? accent : 'rgba(255,255,255,0.2)'}`,
+              border: `1.5px solid ${pomodoroOn ? accent : 'rgba(var(--ink),0.2)'}`,
             }}>
             {pomodoroOn && <span className="w-1 h-1 rounded-full bg-black/60" />}
           </span>

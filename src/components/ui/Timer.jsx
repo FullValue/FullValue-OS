@@ -13,7 +13,7 @@ export default function Timer({ elapsed, isRunning }) {
         )}
         <span
           className="font-mono text-7xl md:text-8xl font-medium tracking-tight"
-          style={{ color: isRunning ? '#6366F1' : '#e2e8f0', letterSpacing: '-2px' }}
+          style={{ color: isRunning ? 'var(--blue-deep)' : 'var(--text-primary)', letterSpacing: '-2px' }}
         >
           {formatTime(elapsed)}
         </span>

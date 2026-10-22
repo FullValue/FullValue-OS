@@ -18,7 +18,7 @@ export const PopoverContent = forwardRef(function PopoverContent(
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          'z-[110] w-72 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-float)] outline-none animate-popIn',
+          'z-[110] w-72 rounded-xl border border-[var(--border-soft)] cockpit-material bg-[var(--bg-material)] backdrop-blur-xl p-4 shadow-[var(--shadow-float)] outline-none animate-popIn',
           className
         )}
         {...props}

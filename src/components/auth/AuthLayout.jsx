@@ -1,9 +1,12 @@
+import AppearanceMenu from '@/components/ui/AppearanceMenu'
+
 export default function AuthLayout({ children }) {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
       style={{ background: 'var(--bg-page)' }}
     >
+      <div className="fixed right-4 top-4 z-40"><AppearanceMenu /></div>
       <div
         className="w-full max-w-sm rounded-2xl p-8"
         style={{

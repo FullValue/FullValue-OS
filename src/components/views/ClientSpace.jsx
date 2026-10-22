@@ -1,3 +1,4 @@
+import { accentText, tint } from '@/lib/colors'
 import { useState, useRef, useEffect } from 'react'
 import {
   Plus, Settings, LayoutDashboard, Kanban, FileText, Paperclip,
@@ -34,7 +35,7 @@ const ACCENT_COLORS = [
 const STATUS_LABELS = {
   prospect: { label: 'Prospect', color: '#A8D4F0' },
   onboarding: { label: 'Onboarding', color: '#FFD66B' },
-  active: { label: 'Actif', color: '#A8E6BD' },
+  active: { label: 'Actif', color: 'var(--green-deep)' },
   paused: { label: 'Pause', color: '#FFB088' },
   completed: { label: 'Terminé', color: '#8B7CFF' },
   archived: { label: 'Archivé', color: '#5C5A58' },
@@ -57,8 +58,8 @@ const DOC_ICONS = { doc: '📝', pdf: '📕', lien: '🔗', spreadsheet: '📊',
 const INVOICE_STATUSES = {
   to_emit: { label: 'À émettre', color: '#FFD66B' },
   sent: { label: 'Envoyée', color: '#A8D4F0' },
-  paid: { label: 'Payée', color: '#A8E6BD' },
-  overdue: { label: 'En retard', color: '#F87171' },
+  paid: { label: 'Payée', color: 'var(--green-deep)' },
+  overdue: { label: 'En retard', color: 'var(--red-deep)' },
 }
 
 // Mapping statut → variante sémantique de <UIBadge> (le sens dicte la couleur)
@@ -108,10 +109,10 @@ function Widget({ icon, label, main, sub, accent, onClick }) {
     >
       <div className="flex items-center gap-2 mb-3">
         <span className="text-base">{icon}</span>
-        <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-medium">{label}</span>
       </div>
-      <p className="font-mono text-2xl font-semibold leading-none" style={{ color: accent }}>{main}</p>
-      <p className="text-[11px] text-white/30 mt-1">{sub}</p>
+      <p className="font-mono text-2xl font-semibold leading-none" style={{ color: accentText(accent) }}>{main}</p>
+      <p className="text-[11px] text-[var(--text-tertiary)] mt-1">{sub}</p>
     </Button>
   )
 }
@@ -174,7 +175,7 @@ function ClientSessionPicker({ client, tasks, accent, onStart, onClose }) {
         </div>
         <div className="max-h-56 overflow-y-auto">
           <Button type="button" variant="ghost" onClick={() => onStart(null, null)}
-            className="h-auto w-full justify-start rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
+            className="h-auto w-full justify-start rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-[rgba(var(--ink),0.05)]"
             style={{ color: 'var(--text-tertiary)' }}>
             — Sans tâche spécifique
           </Button>
@@ -182,7 +183,7 @@ function ClientSessionPicker({ client, tasks, accent, onStart, onClose }) {
             const icon = task.urgency === 'critical' ? '🚨' : task.urgency === 'very-urgent' ? '🔥' : task.urgency === 'urgent' ? '⚡' : null
             return (
               <Button key={task.id} type="button" variant="ghost" onClick={() => onStart(null, task.id)}
-                className="h-auto w-full justify-start gap-2 rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
+                className="h-auto w-full justify-start gap-2 rounded-none px-4 py-2.5 text-left text-xs transition-colors hover:bg-[rgba(var(--ink),0.05)]"
                 style={{ borderTop: '1px solid var(--c-border)', color: 'var(--text-secondary)' }}>
                 {icon && <span className="flex-shrink-0">{icon}</span>}
                 <span className="truncate flex-1">{task.title}</span>
@@ -214,11 +215,11 @@ function UrgentTaskRow({ task }) {
 
   return (
     <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
-      style={{ background: meta.color + '0C', border: `1px solid ${meta.color}25` }}>
+      style={{ background: tint(meta.color, 5), border: `1px solid ${tint(meta.color, 15)}` }}>
       <span className="text-sm flex-shrink-0">{meta.icon}</span>
       <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{task.title}</span>
       <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium"
-        style={{ background: meta.color + '20', color: meta.color }}>
+        style={{ background: tint(meta.color, 13), color: accentText(meta.color) }}>
         {meta.label}
       </span>
       {task.dueDate && (
@@ -273,7 +274,7 @@ function DeadlinesPanel({ tasks }) {
               style={{ borderBottom: '1px solid var(--c-border)' }}>
               <div className="w-12 flex-shrink-0 flex items-center gap-1">
                 <span className="text-[11px] font-bold"
-                  style={{ color: isRed ? '#F87171' : 'var(--text-tertiary)' }}>
+                  style={{ color: isRed ? 'var(--red-deep)' : 'var(--text-tertiary)' }}>
                   {dayStr}.
                 </span>
                 {!isRed && (
@@ -337,7 +338,7 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
   const daysLeft = client.deadline
     ? Math.ceil((new Date(client.deadline) - new Date()) / 86400000)
     : null
-  const deadlineColor = daysLeft == null ? null : daysLeft < 0 ? '#F87171' : daysLeft <= 7 ? '#FFD66B' : accent
+  const deadlineColor = daysLeft == null ? null : daysLeft < 0 ? 'var(--red-deep)' : daysLeft <= 7 ? 'var(--yellow-deep)' : accentText(accent)
 
   function handleStartSession(_, taskId) {
     setShowPicker(false)
@@ -352,11 +353,11 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
         <div className="flex items-start gap-4 mb-5">
           {/* Left: identity */}
           <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
-            style={{ background: accent + '22', color: accent }}>
+            style={{ background: accent + '22', color: accentText(accent) }}>
             {(client.shortName || client.name).charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold leading-tight mb-1" style={{ color: accent }}>
+            <h2 className="text-xl font-bold leading-tight mb-1" style={{ color: accentText(accent) }}>
               {client.name}
             </h2>
             <div className="flex items-center gap-2 flex-wrap">
@@ -401,8 +402,8 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
                 />
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-colors hover:bg-white/8"
-                style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+              <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-colors hover:bg-[rgba(var(--ink),0.08)]"
+                style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(var(--ink),0.1)' }}>
                 <CalendarDays size={12} />
                 <InlineDateEditor
                   value={client.deadline}
@@ -469,7 +470,7 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
                     <span className="text-sm flex-shrink-0">{meta.icon}</span>
                     <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{task.title}</span>
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 font-medium"
-                      style={{ background: meta.color + '20', color: meta.color }}>
+                      style={{ background: tint(meta.color, 13), color: accentText(meta.color) }}>
                       {meta.label}
                     </span>
                   </div>
@@ -486,12 +487,12 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
         <div className="rounded-xl px-4 py-3 flex items-center gap-2"
           style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)' }}>
           <span className="text-sm">⚠</span>
-          <span className="text-xs" style={{ color: '#F87171' }}>
+          <span className="text-xs" style={{ color: 'var(--red-deep)' }}>
             {overdueTasks.length} tâche{overdueTasks.length > 1 ? 's' : ''} en retard
           </span>
           <div className="ml-auto flex flex-col gap-0.5">
             {overdueTasks.slice(0, 3).map(t => (
-              <span key={t.id} className="text-[10px] text-white/40 truncate max-w-[200px]">{t.title}</span>
+              <span key={t.id} className="text-[10px] text-[var(--text-tertiary)] truncate max-w-[200px]">{t.title}</span>
             ))}
           </div>
         </div>
@@ -507,10 +508,10 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
             {weekSessions.slice(0, 5).map(s => (
               <div key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-xl"
                 style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: accent }} />
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"  />
                 <span className="flex-1 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{s.note || '—'}</span>
                 <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{formatDuration(s.duration)}</span>
-                <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
                   {new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                 </span>
               </div>
@@ -555,8 +556,8 @@ function NotesTab({ client, accent }) {
   return (
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
-        <Button size="sm" onClick={() => setShowNew(true)} style={{ background: accent + '18', color: accent }}>
+        <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
+        <Button size="sm" onClick={() => setShowNew(true)} style={{ background: accent + '18', color: accentText(accent) }}>
           <Plus size={12} /> Nouvelle note
         </Button>
       </div>
@@ -565,7 +566,7 @@ function NotesTab({ client, accent }) {
         <Card className="rounded-xl p-3">
           <Input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addNote(); if (e.key === 'Escape') setShowNew(false) }} placeholder="Titre de la note..." />
           <div className="flex gap-2 mt-2">
-            <Button size="sm" onClick={addNote} className="text-white" style={{ background: accent }}>Créer</Button>
+            <Button size="sm" onClick={addNote} >Créer</Button>
             <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Annuler</Button>
           </div>
         </Card>
@@ -578,18 +579,18 @@ function NotesTab({ client, accent }) {
       {notes.map(note => (
         <div key={note.id} className="rounded-xl overflow-hidden group" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
           <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: editing === note.id ? '1px solid var(--c-border)' : 'none' }}>
-            <span className="flex-1 text-sm font-medium text-white/80">{note.title}</span>
-            <span className="font-mono text-[10px] text-white/25">{new Date(note.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+            <span className="flex-1 text-sm font-medium text-[var(--text-primary)]">{note.title}</span>
+            <span className="font-mono text-[10px] text-[var(--text-tertiary)]">{new Date(note.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
             <Button variant="subtle" size="xs" onClick={() => { setEditing(editing === note.id ? null : note.id); setDraft(note.content) }}>{editing === note.id ? 'Fermer' : 'Éditer'}</Button>
             <Button variant="ghost" size="icon-sm" onClick={() => deleteNote(note.id)} className="opacity-0 group-hover:opacity-100 text-[var(--text-tertiary)] hover:text-[var(--red-deep)]"><Trash2 size={12} /></Button>
           </div>
           {editing === note.id ? (
             <div className="p-4">
               <Textarea autoFocus value={draft} onChange={e => setDraft(e.target.value)} rows={8} placeholder="Markdown..." className="font-mono leading-relaxed" />
-              <Button size="sm" onClick={() => saveNote(note.id)} className="mt-2 text-white" style={{ background: accent }}>Enregistrer</Button>
+              <Button size="sm" onClick={() => saveNote(note.id)} className="mt-2">Enregistrer</Button>
             </div>
           ) : note.content ? (
-            <div className="px-4 py-3"><p className="text-white/50 text-xs leading-relaxed whitespace-pre-wrap line-clamp-3">{note.content}</p></div>
+            <div className="px-4 py-3"><p className="text-[var(--text-secondary)] text-xs leading-relaxed whitespace-pre-wrap line-clamp-3">{note.content}</p></div>
           ) : null}
         </div>
       ))}
@@ -639,8 +640,8 @@ function HubTab({ client, accent }) {
   return (
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider">{docs.length} document{docs.length > 1 ? 's' : ''}</p>
-        <Button size="sm" onClick={() => setShowForm(true)} style={{ background: accent + '18', color: accent }}>
+        <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">{docs.length} document{docs.length > 1 ? 's' : ''}</p>
+        <Button size="sm" onClick={() => setShowForm(true)} style={{ background: accent + '18', color: accentText(accent) }}>
           <Plus size={12} /> Ajouter
         </Button>
       </div>
@@ -652,7 +653,7 @@ function HubTab({ client, accent }) {
             {[['lien', '🔗 Lien'], ['upload', '📎 Fichier'], ['youtube', '▶ YouTube']].map(([m, label]) => (
               <Button key={m} type="button" variant="ghost" onClick={() => setMode(m)}
                 className="flex-1 text-xs font-medium"
-                style={mode === m ? { background: accent + '20', color: accent, border: `1px solid ${accent}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
+                style={mode === m ? { background: accent + '20', color: accentText(accent), border: `1px solid ${accent}40` } : { background: 'rgba(var(--ink),0.05)', color: 'var(--text-tertiary)' }}>
                 {label}
               </Button>
             ))}
@@ -676,8 +677,8 @@ function HubTab({ client, accent }) {
                   <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(168,230,189,0.1)', border: '1px solid rgba(168,230,189,0.2)' }}>
                     <span className="text-lg">✓</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white/80 truncate">{uploadedFile.fileName}</p>
-                      <p className="text-xs text-white/30">Fichier prêt</p>
+                      <p className="text-sm text-[var(--text-primary)] truncate">{uploadedFile.fileName}</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">Fichier prêt</p>
                     </div>
                     <Button type="button" variant="ghost" size="icon-sm" onClick={() => setUploadedFile(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"><X size={14} /></Button>
                   </div>
@@ -696,7 +697,7 @@ function HubTab({ client, accent }) {
                 <div className="flex gap-2 flex-wrap">
                   {DOC_TYPES.map(t => (
                     <Button key={t} type="button" variant="ghost" size="sm" onClick={() => setType(t)} className="px-2.5"
-                      style={type === t ? { background: accent + '20', color: accent, border: `1px solid ${accent}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
+                      style={type === t ? { background: accent + '20', color: accentText(accent), border: `1px solid ${accent}40` } : { background: 'rgba(var(--ink),0.05)', color: 'var(--text-tertiary)' }}>
                       {DOC_ICONS[t]} {t}
                     </Button>
                   ))}
@@ -710,7 +711,7 @@ function HubTab({ client, accent }) {
               <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Description (optionnel)" />
               <div className="flex gap-2">
                 <Button onClick={addDoc} disabled={mode === 'upload' && !uploadedFile}
-                  className="flex-1 text-white" style={{ background: accent }}>
+                  className="flex-1">
                   Ajouter
                 </Button>
                 <Button variant="ghost" onClick={resetForm} className="flex-1">Annuler</Button>
@@ -730,8 +731,8 @@ function HubTab({ client, accent }) {
                 <div className="p-3 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white/80 truncate font-medium">{doc.name}</p>
-                      {doc.youtubeChannel && <p className="text-[10px] text-white/30">{doc.youtubeChannel}</p>}
+                      <p className="text-sm text-[var(--text-primary)] truncate font-medium">{doc.name}</p>
+                      {doc.youtubeChannel && <p className="text-[10px] text-[var(--text-tertiary)]">{doc.youtubeChannel}</p>}
                     </div>
                     <Button variant="ghost" size="icon-sm" onClick={() => deleteDoc(doc.id)} className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-[var(--text-tertiary)] hover:text-[var(--red-deep)]">
                       <Trash2 size={12} />
@@ -747,8 +748,8 @@ function HubTab({ client, accent }) {
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex-1 min-w-0 mr-2">
-                      <p className="text-sm text-white/80 truncate font-medium">{doc.name}</p>
-                      {doc.description && <p className="text-[10px] text-white/30 truncate">{doc.description}</p>}
+                      <p className="text-sm text-[var(--text-primary)] truncate font-medium">{doc.name}</p>
+                      {doc.description && <p className="text-[10px] text-[var(--text-tertiary)] truncate">{doc.description}</p>}
                     </div>
                     <Button variant="ghost" size="icon-sm" onClick={() => deleteDoc(doc.id)} className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-[var(--text-tertiary)] hover:text-[var(--red-deep)]">
                       <Trash2 size={12} />
@@ -767,10 +768,10 @@ function HubTab({ client, accent }) {
                 <div className="flex items-center gap-3 px-4 py-3">
                   <span className="text-lg flex-shrink-0">{DOC_ICONS[doc.type] || '📄'}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white/80 truncate">{doc.name}</p>
-                    {doc.description && <p className="text-[10px] text-white/30 truncate">{doc.description}</p>}
+                    <p className="text-sm text-[var(--text-primary)] truncate">{doc.name}</p>
+                    {doc.description && <p className="text-[10px] text-[var(--text-tertiary)] truncate">{doc.description}</p>}
                   </div>
-                  {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-white/30 hover:text-white/70 transition-colors"><ExternalLink size={12} /></a>}
+                  {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"><ExternalLink size={12} /></a>}
                   <Button variant="ghost" size="icon-sm" onClick={() => deleteDoc(doc.id)} className="opacity-0 group-hover:opacity-100 text-[var(--text-tertiary)] hover:text-[var(--red-deep)]"><Trash2 size={12} /></Button>
                 </div>
               )}
@@ -798,8 +799,8 @@ function SessionsTab({ client, accent }) {
       <div className="grid grid-cols-3 gap-3">
         {[['Cette semaine', weekTime], ['Ce mois', monthTime], ['Total', allTime]].map(([label, val]) => (
           <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-            <p className="font-mono text-xl font-medium" style={{ color: accent }}>{formatDuration(val)}</p>
-            <p className="text-[10px] text-white/30 mt-0.5">{label}</p>
+            <p className="font-mono text-xl font-medium" style={{ color: accentText(accent) }}>{formatDuration(val)}</p>
+            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{label}</p>
           </div>
         ))}
       </div>
@@ -810,10 +811,10 @@ function SessionsTab({ client, accent }) {
         <div className="flex flex-col gap-2">
           {sessions.map(s => (
             <div key={s.id} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: accent }} />
-              <span className="flex-1 text-sm text-white/65 truncate">{s.note || '—'}</span>
-              <span className="font-mono text-sm font-medium" style={{ color: accent }}>{formatDuration(s.duration)}</span>
-              <span className="font-mono text-[10px] text-white/25 flex-shrink-0">
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"  />
+              <span className="flex-1 text-sm text-[var(--text-secondary)] truncate">{s.note || '—'}</span>
+              <span className="font-mono text-sm font-medium" style={{ color: accentText(accent) }}>{formatDuration(s.duration)}</span>
+              <span className="font-mono text-[10px] text-[var(--text-tertiary)] flex-shrink-0">
                 {new Date(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
               </span>
             </div>
@@ -858,17 +859,17 @@ function FacturationTab({ client, accent }) {
   return (
     <div className="p-4 space-y-4">
       <div className="grid grid-cols-3 gap-3">
-        {[['Payé', totalFact, '#A8E6BD'], ['À recevoir', toReceive, '#FFD66B'], ['En retard', overdue, '#F87171']].map(([label, val, color]) => (
+        {[['Payé', totalFact, 'var(--green-deep)'], ['À recevoir', toReceive, 'var(--yellow-deep)'], ['En retard', overdue, 'var(--red-deep)']].map(([label, val, color]) => (
           <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
-            <p className="font-mono text-lg font-semibold" style={{ color }}>{formatMoney(val)}</p>
-            <p className="text-[10px] text-white/30 mt-0.5">{label}</p>
+            <p className="font-mono text-lg font-semibold" style={{ color: accentText(color) }}>{formatMoney(val)}</p>
+            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{label}</p>
           </div>
         ))}
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider">{invoices.length} facture{invoices.length > 1 ? 's' : ''}</p>
-        <Button size="sm" onClick={() => setShowForm(true)} style={{ background: accent + '18', color: accent }}>
+        <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">{invoices.length} facture{invoices.length > 1 ? 's' : ''}</p>
+        <Button size="sm" onClick={() => setShowForm(true)} style={{ background: accent + '18', color: accentText(accent) }}>
           <Plus size={12} /> Nouvelle facture
         </Button>
       </div>
@@ -884,13 +885,13 @@ function FacturationTab({ client, accent }) {
           <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Description (optionnel)" />
           <div className="flex gap-2 flex-wrap">
             {Object.entries(INVOICE_STATUSES).map(([k, v]) => (
-              <Button key={k} type="button" variant="ghost" size="sm" onClick={() => setStatus(k)} className="px-2.5" style={status === k ? { background: v.color + '20', color: v.color, border: `1px solid ${v.color}40` } : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
+              <Button key={k} type="button" variant="ghost" size="sm" onClick={() => setStatus(k)} className="px-2.5" style={status === k ? { background: tint(v.color, 13), color: accentText(v.color), border: `1px solid ${tint(v.color, 25)}` } : { background: 'rgba(var(--ink),0.05)', color: 'var(--text-tertiary)' }}>
                 {v.label}
               </Button>
             ))}
           </div>
           <div className="flex gap-2">
-            <Button onClick={addInvoice} className="flex-1 text-white" style={{ background: accent }}>Enregistrer</Button>
+            <Button onClick={addInvoice} className="flex-1">Enregistrer</Button>
             <Button variant="ghost" onClick={() => setShowForm(false)} className="flex-1">Annuler</Button>
           </div>
         </Card>
@@ -905,11 +906,11 @@ function FacturationTab({ client, accent }) {
             return (
               <div key={inv.id} className="flex items-center gap-3 px-4 py-3 rounded-xl group" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
                 <div>
-                  <p className="text-sm font-medium text-white/80">{inv.invoiceNumber || '—'}</p>
-                  {inv.description && <p className="text-[10px] text-white/30">{inv.description}</p>}
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{inv.invoiceNumber || '—'}</p>
+                  {inv.description && <p className="text-[10px] text-[var(--text-tertiary)]">{inv.description}</p>}
                 </div>
                 <div className="ml-auto text-right flex-shrink-0 flex flex-col items-end gap-1">
-                  <p className="font-mono text-sm font-semibold" style={{ color: s.color }}>{formatMoney(inv.amountTtc)}</p>
+                  <p className="font-mono text-sm font-semibold" style={{ color: accentText(s.color) }}>{formatMoney(inv.amountTtc)}</p>
                   <UIBadge variant={INVOICE_STATUS_VARIANT[inv.status] || 'default'} className="rounded-full">{s.label}</UIBadge>
                 </div>
                 {['to_emit', 'sent', 'paid', 'overdue'].filter(k => k !== inv.status).slice(0, 1).map(nextStatus => (
@@ -988,7 +989,7 @@ function ClientForm({ initial = {}, onSubmit, onClose }) {
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <Button type="submit" className="flex-1 h-11 text-white" style={{ background: accentColor }}>
+        <Button type="submit" className="flex-1 h-11">
           {initial.id ? 'Mettre à jour' : 'Créer le client'}
         </Button>
         <Button type="button" variant="ghost" onClick={onClose} className="flex-1 h-11">Annuler</Button>
@@ -1034,7 +1035,7 @@ function ClientSettingsDrawer({ client, onClose }) {
         </Button>
         {confirmDelete ? (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/40 flex-1">Supprimer définitivement ?</span>
+            <span className="text-xs text-[var(--text-tertiary)] flex-1">Supprimer définitivement ?</span>
             <Button variant="danger" size="sm" onClick={deleteClient}>Confirmer</Button>
             <Button variant="ghost" size="icon-sm" onClick={() => setConfirmDelete(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"><X size={14} /></Button>
           </div>
@@ -1078,15 +1079,15 @@ function ClientDashboard({ client, onStartTask }) {
       {/* Client header */}
       <div className="px-4 pt-4 pb-0 max-w-5xl mx-auto w-full">
         <div className="rounded-2xl p-4 mb-4 flex items-start gap-4" style={{ background: accent + '0D', border: `1px solid ${accent}20` }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0" style={{ background: accent + '25', color: accent }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0" style={{ background: accent + '25', color: accentText(accent) }}>
             {(client.shortName || client.name).charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold leading-tight" style={{ color: accent }}>{client.name}</h2>
+            <h2 className="text-lg font-semibold leading-tight" style={{ color: accentText(accent) }}>{client.name}</h2>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <UIBadge variant={STATUS_BADGE_VARIANT[client.status] || 'default'} className="rounded-full">{statusInfo.label}</UIBadge>
-              {client.startDate && <span className="text-[10px] text-white/30">Démarré le {new Date(client.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
-              {client.activityType && <span className="text-[10px] text-white/25">{client.activityType}</span>}
+              {client.startDate && <span className="text-[10px] text-[var(--text-tertiary)]">Démarré le {new Date(client.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+              {client.activityType && <span className="text-[10px] text-[var(--text-tertiary)]">{client.activityType}</span>}
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -1095,7 +1096,7 @@ function ClientDashboard({ client, onStartTask }) {
               size="sm"
               onClick={() => { setImportSuccess(null); setImportOpen(true) }}
               className="rounded-xl px-2.5"
-              style={{ color: accent, background: accent + '15' }}
+              style={{ color: accentText(accent), background: accent + '15' }}
             >
               <Zap size={12} strokeWidth={2} />
               Import
@@ -1114,8 +1115,8 @@ function ClientDashboard({ client, onStartTask }) {
               variant="ghost"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`h-auto flex-shrink-0 gap-1.5 rounded-t-lg px-3 py-2 text-xs font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? '' : 'text-white/40 hover:text-white/70'}`}
-              style={activeTab === tab.id ? { borderBottom: `2px solid ${accent}`, marginBottom: '-1px', color: accent } : {}}
+              className={`h-auto flex-shrink-0 gap-1.5 rounded-t-lg px-3 py-2 text-xs font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? '' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
+              style={activeTab === tab.id ? { borderBottom: `2px solid ${accent}`, marginBottom: '-1px', color: accentText(accent) } : {}}
             >
               <tab.Icon size={12} />
               {tab.label}
@@ -1167,7 +1168,7 @@ function ClientDashboard({ client, onStartTask }) {
             {/* Success banner */}
             {importSuccess !== null && (
               <div className="mx-6 mt-4 px-4 py-2 rounded-xl text-xs flex items-center gap-2"
-                style={{ background: 'rgba(168,230,189,0.1)', border: '1px solid rgba(168,230,189,0.25)', color: '#A8E6BD' }}>
+                style={{ background: 'rgba(168,230,189,0.1)', border: '1px solid rgba(168,230,189,0.25)', color: 'var(--green-deep)' }}>
                 <Check size={13} />
                 {importSuccess} élément{importSuccess > 1 ? 's' : ''} importé{importSuccess > 1 ? 's' : ''} pour <strong>{client.name}</strong>
               </div>
@@ -1242,8 +1243,8 @@ export default function ClientSpace({ onStartTask }) {
               className="h-auto flex-shrink-0 gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap"
               style={
                 (selectedClient?.id === c.id)
-                  ? { background: 'var(--c-card)', color: c.accentColor || '#E8E6E3', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }
-                  : { color: 'rgba(255,255,255,0.40)' }
+                  ? { background: 'var(--c-card)', color: accentText(c.accentColor), boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }
+                  : { color: 'var(--text-tertiary)' }
               }
             >
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.accentColor || '#8B7CFF' }} />
@@ -1254,12 +1255,12 @@ export default function ClientSpace({ onStartTask }) {
             variant="ghost"
             size="sm"
             onClick={() => setAddDrawer(true)}
-            className="rounded-lg text-sm text-white/25 hover:text-white/50 whitespace-nowrap flex-shrink-0"
+            className="rounded-lg text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] whitespace-nowrap flex-shrink-0"
           >
             <Plus size={13} /> Ajouter
           </Button>
           {archivedClients.length > 0 && (
-            <Button variant="ghost" size="xs" onClick={() => setShowArchived(!showArchived)} className="ml-auto text-[10px] text-white/20 hover:text-white/40 flex-shrink-0">
+            <Button variant="ghost" size="xs" onClick={() => setShowArchived(!showArchived)} className="ml-auto text-[10px] text-[var(--text-tertiary)] hover:text-[var(--text-tertiary)] flex-shrink-0">
               {showArchived ? 'Masquer archivés' : `Archivés (${archivedClients.length})`}
             </Button>
           )}
@@ -1268,7 +1269,7 @@ export default function ClientSpace({ onStartTask }) {
         {showArchived && archivedClients.length > 0 && (
           <div className="flex gap-2 mt-2 flex-wrap">
             {archivedClients.map(c => (
-              <Button key={c.id} variant="ghost" size="xs" onClick={() => setSelectedClientId(c.id)} className="text-[11px] px-2.5 rounded-lg text-white/25 bg-white/5 hover:bg-white/8">{c.shortName || c.name}</Button>
+              <Button key={c.id} variant="ghost" size="xs" onClick={() => setSelectedClientId(c.id)} className="text-[11px] px-2.5 rounded-lg text-[var(--text-tertiary)] bg-[rgba(var(--ink),0.05)] hover:bg-[rgba(var(--ink),0.08)]">{c.shortName || c.name}</Button>
             ))}
           </div>
         )}

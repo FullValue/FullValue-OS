@@ -17,7 +17,7 @@ export const Progress = forwardRef(function Progress(
         className="h-full w-full flex-1 rounded-full transition-transform duration-500 ease-out"
         style={{
           transform: `translateX(-${100 - Math.min(100, Math.max(0, value))}%)`,
-          background: color || 'var(--violet-deep)',
+          background: color || 'var(--accent)',
         }}
       />
     </ProgressPrimitive.Root>
@@ -28,7 +28,7 @@ export const Progress = forwardRef(function Progress(
  * Anneau de progression SVG — pour le score de journée, north stars, etc.
  * <ProgressRing value={64} size={44} strokeWidth={4} color="var(--green-deep)" />
  */
-export function ProgressRing({ value = 0, size = 44, strokeWidth = 4, color = 'var(--violet-deep)', trackColor = 'rgba(var(--ink),0.08)', children, className }) {
+export function ProgressRing({ value = 0, size = 44, strokeWidth = 4, color = 'var(--accent)', trackColor = 'rgba(var(--ink),0.08)', children, className }) {
   const clamped = Math.min(100, Math.max(0, value))
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius

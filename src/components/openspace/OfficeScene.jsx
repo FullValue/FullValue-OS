@@ -101,7 +101,7 @@ function NorthStarBoard({ zone, palette }) {
   )
 }
 
-function PoleZone({ zone, palette, selectedId, hoveredId, onSelect, setHovered }) {
+function PoleZone({ zone, poleLevel, palette, selectedId, hoveredId, onSelect, setHovered }) {
   const [cx, cz] = zone.center
   const [w, d] = zone.size
   const active = selectedId === zone.id || hoveredId === zone.id
@@ -117,7 +117,7 @@ function PoleZone({ zone, palette, selectedId, hoveredId, onSelect, setHovered }
       <NorthStarBoard zone={zone} palette={palette} />
       <Label
         position={[cx, 2.5, zone.boardPosition[2]]}
-        title={`${zone.pole.emoji || ''} ${zone.pole.name}`.trim()}
+        title={`${zone.pole.emoji || ''} ${zone.pole.name} · Niv. ${poleLevel}`.trim()}
         subtitle={zone.pole.northStar ? `${zone.pole.northStar} · ${zone.pole.northStarProgress || 0}%` : undefined}
         accent={zone.pole.color} strong
       />
@@ -156,7 +156,21 @@ function Avatar({ color, position, robot }) {
   )
 }
 
-function Hub({ palette, inboxCount, selected, hovered, onSelect, setHovered }) {
+// Flamme de la série de jours : plus la série est longue, plus elle est haute.
+function StreakFlame({ streak, position }) {
+  if (!streak) return null
+  const scale = 0.6 + Math.min(streak, 14) * 0.06
+  return (
+    <group position={position} scale={scale}>
+      <mesh position-y={0.12}><cylinderGeometry args={[0.22, 0.28, 0.24, 16]} /><meshStandardMaterial color="#6B6B75" /></mesh>
+      <mesh position-y={0.55}><coneGeometry args={[0.2, 0.6, 16]} /><meshStandardMaterial color="#FF7A45" emissive="#FF7A45" emissiveIntensity={0.9} /></mesh>
+      <mesh position-y={0.45}><coneGeometry args={[0.11, 0.36, 16]} /><meshStandardMaterial color="#FFD66B" emissive="#FFD66B" emissiveIntensity={1} /></mesh>
+      <pointLight position-y={0.6} color="#FF9A5C" intensity={1.5} distance={3} />
+    </group>
+  )
+}
+
+function Hub({ palette, inboxCount, game, selected, hovered, onSelect, setHovered }) {
   const crates = Math.min(inboxCount, 8)
   return (
     <group position={[0, 0, 3.5]} onClick={e => { e.stopPropagation(); onSelect('hub') }} {...hoverHandlers('hub', setHovered)}>
@@ -176,7 +190,13 @@ function Hub({ palette, inboxCount, selected, hovered, onSelect, setHovered }) {
         </mesh>
       ))}
       {(selected || hovered) && <SelectionRing color="#8B7CFF" radius={2} />}
-      <Label position={[0, 2.2, 0]} title="Ton bureau" subtitle={inboxCount ? `${inboxCount} dans l'Inbox` : 'Inbox vide'} accent="#8B7CFF" strong />
+      <StreakFlame streak={game.streak.current} position={[-2, 0, 0.3]} />
+      <Label
+        position={[0, 2.2, 0]}
+        title={`Ton bureau · Niv. ${game.level}`}
+        subtitle={[game.streak.current ? `🔥 ${game.streak.current} j` : null, inboxCount ? `${inboxCount} dans l'Inbox` : 'Inbox vide'].filter(Boolean).join(' · ')}
+        accent="#8B7CFF" strong
+      />
     </group>
   )
 }
@@ -233,7 +253,7 @@ function MeetingRoom({ meeting, palette, selected, hovered, onSelect, setHovered
   )
 }
 
-export default function OfficeScene({ layout, theme, inboxCount, selectedId, onSelect }) {
+export default function OfficeScene({ layout, theme, inboxCount, game, selectedId, onSelect }) {
   const [hoveredId, setHovered] = useState(null)
   // Les <Html> de drei montés avant la création du canvas n'ont pas de conteneur et disparaissent :
   // on attend onCreated pour monter les postes et leurs étiquettes.
@@ -272,9 +292,9 @@ export default function OfficeScene({ layout, theme, inboxCount, selectedId, onS
       {ready && (
         <>
           {layout.zones.map(zone => (
-            <PoleZone key={zone.id} zone={zone} selectedId={selectedId} hoveredId={hoveredId} {...common} />
+            <PoleZone key={zone.id} zone={zone} poleLevel={game.poles[zone.pole.id]?.level || 1} selectedId={selectedId} hoveredId={hoveredId} {...common} />
           ))}
-          <Hub inboxCount={inboxCount} selected={selectedId === 'hub'} hovered={hoveredId === 'hub'} {...common} />
+          <Hub inboxCount={inboxCount} game={game} selected={selectedId === 'hub'} hovered={hoveredId === 'hub'} {...common} />
           <AgentsCorner agents={layout.commons.agents} selectedId={selectedId} hoveredId={hoveredId} {...common} />
           <MeetingRoom meeting={layout.commons.meeting} selected={selectedId === 'meeting'} hovered={hoveredId === 'meeting'} {...common} />
         </>

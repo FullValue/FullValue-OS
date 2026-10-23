@@ -2,7 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { keepCorruptCopy, snapshotDaily } from '@/lib/backup'
 import { toast } from '@/lib/toast'
 
-const STATE_VERSION = 3
+const STATE_VERSION = 4
 const nanoid = () => Math.random().toString(36).slice(2, 10)
 
 const PROJECTS = [
@@ -60,6 +60,8 @@ const INITIAL_STATE = {
   clientInvoices: [],
   appointments: [],
   dailyReviews: [],
+  // Jeu : seules les quêtes réclamées sont stockées, le reste se recalcule (src/lib/game.js)
+  game: { questClaims: {} },
 }
 
 // Champs par défaut d'une tâche, partagés par toutes les actions qui en créent une.
@@ -205,6 +207,14 @@ function reducer(state, action) {
     case 'SKIP_DAILY_REVIEW':
       return { ...state, dailyReviews: [...state.dailyReviews, { id: nanoid(), date: action.payload.date, skipped: true, createdAt: new Date().toISOString() }] }
 
+    case 'CLAIM_QUEST': {
+      // payload: { date, id, xp } — idempotent : une quête ne rapporte qu'une fois par jour
+      const { date, id, xp } = action.payload
+      const claims = state.game?.questClaims || {}
+      if ((claims[date] || []).some(c => c.id === id)) return state
+      return { ...state, game: { ...state.game, questClaims: { ...claims, [date]: [...(claims[date] || []), { id, xp }] } } }
+    }
+
     case 'RESTORE_ITEMS': {
       // Undo générique : réinsère des éléments supprimés en conservant leurs ids.
       // payload: { tasks: [...], clients: [...], clientNotes: [...], ... }
@@ -254,6 +264,7 @@ function loadState() {
           appointments: parsed.appointments || [],
           tagStyles: parsed.tagStyles || {},
           dailyReviews: parsed.dailyReviews || [],
+          game: { questClaims: {}, ...(parsed.game || {}) },
           settings: { ...INITIAL_STATE.settings, ...(parsed.settings || {}), prayerTimes: { ...INITIAL_STATE.settings.prayerTimes, ...(parsed.settings?.prayerTimes || {}) } },
         }
       }

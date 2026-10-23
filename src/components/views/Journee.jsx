@@ -16,6 +16,7 @@ import { useStore } from '@/store/useStore'
 import { PrayerWidget } from '@/components/layout/RightSidebar'
 import StatistiqueWidget from '@/components/widgets/StatistiqueWidget'
 import CapacityWidget from '@/components/widgets/CapacityWidget'
+import GameCard from '@/components/widgets/GameCard'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -755,6 +756,7 @@ export default function Journee({ onStartTask, onNavigate }) {
         )}
       </div>
       <NextActionCard tasks={state.tasks} projects={state.projects} dispatch={dispatch} onStartTask={onStartTask} />
+      <GameCard />
 
       {/* Rappel de revue hebdo, du vendredi après-midi au dimanche */}
       {(now.getDay() === 0 || now.getDay() === 6 || (now.getDay() === 5 && now.getHours() >= 14)) && (

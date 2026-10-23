@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
+import QuestItem from '@/components/widgets/QuestItem'
 
 const SECTION = 'mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]'
 
@@ -43,7 +44,7 @@ function RequestButton() {
   )
 }
 
-function Body({ entity, state, onNavigate }) {
+function Body({ entity, state, game, onNavigate }) {
   switch (entity.type) {
     case 'pole': {
       const { pole } = entity.zone
@@ -51,6 +52,7 @@ function Body({ entity, state, onNavigate }) {
       return (
         <>
           <Header title={`${pole.emoji || ''} ${pole.name}`.trim()} subtitle="Pôle" color={pole.color} />
+          <PoleLevel info={game.poles[pole.id]} />
           {pole.northStar && (
             <div>
               <p className={SECTION}>North Star</p>
@@ -113,7 +115,14 @@ function Body({ entity, state, onNavigate }) {
       const today = state.tasks.filter(t => t.today && t.status !== 'done')
       return (
         <>
-          <Header title="Ton bureau" subtitle="Pilotage de la journée" color="#8B7CFF" />
+          <Header title="Ton bureau" subtitle={`Niv. ${game.level} · ${game.title}`} color="#8B7CFF" />
+          <div>
+            <Progress value={Math.round(game.progress * 100)} />
+            <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
+              {game.current} / {game.need} XP · {game.streak.current ? `🔥 ${game.streak.current} jour${game.streak.current > 1 ? 's' : ''} d'affilée` : 'aucune série en cours'}
+            </p>
+          </div>
+          <div><p className={SECTION}>Quêtes du jour</p><ul className="space-y-3">{game.quests.map(q => <QuestItem key={q.id} quest={q} />)}</ul></div>
           <div><p className={SECTION}>Priorités du jour · {today.length}</p><TaskList tasks={today} /></div>
           <div className="grid grid-cols-2 gap-2">
             <Button size="sm" onClick={() => onNavigate('journee')}>Journée</Button>
@@ -135,6 +144,17 @@ function Body({ entity, state, onNavigate }) {
     default:
       return null
   }
+}
+
+function PoleLevel({ info }) {
+  const level = info || { level: 1, current: 0, need: 100, progress: 0 }
+  return (
+    <div>
+      <p className={SECTION}>Niveau du pôle · {level.level}</p>
+      <Progress value={Math.round(level.progress * 100)} />
+      <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">{level.current} / {level.need} XP vers le niveau {level.level + 1}</p>
+    </div>
+  )
 }
 
 function Header({ title, subtitle, color }) {
@@ -162,16 +182,16 @@ function Chip({ children }) {
   return <span className="rounded-full bg-[var(--bg-page)] px-2 py-0.5 text-[var(--text-secondary)]">{children}</span>
 }
 
-export default function DetailPanel({ entity, onClose, onNavigate }) {
+export default function DetailPanel({ entity, game, onClose, onNavigate }) {
   const { state } = useStore()
   if (!entity) return null
   return (
-    <Card className="absolute inset-x-2 bottom-2 z-10 max-h-[55%] overflow-y-auto p-4 sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-3 sm:max-h-[calc(100%-1.5rem)] sm:w-80">
+    <Card className="absolute inset-x-2 bottom-2 z-30 max-h-[55%] overflow-y-auto p-4 sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-3 sm:max-h-[calc(100%-1.5rem)] sm:w-80">
       <Button variant="ghost" size="icon-sm" className="absolute right-2 top-2" onClick={onClose} aria-label="Fermer le panneau">
         <X size={14} />
       </Button>
       <div className="space-y-4">
-        <Body entity={entity} state={state} onNavigate={onNavigate} />
+        <Body entity={entity} state={state} game={game} onNavigate={onNavigate} />
       </div>
     </Card>
   )

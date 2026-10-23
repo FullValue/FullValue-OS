@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '@/store/useStore'
+import { useGame } from '@/hooks/useGame'
 import { useTheme } from '@/contexts/ThemeContext'
 import OfficeScene from '@/components/openspace/OfficeScene'
 import DetailPanel from '@/components/openspace/DetailPanel'
@@ -9,6 +10,7 @@ import { buildLayout, findEntity } from '@/components/openspace/layout'
 export default function OpenSpace({ onNavigate }) {
   const { state } = useStore()
   const { theme } = useTheme()
+  const game = useGame()
   const [selectedId, setSelectedId] = useState(null)
   const layout = useMemo(() => buildLayout(state), [state])
   const entity = findEntity(layout, selectedId)
@@ -22,7 +24,7 @@ export default function OpenSpace({ onNavigate }) {
         <div>
           <h1 className="font-heading text-2xl font-bold text-[var(--text-primary)]">Open space</h1>
           <p className="text-sm text-[var(--text-tertiary)]">
-            {state.projects.length} pôles · {clientCount} clients · {openTasks} tâches ouvertes
+            Niv. {game.level} · {game.streak.current ? `🔥 ${game.streak.current} j · ` : ''}{state.projects.length} pôles · {clientCount} clients · {openTasks} tâches ouvertes
           </p>
         </div>
         <p className="hidden text-xs text-[var(--text-tertiary)] sm:block">Glisser pour tourner · clic droit pour déplacer · molette pour zoomer</p>
@@ -35,10 +37,11 @@ export default function OpenSpace({ onNavigate }) {
           layout={layout}
           theme={theme}
           inboxCount={state.inbox.length}
+          game={game}
           selectedId={entity ? selectedId : null}
           onSelect={setSelectedId}
         />
-        <DetailPanel entity={entity} onClose={() => setSelectedId(null)} onNavigate={onNavigate} />
+        <DetailPanel entity={entity} game={game} onClose={() => setSelectedId(null)} onNavigate={onNavigate} />
       </div>
     </div>
   )

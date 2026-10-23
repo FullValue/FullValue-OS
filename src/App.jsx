@@ -16,6 +16,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { useShortcuts } from '@/hooks/useShortcuts'
+import { useGameNotifications } from '@/hooks/useGame'
 import { useStore } from '@/store/useStore'
 import { localDateStr } from '@/lib/backup'
 import AccessCodePage from '@/components/auth/AccessCodePage'
@@ -78,6 +79,7 @@ function AppInner() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   const { theme, setThemePreference } = useTheme()
+  useGameNotifications()
 
   // Live clock for right sidebar prayer widget
   const [now, setNow] = useState(new Date())

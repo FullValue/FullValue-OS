@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
-import { Search } from 'lucide-react'
 import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import FloatingNavbar, { SIDEBAR_WIDTH } from '@/components/layout/FloatingNavbar'
-import RightSidebar from '@/components/layout/RightSidebar'
-import { Button } from '@/components/ui/button'
-import AppearanceMenu from '@/components/ui/AppearanceMenu'
+import TopBar from '@/components/layout/TopBar'
+import PriorityStrip from '@/components/layout/PriorityStrip'
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
+import { GmailProvider } from '@/contexts/GmailContext'
 import CommandPalette from '@/components/CommandPalette'
 import ShortcutsDialog from '@/components/ShortcutsDialog'
 import StickyTimer from '@/components/ui/StickyTimer'
@@ -14,7 +13,6 @@ import FocusMode from '@/components/ui/FocusMode'
 import DailyClosingModal from '@/components/DailyClosingModal'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { SimpleTooltip } from '@/components/ui/tooltip'
 import { useShortcuts } from '@/hooks/useShortcuts'
 import { useGameNotifications } from '@/hooks/useGame'
 import { useStore } from '@/store/useStore'
@@ -34,6 +32,7 @@ import MigratePage from '@/components/views/MigratePage'
 import ImportPage from '@/components/views/ImportPage'
 import RevueHebdo from '@/components/views/RevueHebdo'
 import Donnees from '@/components/views/Donnees'
+import Integrations from '@/components/views/Integrations'
 
 // three.js est lourd : la page 3D vit dans son propre chunk.
 const OpenSpace = lazy(() => import('@/components/views/OpenSpace'))
@@ -65,7 +64,9 @@ function AuthGate() {
 
   return (
     <StoreProvider>
-      <AppInner />
+      <GmailProvider>
+        <AppInner />
+      </GmailProvider>
     </StoreProvider>
   )
 }
@@ -80,14 +81,6 @@ function AppInner() {
 
   const { theme, setThemePreference } = useTheme()
   useGameNotifications()
-
-  // Live clock for right sidebar prayer widget
-  const [now, setNow] = useState(new Date())
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 30000)
-    return () => clearInterval(t)
-  }, [])
-  const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
   // Timer
   // Le chrono survit à un rechargement : son état est rejoué depuis localStorage.
@@ -190,6 +183,11 @@ function AppInner() {
 
   useEffect(() => () => clearInterval(intervalRef.current), [])
 
+  const timer = {
+    elapsed, running: timerRunning, paused: timerPaused, project: timerProject, task: timerTask,
+    start: startTimer, pause: pauseTimer, resume: resumeTimer, stop: stopTimer,
+  }
+
   const goToSessionsWithTask = useCallback((projectId, taskId) => {
     if (projectId) setTimerProject(projectId)
     if (taskId) setTimerTask(taskId)
@@ -205,7 +203,7 @@ function AppInner() {
       return <ProjetPage projectId={projectPageMatch} onNavigate={setActivePage} onStartTask={goToSessionsWithTask} />
     }
     switch (activePage) {
-      case 'journee':    return <Journee onStartTask={goToSessionsWithTask} onNavigate={setActivePage} />
+      case 'journee':    return <Journee onStartTask={goToSessionsWithTask} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
       case 'inbox':      return <Inbox onNavigate={setActivePage} />
       case 'calendrier': return <Calendrier />
       case 'taches':     return <Taches />
@@ -225,12 +223,13 @@ function AppInner() {
       case 'import':         return <ImportPage />
       case 'revue':          return <RevueHebdo onNavigate={setActivePage} />
       case 'donnees':        return <Donnees onNavigate={setActivePage} />
+      case 'integrations':   return <Integrations />
       case 'open-space':     return (
         <Suspense fallback={<p className="py-20 text-center text-sm text-[var(--text-tertiary)]">Chargement de l'open space…</p>}>
           <OpenSpace onNavigate={setActivePage} />
         </Suspense>
       )
-      default:               return <Journee onStartTask={goToSessionsWithTask} onNavigate={setActivePage} />
+      default:               return <Journee onStartTask={goToSessionsWithTask} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
     }
   }
 
@@ -248,25 +247,6 @@ function AppInner() {
       className="min-h-screen min-h-dvh"
       style={{ background: 'var(--bg-page)' }}
     >
-      {/* Top-right controls — palette + theme toggle */}
-      <div className="fixed top-4 right-4 z-40 flex items-center gap-2">
-        <SimpleTooltip label="Rechercher & commandes" shortcut="⌘K" side="bottom">
-          <Button
-            type="button"
-            onClick={() => setCmdOpen(true)}
-            aria-label="Ouvrir la palette de commandes"
-            variant="outline"
-            size="sm"
-            className="hidden border-[var(--border-soft)] bg-[var(--bg-surface)] text-[var(--text-tertiary)] shadow-[var(--shadow-card)] hover:text-[var(--text-secondary)] hover:shadow-[var(--shadow-card-hover)] sm:flex"
-          >
-            <Search size={14} />
-            <span>Rechercher</span>
-            <kbd className="ml-1">⌘K</kbd>
-          </Button>
-        </SimpleTooltip>
-        <AppearanceMenu />
-      </div>
-
       {/* Floating left navbar */}
       <FloatingNavbar
         activePage={activePage}
@@ -274,19 +254,17 @@ function AppInner() {
         timerRunning={timerRunning}
       />
 
-      {/* Right sidebar — only on Journée, desktop only */}
-      {isJournee && <RightSidebar nowMinutes={nowMinutes} />}
-
-      {/* Main content — shifts right when sidebar is locked open */}
+      {/* Contenu : barre du haut et bandeau « À traiter » communs, puis la page */}
       <main
         className="transition-all duration-200"
         style={{
           marginLeft: isMobile ? 0 : SIDEBAR_WIDTH,
-          marginRight: isMobile ? 0 : (isJournee ? 'clamp(0px, calc(300px + 2.5rem), 340px)' : 'clamp(0px, 5vw, 40px)'),
-          padding: isMobile ? '64px 16px 80px' : '24px 32px 80px',
+          padding: isMobile ? '12px 12px 88px' : '12px 12px 64px 0',
         }}
       >
-        <div className="mx-auto animate-fadeIn" style={{ maxWidth: isMobile || isOpenSpace ? '100%' : (isJournee ? 760 : 1024) }}>
+        <TopBar onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
+        <PriorityStrip onStartTask={goToSessionsWithTask} onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
+        <div className="mx-auto animate-fadeIn px-0 sm:px-2" style={{ maxWidth: isMobile || isOpenSpace ? '100%' : (isJournee ? 1440 : 1100) }}>
           {renderPage()}
         </div>
       </main>

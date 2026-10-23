@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   Home, Inbox, Calendar, CheckSquare, Timer,
   BookOpen, GraduationCap,
-  Users, LayoutDashboard, ChevronDown, LogOut, HardDrive,
+  Users, LayoutDashboard, ChevronDown, LogOut, HardDrive, Plug, Flame,
   Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -10,6 +10,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
+import { useGame } from '@/hooks/useGame'
 import { toast, toastUndo } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,7 +63,7 @@ function SortableProjectItem({ id, children }) {
 function SectionLabel({ children, className = '' }) {
   return (
     <p
-      className={`px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.09em] ${className}`}
+      className={`px-3 pb-1.5 pt-4 text-[11px] font-medium uppercase tracking-[0.08em] ${className}`}
       style={{ color: 'var(--text-tertiary)' }}
     >
       {children}
@@ -70,7 +71,28 @@ function SectionLabel({ children, className = '' }) {
   )
 }
 
-// Navigation sélectionnée : teinte système, indépendante des boutons d’action.
+// Carte vert foncé en bas de la barre latérale : niveau, XP et série en cours.
+function LevelCard({ onOpen }) {
+  const game = useGame()
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="relative mt-3 w-full overflow-hidden rounded-[20px] p-4 text-left text-white"
+      style={{ background: 'var(--hero-gradient)' }}
+    >
+      <span className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full border-[14px] border-white/10" />
+      <span className="flex items-center gap-1.5 text-[11px] font-medium text-white/70"><Flame size={12} /> {game.streak.current ? `${game.streak.current} jour${game.streak.current > 1 ? 's' : ''} d'affilée` : 'Lance ta série'}</span>
+      <span className="mt-1 block text-lg font-semibold leading-tight">Niv. {game.level} · {game.title}</span>
+      <span className="mt-3 block h-1.5 overflow-hidden rounded-full bg-white/20">
+        <span className="block h-full rounded-full bg-white" style={{ width: `${Math.round(game.progress * 100)}%` }} />
+      </span>
+      <span className="mt-1.5 block text-[11px] text-white/70">{game.current} / {game.need} XP</span>
+    </button>
+  )
+}
+
+// Navigation sélectionnée : barre verte à gauche, icône à la couleur d'accent.
 function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActive = false }) {
   return (
     <Button
@@ -78,19 +100,19 @@ function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActiv
       variant="ghost"
       onClick={() => onClick(id)}
       aria-current={isActive ? 'page' : undefined}
-      className="h-auto w-full justify-start gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.05)]"
-      style={{ background: isActive ? 'var(--bg-selection)' : undefined }}
+      className="relative h-auto w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.04)]"
     >
+      {isActive && <span className="absolute -left-3 top-1/2 h-7 w-1.5 -translate-y-1/2 rounded-r-full bg-[var(--accent)]" />}
       <span className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
         <Icon
           size={18}
-          strokeWidth={isActive ? 2 : 1.7}
-          style={{ color: isActive ? 'var(--text-selection)' : 'var(--text-tertiary)' }}
+          strokeWidth={isActive ? 2.2 : 1.7}
+          style={{ color: isActive ? 'var(--accent)' : 'var(--text-tertiary)' }}
         />
         {badgeCount > 0 && (
           <span
             className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-0.5 text-[8px] font-bold"
-            style={{ background: 'var(--violet-deep)', color: '#fff' }}
+            style={{ background: 'var(--brand-900)', color: '#fff' }}
           >
             {badgeCount > 9 ? '9+' : badgeCount}
           </span>
@@ -102,7 +124,7 @@ function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActiv
       <span
         className="text-sm"
         style={{
-          color: isActive ? 'var(--text-selection)' : 'var(--text-secondary)',
+          color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
           fontWeight: isActive ? 600 : 500,
         }}
       >
@@ -189,6 +211,7 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
         { id: 'open-space', label: 'Open space',  Icon: Building2 },
         { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
         { id: 'revue',      label: 'Revue hebdo', Icon: ClipboardCheck },
+        { id: 'integrations', label: 'Intégrations', Icon: Plug },
         { id: 'donnees',    label: 'Données',     Icon: HardDrive },
       ],
     },
@@ -341,19 +364,20 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
     <>
       {/* Desktop fixed sidebar */}
       <aside
-        className="fixed left-0 top-0 z-50 hidden flex-col sm:flex"
+        className="fixed left-3 top-3 z-50 hidden flex-col overflow-hidden rounded-[26px] sm:flex"
         style={{
-          width: SIDEBAR_WIDTH,
-          height: '100dvh',
+          width: SIDEBAR_WIDTH - 24,
+          height: 'calc(100dvh - 24px)',
           background: 'var(--bg-sidebar)',
-          borderRight: '1px solid var(--border-medium)',
         }}
       >
         {/* Brand */}
-        <div className="flex h-16 flex-shrink-0 items-center gap-2.5 px-5">
-          <span className="text-lg leading-none">✦</span>
-          <span className="text-[15px] font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Le Cockpit
+        <div className="flex h-20 flex-shrink-0 items-center gap-2.5 px-6">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ border: '3px solid var(--accent)' }}>
+            <span className="h-3.5 w-3.5 rounded-full" style={{ background: 'var(--accent)' }} />
+          </span>
+          <span className="text-[19px] font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            Cockpit
           </span>
         </div>
 
@@ -551,18 +575,15 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
           </div>
         </div>
 
-        {/* Bottom: migration + account */}
-        <div className="flex-shrink-0 px-3 py-3" style={{ borderTop: '1px solid var(--border-soft)' }}>
-          <NavRow id="donnees" label="Données" Icon={HardDrive} isActive={['donnees', 'import', 'migrate'].includes(activePage)} onClick={setActivePage} />
-          <div className="mt-1 flex items-center gap-2.5 px-3 py-2">
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold" style={{ background: 'var(--violet-bg)', color: 'var(--violet-deep)' }}>
-              {userInitials}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-xs" style={{ color: 'var(--text-tertiary)' }}>{user?.email}</span>
-            <Button type="button" variant="ghost" size="icon-sm" onClick={signOut} title="Se déconnecter" className="h-7 w-7 flex-shrink-0 rounded-lg p-1.5 transition-colors hover:bg-[rgba(var(--ink),0.06)]">
-              <LogOut size={15} style={{ color: 'var(--text-tertiary)' }} />
-            </Button>
+        {/* Bas : section Général + carte de progression (XP) */}
+        <div className="flex-shrink-0 px-3 pb-3">
+          <SectionLabel>Général</SectionLabel>
+          <div className="flex flex-col gap-0.5">
+            <NavRow id="integrations" label="Intégrations" Icon={Plug} isActive={activePage === 'integrations'} onClick={setActivePage} />
+            <NavRow id="donnees" label="Données" Icon={HardDrive} isActive={['donnees', 'import', 'migrate'].includes(activePage)} onClick={setActivePage} />
+            <NavRow id="logout" label="Déconnexion" Icon={LogOut} isActive={false} onClick={signOut} />
           </div>
+          <LevelCard onOpen={() => setActivePage('journee')} />
         </div>
       </aside>
 

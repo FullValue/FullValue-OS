@@ -3,8 +3,8 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Html, RoundedBox, ContactShadows } from '@react-three/drei'
 
 const PALETTES = {
-  light: { floor: '#ECEAE4', desk: '#FBFAF7', leg: '#A39E94', chair: '#4B4B55', screenOff: '#2A2A30', wall: '#D5D2CA', glass: '#BFD8F2', board: '#FFFFFF', track: '#E2DFD8', bg: '#F5F5F7' },
-  dark:  { floor: '#34343B', desk: '#55555E', leg: '#7A7A84', chair: '#26262C', screenOff: '#141418', wall: '#44444C', glass: '#5A80A8', board: '#4A4A52', track: '#5E5E68', bg: '#1C1C20' },
+  light: { floor: '#E3E7E0', desk: '#FFFFFF', leg: '#9AA39C', chair: '#2B3A31', screenOff: '#1C2620', wall: '#D3DAD0', glass: '#BFE0CD', board: '#FFFFFF', track: '#E3E8E1', bg: '#EEF0EC', plant: '#2F8F5B', plantDark: '#1A6B44', pot: '#C9B9A3' },
+  dark:  { floor: '#26302A', desk: '#3A483F', leg: '#66746B', chair: '#141A16', screenOff: '#0B110D', wall: '#33403A', glass: '#3F7A5A', board: '#33403A', track: '#46544B', bg: '#0E1310', plant: '#3FA36F', plantDark: '#2F8F5B', pot: '#7A6A58' },
 }
 
 // Les étiquettes HTML restent sous les dialogues de l'app (palette ⌘K, modales).
@@ -73,6 +73,12 @@ function Desk({ desk, palette, selected, hovered, onSelect, setHovered }) {
         <mesh position={[0.72, 0.82, 0.3]}><cylinderGeometry args={[0.1, 0.1, 0.04, 24]} /><meshStandardMaterial color={desk.color} /></mesh>
       </group>
       <Chair palette={palette} />
+      {desk.overdue && (
+        <mesh position={[0.55, 1.62 + lift, -0.3]}>
+          <sphereGeometry args={[0.11, 16, 16]} />
+          <meshStandardMaterial color="#E5484D" emissive="#E5484D" emissiveIntensity={0.8} />
+        </mesh>
+      )}
       {(selected || hovered) && <SelectionRing color={desk.color} />}
       <Label position={[0, 1.95, -0.3]} title={desk.label} subtitle={desk.sublabel} accent={selected ? desk.color : undefined} />
     </group>
@@ -101,19 +107,45 @@ function NorthStarBoard({ zone, palette }) {
   )
 }
 
+function Plant({ palette, position, small }) {
+  const s = small ? 0.75 : 1
+  return (
+    <group position={position} scale={s}>
+      <mesh position-y={0.22} castShadow><cylinderGeometry args={[0.2, 0.15, 0.44, 16]} /><meshStandardMaterial color={palette.pot} /></mesh>
+      <mesh position-y={0.72} castShadow><sphereGeometry args={[0.34, 16, 16]} /><meshStandardMaterial color={palette.plant} /></mesh>
+      <mesh position={[0.14, 0.98, 0.05]} castShadow><sphereGeometry args={[0.22, 16, 16]} /><meshStandardMaterial color={palette.plantDark} /></mesh>
+    </group>
+  )
+}
+
+// Boîte aux lettres du bureau : le drapeau se lève quand des mails importants attendent.
+function Mailbox({ count, position }) {
+  return (
+    <group position={position}>
+      <mesh position-y={0.45}><cylinderGeometry args={[0.04, 0.04, 0.9, 8]} /><meshStandardMaterial color="#6B6B75" /></mesh>
+      <RoundedBox args={[0.5, 0.36, 0.7]} radius={0.12} position-y={1.0} castShadow><meshStandardMaterial color="#1A6B44" /></RoundedBox>
+      <mesh position={[0.27, count ? 1.25 : 1.05, -0.1]} rotation-z={count ? 0 : -Math.PI / 2}>
+        <boxGeometry args={[0.04, 0.3, 0.14]} /><meshStandardMaterial color={count ? '#E5484D' : '#9AA39C'} />
+      </mesh>
+      {count > 0 && <Label position={[0, 1.65, 0]} title={`📬 ${count} mail${count > 1 ? 's' : ''}`} accent="#E5484D" />}
+    </group>
+  )
+}
+
 function PoleZone({ zone, poleLevel, palette, selectedId, hoveredId, onSelect, setHovered }) {
   const [cx, cz] = zone.center
   const [w, d] = zone.size
   const active = selectedId === zone.id || hoveredId === zone.id
   return (
     <group>
-      <mesh
-        rotation-x={-Math.PI / 2} position={[cx, 0.005, cz]} receiveShadow
+      <RoundedBox
+        args={[w, 0.06, d]} radius={0.03} position={[cx, 0.03, cz]} receiveShadow
         onClick={e => { e.stopPropagation(); onSelect(zone.id) }} {...hoverHandlers(zone.id, setHovered)}
       >
-        <planeGeometry args={[w, d]} />
-        <meshStandardMaterial color={zone.pole.color} transparent opacity={active ? 0.55 : 0.32} />
-      </mesh>
+        <meshStandardMaterial color={zone.pole.color} transparent opacity={active ? 0.6 : 0.34} />
+      </RoundedBox>
+      <Plant palette={palette} position={[cx - w / 2 + 0.5, 0, cz - d / 2 + 0.5]} />
+      <Plant palette={palette} position={[cx + w / 2 - 0.5, 0, cz - d / 2 + 0.5]} small />
       <NorthStarBoard zone={zone} palette={palette} />
       <Label
         position={[cx, 2.5, zone.boardPosition[2]]}
@@ -170,7 +202,7 @@ function StreakFlame({ streak, position }) {
   )
 }
 
-function Hub({ palette, inboxCount, game, selected, hovered, onSelect, setHovered }) {
+function Hub({ palette, inboxCount, mailCount, game, selected, hovered, onSelect, setHovered }) {
   const crates = Math.min(inboxCount, 8)
   return (
     <group position={[0, 0, 3.5]} onClick={e => { e.stopPropagation(); onSelect('hub') }} {...hoverHandlers('hub', setHovered)}>
@@ -191,6 +223,8 @@ function Hub({ palette, inboxCount, game, selected, hovered, onSelect, setHovere
       ))}
       {(selected || hovered) && <SelectionRing color="#8B7CFF" radius={2} />}
       <StreakFlame streak={game.streak.current} position={[-2, 0, 0.3]} />
+      <Mailbox count={mailCount} position={[2.3, 0, -0.9]} />
+      <Plant palette={palette} position={[-2.2, 0, -0.9]} />
       <Label
         position={[0, 2.2, 0]}
         title={`Ton bureau · Niv. ${game.level}`}
@@ -206,7 +240,7 @@ function AgentsCorner({ agents, palette, selectedId, hoveredId, onSelect, setHov
     <group>
       <mesh rotation-x={-Math.PI / 2} position={[-9, 0.004, 4]} receiveShadow>
         <planeGeometry args={[6.5, 4]} />
-        <meshStandardMaterial color="#C9C3F5" transparent opacity={0.35} />
+        <meshStandardMaterial color="#BFE0CD" transparent opacity={0.45} />
       </mesh>
       {agents.desks.map(agent => {
         const id = `agent:${agent.id}`
@@ -253,7 +287,7 @@ function MeetingRoom({ meeting, palette, selected, hovered, onSelect, setHovered
   )
 }
 
-export default function OfficeScene({ layout, theme, inboxCount, game, selectedId, onSelect }) {
+export default function OfficeScene({ layout, theme, inboxCount, mailCount = 0, game, selectedId, onSelect }) {
   const [hoveredId, setHovered] = useState(null)
   // Les <Html> de drei montés avant la création du canvas n'ont pas de conteneur et disparaissent :
   // on attend onCreated pour monter les postes et leurs étiquettes.
@@ -270,7 +304,7 @@ export default function OfficeScene({ layout, theme, inboxCount, game, selectedI
       shadows
       frameloop="demand"
       dpr={[1, 2]}
-      camera={{ position: [0, reach * 0.8, centerZ + reach * 0.9], fov: 38 }}
+      camera={{ position: [0, reach * 0.68, centerZ + reach * 0.78], fov: 38 }}
       onPointerMissed={() => onSelect(null)}
       onCreated={() => setReady(true)}
     >
@@ -294,7 +328,7 @@ export default function OfficeScene({ layout, theme, inboxCount, game, selectedI
           {layout.zones.map(zone => (
             <PoleZone key={zone.id} zone={zone} poleLevel={game.poles[zone.pole.id]?.level || 1} selectedId={selectedId} hoveredId={hoveredId} {...common} />
           ))}
-          <Hub inboxCount={inboxCount} game={game} selected={selectedId === 'hub'} hovered={hoveredId === 'hub'} {...common} />
+          <Hub inboxCount={inboxCount} mailCount={mailCount} game={game} selected={selectedId === 'hub'} hovered={hoveredId === 'hub'} {...common} />
           <AgentsCorner agents={layout.commons.agents} selectedId={selectedId} hoveredId={hoveredId} {...common} />
           <MeetingRoom meeting={layout.commons.meeting} selected={selectedId === 'meeting'} hovered={hoveredId === 'meeting'} {...common} />
         </>

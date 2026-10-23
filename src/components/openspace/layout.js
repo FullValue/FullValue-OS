@@ -14,6 +14,13 @@ export const AGENTS = [
   { id: 'codex',  name: 'Codex',  color: '#10A37F' },
 ]
 
+function todayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const isOverdue = (t, today) => t.status !== 'done' && t.dueDate && t.dueDate < today
+
 function clientPoleId(projects) {
   const ulycom = projects.find(p => /ulycom/i.test(p.name))
   return (ulycom || projects.find(p => p.id === 'p1'))?.id ?? null
@@ -25,6 +32,7 @@ function shorten(text, max = 22) {
 
 // Postes d'un pôle : les clients actifs pour le pôle agence, sinon les tâches ouvertes.
 function postsForPole(pole, state, clientsPole) {
+  const today = todayStr()
   if (pole.id === clientsPole) {
     return state.clients
       .filter(c => c.status !== 'archived')
@@ -34,6 +42,7 @@ function postsForPole(pole, state, clientsPole) {
           id: `client:${c.id}`, kind: 'client', refId: c.id,
           label: c.shortName || c.name, sublabel: `${open.length} tâche${open.length > 1 ? 's' : ''}`,
           color: c.accentColor || pole.color, busy: open.some(t => t.status === 'inprogress'),
+          overdue: open.some(t => isOverdue(t, today)),
         }
       })
   }
@@ -45,6 +54,7 @@ function postsForPole(pole, state, clientsPole) {
       id: `task:${t.id}`, kind: 'task', refId: t.id,
       label: shorten(t.title), sublabel: t.status === 'inprogress' ? 'En cours' : 'À faire',
       color: t.impact === 'high' ? '#FF8FA3' : pole.color, busy: t.status === 'inprogress',
+      overdue: isOverdue(t, today),
     }))
 }
 

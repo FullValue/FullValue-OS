@@ -30,10 +30,13 @@ function isoWeek(d) {
   return Math.ceil((((date - yearStart) / 86400000) + 1) / 7)
 }
 
-function weeklyStats(state, game, now = new Date()) {
-  const w = weekBounds(now)
+// range (optionnel) : { start, end } en AAAA-MM-JJ pour le bilan d'un Winter Arc entier.
+function weeklyStats(state, game, now = new Date(), range = null) {
+  const w = range
+    ? { start: new Date(range.start + 'T00:00:00').getTime(), end: new Date(range.end + 'T00:00:00').getTime() + 86400000 }
+    : weekBounds(now)
   const inW = iso => { if (!iso) return false; const t = new Date(iso).getTime(); return t >= w.start && t < w.end }
-  const days = Array.from({ length: 7 }, (_, i) => localDateStr(new Date(w.start + i * 86400000)))
+  const days = Array.from({ length: Math.round((w.end - w.start) / 86400000) }, (_, i) => localDateStr(new Date(w.start + i * 86400000 + 43200000)))
   const sessions = state.sessions.filter(s => inW(s.date))
   const focusMin = Math.round(sessions.reduce((s, x) => s + (x.duration || 0), 0) / 60)
   const focusByDay = days.map(d => Math.round(sessions.filter(s => localDateStr(new Date(s.date)) === d).reduce((s, x) => s + (x.duration || 0), 0) / 60))
@@ -50,7 +53,8 @@ function weeklyStats(state, game, now = new Date()) {
   const xp = days.reduce((s, d) => s + (game.xpByDay[d] || 0), 0)
   return {
     weekNumber: isoWeek(new Date(w.start)),
-    focusMin, bestDay: focusByDay[bestIdx] > 0 ? new Date(days[bestIdx] + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long' }) : null,
+    focusMin, bestDay: focusByDay[bestIdx] > 0 ? new Date(days[bestIdx] + 'T12:00:00').toLocaleDateString('fr-FR', range ? { weekday: 'long', day: 'numeric', month: 'long' } : { weekday: 'long' }) : null,
+    arc: range ? { days: days.length } : null,
     done: done.length, high: done.filter(t => t.impact === 'high').length, topPole: state.projects.find(p => p.id === topPoleId), topPoleCount: byPole[topPoleId] || 0,
     habitsChecked, prayersOnTime, prayersLogged, wins, unlocked, xp,
     boss: bossStatus(state, now), nextBoss: bossOfWeek(new Date(w.end + 3600000)),
@@ -71,10 +75,11 @@ export default function WeeklyWrapped() {
   const game = useGame()
   const [open, setOpen] = useState(false)
   const [index, setIndex] = useState(0)
+  const [range, setRange] = useState(null)
   const soundsOn = state.settings?.sounds !== false
-  const stats = useMemo(() => (open ? weeklyStats(state, game) : null), [open, state, game])
+  const stats = useMemo(() => (open ? weeklyStats(state, game, new Date(), range) : null), [open, state, game, range])
 
-  const show = useCallback(() => { setIndex(0); setOpen(true); playSound('levelUp', soundsOn) }, [soundsOn])
+  const show = useCallback(e => { setRange(e?.detail?.arc || null); setIndex(0); setOpen(true); playSound('levelUp', soundsOn) }, [soundsOn])
   const close = useCallback(() => {
     setOpen(false)
     dispatch({ type: 'UPDATE_SETTINGS', payload: { lastWrapped: weekBounds().key } })
@@ -93,7 +98,9 @@ export default function WeeklyWrapped() {
   }, [state.settings?.lastWrapped, show])
 
   const slides = stats ? [
-    <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Ton bilan</p><Big>Semaine {stats.weekNumber}</Big><Line>Prêt à voir ce que tu as accompli ?</Line></>,
+    stats.arc
+      ? <><p className="text-sm uppercase tracking-[0.3em] text-white/70">❄️ Ton Winter Arc</p><Big>{stats.arc.days} jours</Big><Line>Tu es allé au bout. Voici ce que tu as construit.</Line></>
+      : <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Ton bilan</p><Big>Semaine {stats.weekNumber}</Big><Line>Prêt à voir ce que tu as accompli ?</Line></>,
     <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Temps de focus</p><Big>{fmtH(stats.focusMin)}</Big><Line>{stats.bestDay ? `Ton meilleur jour : ${stats.bestDay}.` : 'Lance le chrono la semaine prochaine pour voir ton meilleur jour.'}</Line></>,
     <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Tâches terminées</p><Big>{stats.done}</Big><Line>dont {stats.high} à fort impact{stats.topPole ? ` · pôle star : ${stats.topPole.emoji} ${stats.topPole.name} (${stats.topPoleCount})` : ''}</Line></>,
     <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Routines</p><Big>{stats.habitsChecked}</Big><Line>cases cochées · 🕌 {stats.prayersOnTime} prière{stats.prayersOnTime > 1 ? 's' : ''} à l'heure sur {stats.prayersLogged} notée{stats.prayersLogged > 1 ? 's' : ''}</Line></>,
@@ -103,7 +110,7 @@ export default function WeeklyWrapped() {
       ) : <Line delay={0.3}>Note tes victoires en fin de journée : elles s'afficheront ici.</Line>}
       {stats.unlocked.length > 0 && <Line delay={1.6}>Succès débloqués : {stats.unlocked.map(a => a.emoji).join(' ')}</Line>}
     </>,
-    <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Boss de la semaine</p><Big>{stats.boss.emoji}</Big>
+    stats.arc ? <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Discipline</p><Big>❄️</Big><Line>Succès « Winter Arc terminé » débloqué et bonnet exclusif pour ton avatar.</Line></> : <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Boss de la semaine</p><Big>{stats.boss.emoji}</Big>
       <Line>{stats.boss.defeated ? `${stats.boss.name} : vaincu !` : `${stats.boss.name} : ${stats.boss.value} / ${stats.boss.goal} ${stats.boss.unit}.`}</Line>
       <Line delay={1}>Semaine prochaine : {stats.nextBoss.emoji} {stats.nextBoss.name}</Line></>,
     <><p className="text-sm uppercase tracking-[0.3em] text-white/70">Au total</p><Big>+{stats.xp} XP</Big>

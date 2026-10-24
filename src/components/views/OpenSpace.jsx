@@ -12,6 +12,7 @@ import OfficeScene from '@/components/openspace/OfficeScene'
 import DetailPanel from '@/components/openspace/DetailPanel'
 import { TimerChip } from '@/components/layout/TopBar'
 import { buildLayout, findEntity } from '@/components/openspace/layout'
+import { arcInfo } from '@/lib/winterArc'
 
 const GLASS = 'bg-[var(--bg-material)] backdrop-blur-xl shadow-[var(--shadow-float)]'
 
@@ -84,12 +85,12 @@ function AvatarTab({ game }) {
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Accessoire</p>
         <div className="grid grid-cols-2 gap-2">
           {AVATAR_ACCESSORIES.map(a => {
-            const locked = game.level < a.level
+            const locked = game.level < a.level || (a.achievement && !state.game?.achievements?.[a.achievement])
             return (
               <button key={a.id} type="button" disabled={locked} onClick={() => set({ accessory: a.id })}
                 className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium disabled:opacity-50"
                 style={avatar.accessory === a.id ? { background: 'var(--bg-selection)', color: 'var(--accent)' } : { background: 'var(--bg-card-soft)', color: 'var(--text-secondary)' }}>
-                {a.label} {locked && <span className="flex items-center gap-1 text-[10px]"><Lock size={10} /> niv. {a.level}</span>}
+                {a.label} {locked && <span className="flex items-center gap-1 text-[10px]"><Lock size={10} /> {a.achievement ? 'Winter Arc' : `niv. ${a.level}`}</span>}
               </button>
             )
           })}
@@ -142,7 +143,7 @@ export default function OpenSpace({ onNavigate, timer, onStartTask }) {
     <div className="relative h-full w-full overflow-hidden rounded-[26px] sm:rounded-none" style={{ minHeight: 'calc(100dvh - 120px)' }}>
       <div className="absolute inset-0">
         <OfficeScene
-          layout={layout} theme={theme} inboxCount={state.inbox.length} mailCount={mailCount}
+          layout={layout} theme={arcInfo(state).active ? 'dark' : theme} winter={arcInfo(state).active} inboxCount={state.inbox.length} mailCount={mailCount}
           game={game} avatar={state.settings?.avatar}
           selectedId={entity ? selectedId : null} onSelect={select} panelOpen={panelOpen}
         />

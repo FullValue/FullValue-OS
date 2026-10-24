@@ -22,6 +22,8 @@ import { playSound, notify } from '@/lib/sound'
 import VoiceCapture from '@/components/VoiceCapture'
 import CheckinOverlay from '@/components/CheckinOverlay'
 import WeeklyWrapped from '@/components/WeeklyWrapped'
+import WinterArcLayer from '@/components/WinterArcLayer'
+import { arcInfo } from '@/lib/winterArc'
 import AccessCodePage from '@/components/auth/AccessCodePage'
 import LoginPage from '@/components/auth/LoginPage'
 import SignupPage from '@/components/auth/SignupPage'
@@ -445,8 +447,9 @@ function AppInner() {
       <VoiceCapture />
       <CheckinOverlay />
       <WeeklyWrapped />
+      <WinterArcLayer />
 
-      <Toaster theme={theme} />
+      <Toaster theme={arcInfo(state).active ? 'dark' : theme} />
     </div>
     </TooltipProvider>
   )

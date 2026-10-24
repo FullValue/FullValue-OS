@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '@/store/useStore'
-import { bossStatus, BOSS_REWARD } from '@/lib/boss'
+import { bossStatus } from '@/lib/boss'
 import { Card } from '@/components/ui/card'
 
 // Boss de la semaine : sa vie descend à mesure que tu avances sur le défi.
@@ -17,7 +17,7 @@ export default function BossCard() {
       <p className="mt-1 flex items-center gap-2 text-xl font-semibold tracking-tight"><span className="text-3xl">{boss.emoji}</span>{boss.name}</p>
       <p className="mt-1 text-sm text-white/70">Défi : {boss.goal} {boss.unit}</p>
       {boss.defeated ? (
-        <p className="mt-5 rounded-2xl bg-white/15 px-4 py-3 text-sm font-semibold">Vaincu ✓ · +{BOSS_REWARD.xp} XP et +{BOSS_REWARD.coins} pièces</p>
+        <p className="mt-5 rounded-2xl bg-white/15 px-4 py-3 text-sm font-semibold">Vaincu ✓ · +{boss.reward.xp} XP et +{boss.reward.coins} pièces</p>
       ) : (
         <div className="mt-5">
           <div className="mb-1 flex justify-between text-xs text-white/70">
@@ -27,7 +27,7 @@ export default function BossCard() {
           <div className="h-3 overflow-hidden rounded-full bg-white/15">
             <div className="h-full rounded-full transition-all duration-700" style={{ width: `${boss.hpPct}%`, background: hpColor, boxShadow: `0 0 12px ${hpColor}` }} />
           </div>
-          <p className="mt-2 text-[11px] text-white/60">Récompense : +{BOSS_REWARD.xp} XP · +{BOSS_REWARD.coins} 🪙</p>
+          <p className="mt-2 text-[11px] text-white/60">Récompense : +{boss.reward.xp} XP · +{boss.reward.coins} 🪙</p>
         </div>
       )}
     </Card>

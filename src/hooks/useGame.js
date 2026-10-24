@@ -5,7 +5,7 @@ import { computeGame } from '@/lib/game'
 import { localDateStr } from '@/lib/backup'
 import { toast } from '@/lib/toast'
 import { newlyUnlocked } from '@/lib/achievements'
-import { bossStatus, BOSS_REWARD } from '@/lib/boss'
+import { bossStatus } from '@/lib/boss'
 import { playSound } from '@/lib/sound'
 
 export function useGame() {
@@ -24,10 +24,10 @@ export function useGameNotifications() {
   useEffect(() => {
     const boss = bossStatus(state)
     if (!boss.defeated || boss.claimed) return
-    dispatch({ type: 'CLAIM_BOSS', payload: { week: boss.week.key, id: boss.id, ...BOSS_REWARD } })
+    dispatch({ type: 'CLAIM_BOSS', payload: { week: boss.week.key, id: boss.id, ...boss.reward } })
     playSound('levelUp', soundsOn)
     confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#3b6ff0', '#FFD66B', '#FF8FA3', '#22a06b'] })
-    toast(`${boss.emoji} ${boss.name} est vaincu !`, { description: `+${BOSS_REWARD.xp} XP · +${BOSS_REWARD.coins} pièces`, duration: 8000 })
+    toast(`${boss.emoji} ${boss.name} est vaincu !`, { description: `+${boss.reward.xp} XP · +${boss.reward.coins} pièces`, duration: 8000 })
   }, [state, dispatch, soundsOn])
 
   // Combos : toast quand l'enchaînement grandit.

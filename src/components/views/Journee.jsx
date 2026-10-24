@@ -5,6 +5,7 @@ import { PrayerWidget } from '@/components/layout/RightSidebar'
 import GameCard from '@/components/widgets/GameCard'
 import HabitsCard from '@/components/widgets/HabitsCard'
 import BossCard from '@/components/widgets/BossCard'
+import WinterArcBanner from '@/components/widgets/WinterArcBanner'
 import NextActionCard from '@/components/dashboard/NextActionCard'
 import PrioritiesCard from '@/components/dashboard/PrioritiesCard'
 import {
@@ -118,6 +119,8 @@ export default function Journee({ onStartTask, onNavigate, onOpenPalette, timer 
           <Button size="lg" variant="outline" onClick={() => onNavigate('revue')}>Revue hebdo</Button>
         </div>
       </div>
+
+      <WinterArcBanner />
 
       {/* Capture rapide : vider sa tête sans quitter la page */}
       <div className="flex items-center gap-3 rounded-full bg-[var(--bg-card)] px-5 py-2.5 shadow-[var(--shadow-card)]">

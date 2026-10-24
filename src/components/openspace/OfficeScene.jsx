@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Html, RoundedBox, ContactShadows } from '@react-three/drei'
 
@@ -199,6 +199,13 @@ function Accessory({ kind }) {
   if (kind === 'crown') return (
     <group position-y={1.6}>
       <mesh><cylinderGeometry args={[0.16, 0.18, 0.12, 6, 1, true]} /><meshStandardMaterial color="#FFC83D" metalness={0.6} roughness={0.3} emissive="#FFB000" emissiveIntensity={0.25} side={2} /></mesh>
+    </group>
+  )
+  if (kind === 'beanie') return (
+    <group position-y={1.48}>
+      <mesh><sphereGeometry args={[0.215, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#1f4fd1" /></mesh>
+      <mesh position-y={0.01} rotation-x={Math.PI / 2}><torusGeometry args={[0.205, 0.04, 8, 24]} /><meshStandardMaterial color="#e6eeff" /></mesh>
+      <mesh position-y={0.24}><sphereGeometry args={[0.07, 12, 12]} /><meshStandardMaterial color="#ffffff" /></mesh>
     </group>
   )
   if (kind === 'halo') return (
@@ -413,6 +420,32 @@ function Neon({ position, text = 'COCKPIT' }) {
   )
 }
 
+// Winter Arc : neige derrière les baies et congères sur les rebords (statique, rendu à la demande).
+function WinterOutside({ width, z }) {
+  const positions = useMemo(() => {
+    // Pseudo-aléatoire déterministe : la neige garde la même place à chaque rendu.
+    let seed = 42
+    const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
+    const arr = new Float32Array(900 * 3)
+    for (let i = 0; i < 900; i++) {
+      arr[i * 3] = (rand() - 0.5) * (width + 6)
+      arr[i * 3 + 1] = rand() * 6
+      arr[i * 3 + 2] = z - 0.6 - rand() * 6
+    }
+    return arr
+  }, [width, z])
+  return (
+    <group>
+      <points>
+        <bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry>
+        <pointsMaterial color="#ffffff" size={0.09} sizeAttenuation transparent opacity={0.9} />
+      </points>
+      <mesh position={[0, 0.5, z - 3]} rotation-x={-Math.PI / 2}><planeGeometry args={[width + 12, 8]} /><meshStandardMaterial color="#eef4ff" /></mesh>
+      <RoundedBox args={[width, 0.12, 0.35]} radius={0.05} position={[0, 0.55, z + 0.25]}><meshStandardMaterial color="#ffffff" /></RoundedBox>
+    </group>
+  )
+}
+
 // Le décor se débloque avec le niveau global (voir DECOR_UNLOCKS dans layout.js).
 function LivingDecor({ palette, bounds, level, night }) {
   const left = -bounds.w / 2 + 2
@@ -434,7 +467,7 @@ function LivingDecor({ palette, bounds, level, night }) {
   )
 }
 
-export default function OfficeScene({ layout, theme, inboxCount, mailCount = 0, game, avatar, selectedId, onSelect, panelOpen = false }) {
+export default function OfficeScene({ layout, theme, inboxCount, mailCount = 0, game, avatar, selectedId, onSelect, panelOpen = false, winter = false }) {
   const [hoveredId, setHovered] = useState(null)
   // Les <Html> de drei montés avant la création du canvas n'ont pas de conteneur et disparaissent :
   // on attend onCreated pour monter les postes et leurs étiquettes.
@@ -460,8 +493,8 @@ export default function OfficeScene({ layout, theme, inboxCount, mailCount = 0, 
       onPointerMissed={() => onSelect(null)}
       onCreated={() => setReady(true)}
     >
-      <color attach="background" args={[palette.bg]} />
-      <fog attach="fog" args={[palette.bg, reach * 1.6, reach * 3.2]} />
+      <color attach="background" args={[winter ? '#070b16' : palette.bg]} />
+      <fog attach="fog" args={[winter ? '#070b16' : palette.bg, reach * 1.6, reach * 3.2]} />
       <hemisphereLight args={[night ? '#c9d6ff' : '#ffffff', palette.floor, night ? 0.75 : 1]} />
       <directionalLight
         position={[12, 22, 10]} intensity={night ? 1.1 : 1.7} color={night ? '#cfdcff' : '#ffffff'} castShadow
@@ -479,7 +512,8 @@ export default function OfficeScene({ layout, theme, inboxCount, mailCount = 0, 
         <meshStandardMaterial color={palette.floor} />
       </mesh>
       <gridHelper args={[Math.max(bounds.w, depth) + 4, Math.round((Math.max(bounds.w, depth) + 4) / 2), palette.plinth, palette.plinth]} position={[0, 0.003, centerZ]} />
-      <WindowWall palette={palette} width={bounds.w + 5.6} z={bounds.minZ - 2.4} night={night} />
+      <WindowWall palette={winter ? { ...palette, sky: '#dfe9ff', skyNight: '#24365f' } : palette} width={bounds.w + 5.6} z={bounds.minZ - 2.4} night={night} />
+      {winter && <WinterOutside width={bounds.w + 5.6} z={bounds.minZ - 2.4} />}
       <ContactShadows position={[0, 0.01, centerZ]} scale={reach * 1.6} opacity={0.25} blur={2.5} far={4} frames={1} />
 
       {ready && (

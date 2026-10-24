@@ -5,6 +5,7 @@
 import { localDateStr } from '@/lib/backup'
 import { isDue } from '@/lib/habits'
 import { prayerXpByDay } from '@/lib/prayers'
+import { arcInfo } from '@/lib/winterArc'
 
 export const XP_RULES = {
   taskHigh: 30,
@@ -80,22 +81,24 @@ function shiftDay(dateStr, delta) {
 }
 
 // Série en cours : aujourd'hui pas encore validé ne casse pas la série d'hier.
-export function computeStreak(days, today = localDateStr()) {
+// isValid(dateStr, day) : règle de validation d'un jour (plus exigeante pendant le Winter Arc).
+export function computeStreak(days, today = localDateStr(), isValid = (_d, day) => dayValidated(day)) {
+  const ok = d => isValid(d, days[d])
   let current = 0
-  let cursor = dayValidated(days[today]) ? today : shiftDay(today, -1)
-  while (dayValidated(days[cursor])) {
+  let cursor = ok(today) ? today : shiftDay(today, -1)
+  while (ok(cursor)) {
     current++
     cursor = shiftDay(cursor, -1)
   }
   let best = 0
   let run = 0
   let prev = null
-  for (const d of Object.keys(days).filter(k => dayValidated(days[k])).sort()) {
+  for (const d of Object.keys(days).filter(ok).sort()) {
     run = prev && shiftDay(prev, 1) === d ? run + 1 : 1
     best = Math.max(best, run)
     prev = d
   }
-  return { current, best: Math.max(best, current), todayValidated: dayValidated(days[today]) }
+  return { current, best: Math.max(best, current), todayValidated: ok(today) }
 }
 
 // ── Quêtes du jour : deux fixes, une qui tourne selon le jour ───────────────
@@ -120,6 +123,29 @@ export function questsFor(dateStr, day) {
   const rot = ROTATING_QUESTS[dayIndex(dateStr) % ROTATING_QUESTS.length]
   list.push({ id: rot.id, title: rot.title, reward: rot.reward, goal: rot.goal, value: rot.measure(d) })
   return list.map(q => ({ ...q, done: q.value >= q.goal }))
+}
+
+// Bilan de l'Arc : jours écoulés et jours validés selon la règle de l'Arc.
+export function arcDaysSummary(state, now = new Date()) {
+  const arc = arcInfo(state, now)
+  if (!arc.startDate) return { elapsed: 0, validated: 0, todayValidated: false, focusTodayMin: 0 }
+  const days = activityByDay(state)
+  const today = localDateStr(now)
+  let validated = 0
+  let elapsed = 0
+  for (let d = arc.startDate; d <= today && d <= arc.endDate; d = shiftDay(d, 1)) {
+    elapsed++
+    if (arcDayValidated(state, d, days[d], arc.focusGoalMin)) validated++
+  }
+  return { elapsed, validated, todayValidated: arcDayValidated(state, today, days[today], arc.focusGoalMin), focusTodayMin: Math.round(days[today]?.focusMin || 0) }
+}
+
+// Jour d'Arc validé : objectif de focus atteint et toutes les routines prévues faites.
+function arcDayValidated(state, date, day, focusGoalMin) {
+  if ((day?.focusMin || 0) < focusGoalMin) return false
+  const d = new Date(date + 'T12:00:00')
+  const done = state.habitLogs?.[date] || []
+  return (state.habits || []).filter(h => !h.archived && isDue(h, d) && (!h.createdAt || h.createdAt.slice(0, 10) <= date)).every(h => done.includes(h.id))
 }
 
 // ── Habitudes : 5 XP par case, bonus si toutes les routines prévues du jour sont faites ──
@@ -207,6 +233,16 @@ export function computeGame(state, today = localDateStr(), now = Date.now()) {
     claimed: (claims[today] || []).some(c => c.id === q.id),
   }))
 
+  // Winter Arc : chaque jour de l'Arc rapporte le double d'XP.
+  const arc = arcInfo(state, new Date(now))
+  let arcBonus = 0
+  if (arc.startDate && state.settings?.winterArc?.active) {
+    for (const [d, n] of Object.entries(xpByDay)) {
+      if (arc.inArc(d)) { arcBonus += n; xpByDay[d] = n * 2 }
+    }
+  }
+  xp += arcBonus
+
   // Pièces : 1 pièce pour 10 XP, plus les récompenses de boss, moins les achats en boutique.
   const spent = (state.rewardClaims || []).reduce((sum, c) => sum + (Number(c.cost) || 0), 0)
   const coins = { earned: Math.floor(xp / 10) + bossCoins, spent, balance: Math.floor(xp / 10) + bossCoins - spent }
@@ -221,7 +257,8 @@ export function computeGame(state, today = localDateStr(), now = Date.now()) {
     coins,
     ...level,
     title: levelTitle(level.level),
-    streak: computeStreak(days, today),
+    arcBonus,
+    streak: computeStreak(days, today, (d, day) => (arc.inArc?.(d) ? arcDayValidated(state, d, day, arc.focusGoalMin) : dayValidated(day))),
     quests,
     poles: Object.fromEntries(Object.entries(xpByPole).map(([id, n]) => [id, { xp: n, ...levelFromXp(n) }])),
   }

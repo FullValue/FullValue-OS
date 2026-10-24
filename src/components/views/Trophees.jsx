@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import BossCard from '@/components/widgets/BossCard'
+import WinterArcCard from '@/components/widgets/WinterArcCard'
 import { seasonsFrom, tierFor, SEASON_TIERS } from '@/lib/season'
 import { quarterLabel, quarterOf, northStarOf } from '@/lib/goals'
 import { toast, toastUndo } from '@/lib/toast'
@@ -168,6 +169,8 @@ export default function Trophees() {
         <SeasonCard game={game} />
         <BossCard />
       </div>
+
+      <WinterArcCard />
 
       <Shop game={game} />
 

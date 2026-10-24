@@ -1,6 +1,7 @@
 // Boss de la semaine : un gros défi hebdo, choisi selon la semaine. Sa vie descend à mesure
 // que tu avances ; vaincu, il rapporte une grosse récompense (XP + pièces).
 import { localDateStr } from '@/lib/backup'
+import { arcInfo } from '@/lib/winterArc'
 
 export const BOSS_REWARD = { xp: 300, coins: 100 }
 
@@ -34,9 +35,13 @@ export function bossOfWeek(date = new Date()) {
   return { ...BOSSES[((idx % BOSSES.length) + BOSSES.length) % BOSSES.length], week: w }
 }
 
+// Pendant le Winter Arc, le boss devient « de glace » : objectif ×1,5, récompense ×2.
 export function bossStatus(state, date = new Date()) {
-  const boss = bossOfWeek(date)
+  const base = bossOfWeek(date)
+  const icy = arcInfo(state, date).active
+  const boss = icy ? { ...base, name: `${base.name} de glace`, emoji: `❄️${base.emoji}`, goal: Math.ceil(base.goal * 1.5), icy: true } : base
   const value = boss.measure(state, boss.week)
   const hp = Math.max(0, boss.goal - value)
-  return { ...boss, value, hp, hpPct: Math.round((hp / boss.goal) * 100), defeated: hp === 0, claimed: !!state.game?.bossClaims?.[boss.week.key] }
+  const reward = icy ? { xp: BOSS_REWARD.xp * 2, coins: BOSS_REWARD.coins * 2 } : BOSS_REWARD
+  return { ...boss, reward, value, hp, hpPct: Math.round((hp / boss.goal) * 100), defeated: hp === 0, claimed: !!state.game?.bossClaims?.[boss.week.key] }
 }

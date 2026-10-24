@@ -27,6 +27,7 @@ export const ACHIEVEMENTS = [
   { id: 'first-paid', emoji: '💶', title: 'Premier encaissement', desc: 'Une facture payée', check: s => paid(s).length >= 1 },
   { id: 'revenue-10k', emoji: '💰', title: '10 K', desc: '10 000 € encaissés', check: s => paid(s).reduce((sum, i) => sum + totals(i).ttc, 0) >= 10000 },
   { id: 'goal-100', emoji: '🏆', title: 'Objectif atteint', desc: 'Un objectif trimestriel à 100 %', check: s => (s.goals || []).some(g => { const p = goalProgress(g, s.tasks); return p.total > 0 && p.pct === 100 }) },
+  { id: 'winter-arc', emoji: '❄️', title: 'Winter Arc terminé', desc: 'Aller au bout d’un Winter Arc', check: s => !!s.settings?.winterArc?.completed },
   { id: 'level-5', emoji: '⭐', title: 'Pilote confirmé', desc: 'Atteindre le niveau 5', check: (s, g) => g.level >= 5 },
   { id: 'level-10', emoji: '🌟', title: 'Commandant', desc: 'Atteindre le niveau 10', check: (s, g) => g.level >= 10 },
 ]

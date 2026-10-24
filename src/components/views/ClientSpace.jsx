@@ -104,14 +104,14 @@ function Widget({ icon, label, main, sub, accent, onClick }) {
       type="button"
       variant="ghost"
       onClick={onClick}
-      className="h-auto w-full justify-start rounded-xl p-4 text-left transition-all hover:bg-[var(--bg-card)] hover:scale-[1.02]"
+      className="h-auto w-full min-w-0 flex-col items-start justify-start gap-0 whitespace-normal rounded-xl p-4 text-left transition-all hover:bg-[var(--bg-card)] hover:scale-[1.02]"
       style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}
     >
       <div className="flex items-center gap-2 mb-3">
         <span className="text-base">{icon}</span>
         <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-medium">{label}</span>
       </div>
-      <p className="font-mono text-2xl font-semibold leading-none" style={{ color: accentText(accent) }}>{main}</p>
+      <p className="max-w-full truncate font-mono text-xl font-semibold leading-none sm:text-2xl" style={{ color: accentText(accent) }}>{main}</p>
       <p className="text-[11px] text-[var(--text-tertiary)] mt-1">{sub}</p>
     </Button>
   )
@@ -350,7 +350,7 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
 
       {/* ── Hero card ─────────────────────────────────────────────────────── */}
       <div className="rounded-2xl p-5" style={{ background: accent + '0E', border: `1px solid ${accent}28` }}>
-        <div className="flex items-start gap-4 mb-5">
+        <div className="flex flex-wrap items-start gap-4 mb-5">
           {/* Left: identity */}
           <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
             style={{ background: accent + '22', color: accentText(accent) }}>
@@ -386,10 +386,10 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
             </div>
           </div>
 
-          {/* Right: deadline */}
-          <div className="flex-shrink-0 text-right">
+          {/* Right: deadline (passe sous l'identité sur mobile) */}
+          <div className="flex-shrink-0 basis-full pl-16 sm:basis-auto sm:pl-0 sm:text-right">
             {daysLeft !== null ? (
-              <div className="flex flex-col items-end gap-1">
+              <div className="flex flex-col items-start gap-1 sm:items-end">
                 <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Deadline</span>
                 <span className="font-mono text-2xl font-bold leading-none" style={{ color: deadlineColor }}>
                   {daysLeft < 0 ? `+${Math.abs(daysLeft)}j` : `J-${daysLeft}`}
@@ -402,7 +402,7 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
                 />
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-colors hover:bg-[rgba(var(--ink),0.08)]"
+              <div className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl cursor-pointer transition-colors hover:bg-[rgba(var(--ink),0.08)]"
                 style={{ color: 'var(--text-tertiary)', border: '1px dashed rgba(var(--ink),0.1)' }}>
                 <CalendarDays size={12} />
                 <InlineDateEditor
@@ -440,7 +440,7 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
 
       {/* ── Stats + Deadlines ─────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row gap-3">
-        <div className="grid grid-cols-2 gap-2.5 md:w-[50%] flex-shrink-0">
+        <div className="grid grid-cols-2 gap-2.5 md:w-[50%] md:flex-shrink-0">
           <Widget icon="✓" label="Tâches" main={activeTasks.length} sub={`${doneTasks.length} terminées`} accent={accent} onClick={() => onTabChange('kanban')} />
           <Widget icon="📎" label="Hub" main={docs.length} sub="documents" accent={accent} onClick={() => onTabChange('hub')} />
           <Widget icon="⏱" label="Temps" main={formatDuration(weekTime)} sub="cette semaine" accent={accent} onClick={() => onTabChange('sessions')} />

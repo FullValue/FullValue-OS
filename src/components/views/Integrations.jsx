@@ -161,7 +161,7 @@ export default function Integrations() {
         <p className="text-sm text-[var(--text-tertiary)]">Branche tes outils pour que le Cockpit remonte ce qui compte, et que tes agents IA puissent agir.</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <IntegrationCard
           Icon={Mail} color="#EA4335" name="Gmail"
           description="Mails importants non lus dans la barre du haut et le bandeau « À traiter ». Lecture seule."

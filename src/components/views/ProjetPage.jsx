@@ -573,7 +573,7 @@ function ResourcesTab({ project }) {
         <Button type="submit" size="sm" className="h-10"><Plus size={13} /> Ajouter</Button>
       </form>
       {resources.length ? (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {resources.map(r => (
             <Card key={r.id} className="group flex items-start gap-3 p-4">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-100)] text-[var(--accent)]">

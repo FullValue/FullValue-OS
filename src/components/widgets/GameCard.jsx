@@ -11,7 +11,7 @@ export default function GameCard() {
   const { streak } = game
   return (
     <Card className="p-5">
-      <div className="grid gap-5 md:grid-cols-[1fr_1.3fr]">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-[1fr_1.3fr]">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div

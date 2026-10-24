@@ -1,6 +1,5 @@
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
-import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem,
@@ -12,18 +11,18 @@ const appearances = [
   { value: 'system', label: 'Système', Icon: Monitor },
 ]
 
-export default function AppearanceMenu() {
+// Bouton rond (même format que la cloche) : l'icône reflète l'apparence affichée.
+export default function AppearanceMenu({ className = '' }) {
   const { preference, theme, setThemePreference } = useTheme()
   const selected = appearances.find(option => option.value === preference)
-  const Icon = selected.Icon
+  const Icon = theme === 'dark' ? Moon : Sun
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="appearance-trigger h-9 gap-2" aria-label={`Apparence : ${selected.label}`}>
-          <Icon size={15} aria-hidden="true" />
-          <span className="hidden sm:inline">{selected.label}</span>
-        </Button>
+        <button type="button" className={className} aria-label={`Apparence : ${selected.label}`} title={`Apparence : ${selected.label}`}>
+          <Icon size={17} aria-hidden="true" />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 p-1.5">
         <DropdownMenuLabel>Apparence</DropdownMenuLabel>

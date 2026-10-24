@@ -155,7 +155,7 @@ export default function Journee({ onStartTask, onNavigate, onOpenPalette, timer 
 
       <StatCards state={state} onNavigate={onNavigate} />
 
-      <div className="grid gap-5 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="lg:col-span-5"><FocusChart state={state} /></div>
         <div className="lg:col-span-3"><RemindersCard state={state} nextPrayer={nextPrayer} onNavigate={onNavigate} /></div>
         <div className="lg:col-span-4"><PolesCard state={state} onNavigate={onNavigate} /></div>
@@ -177,12 +177,12 @@ export default function Journee({ onStartTask, onNavigate, onOpenPalette, timer 
         </button>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="lg:col-span-7"><GameCard /></div>
         <div className="lg:col-span-5"><BossCard /></div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="lg:col-span-5"><HabitsCard onNavigate={onNavigate} /></div>
         <div className="lg:col-span-7"><PrayerWidget nowMinutes={nowMinutes} /></div>
       </div>

@@ -1,4 +1,4 @@
-import { Search, Mail, Bell, ExternalLink, RefreshCw, AlertTriangle, CalendarClock, Play, Pause, Square, Maximize2, Cloud, CloudOff, Loader2 } from 'lucide-react'
+import { Search, Mail, Bell, ExternalLink, RefreshCw, AlertTriangle, CalendarClock, Play, Pause, Square, Maximize2, Cloud, CloudOff, Loader2, Snowflake } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -11,6 +11,7 @@ import { displayStatus, eur, totals } from '@/lib/billing'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import AppearanceMenu from '@/components/ui/AppearanceMenu'
+import { ARC_DURATIONS, ARC_DEFAULT_FOCUS_MIN, arcEndDate, arcInfo } from '@/lib/winterArc'
 
 const ROUND = 'relative flex h-11 w-11 items-center justify-center rounded-full bg-[var(--bg-card)] text-[var(--text-secondary)] shadow-[var(--shadow-card)] transition-colors hover:text-[var(--text-primary)]'
 
@@ -144,7 +145,7 @@ function SyncIndicator() {
     return (
       <SimpleTooltip label="Données uniquement dans ce navigateur. Connecte-toi pour les synchroniser." side="bottom">
         <button type="button" onClick={leaveLocalMode} className={`${ROUND} w-auto gap-2 px-4 text-xs font-medium`}>
-          <CloudOff size={16} /> <span className="hidden md:inline">Activer la synchro</span>
+          <CloudOff size={16} /> <span className="hidden whitespace-nowrap xl:inline">Activer la synchro</span>
         </button>
       </SimpleTooltip>
     )
@@ -159,6 +160,62 @@ function SyncIndicator() {
         {busy ? <Loader2 size={17} className="animate-spin" /> : status === 'offline' ? <CloudOff size={17} className="text-[var(--red-deep)]" /> : <Cloud size={17} className="text-[var(--accent)]" />}
       </button>
     </SimpleTooltip>
+  )
+}
+
+// Flocon : lance / suit / arrête le Winter Arc. Allumé (fond nuit) quand l'Arc est actif.
+function WinterArcMenu() {
+  const { state, dispatch } = useStore()
+  const arc = arcInfo(state)
+  const [duration, setDuration] = useState('year-end')
+  const set = patch => dispatch({ type: 'UPDATE_SETTINGS', payload: { winterArc: { ...(state.settings?.winterArc || {}), ...patch } } })
+  const start = () => {
+    const now = new Date()
+    set({ active: true, completed: false, startDate: localDateStr(now), endDate: arcEndDate(duration, now), focusGoalMin: state.settings?.winterArc?.focusGoalMin || ARC_DEFAULT_FOCUS_MIN, snow: true })
+  }
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={ROUND}
+          style={arc.active ? { background: 'var(--hero-dark)', color: '#cfe6ff', boxShadow: '0 0 0 2px rgba(147,197,253,0.35), var(--shadow-card)' } : undefined}
+          aria-pressed={!!arc.active}
+          aria-label={arc.active ? `Winter Arc actif : jour ${arc.dayIndex} sur ${arc.totalDays}` : 'Winter Arc'}
+          title={arc.active ? `Winter Arc · jour ${arc.dayIndex}/${arc.totalDays}` : 'Activer le Winter Arc'}
+        >
+          <Snowflake size={17} className={arc.active ? 'animate-[spin_12s_linear_infinite]' : ''} />
+          {arc.active && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#93c5fd] ring-2 ring-[var(--bg-sidebar)]" />}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 p-4">
+        {arc.active ? (
+          <div className="space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">❄️ Winter Arc en cours</p>
+            <p className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">Jour {arc.dayIndex} / {arc.totalDays}</p>
+            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--bg-card-soft)]">
+              <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${Math.round((arc.dayIndex / arc.totalDays) * 100)}%` }} />
+            </div>
+            <p className="text-xs text-[var(--text-secondary)]">XP ×2 · objectif {arc.focusGoalMin / 60} h de focus par jour · encore {arc.daysLeft} j</p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" onClick={() => set({ snow: !arc.snow })}>{arc.snow ? 'Couper la neige' : 'Neige'}</Button>
+              <Button size="sm" variant="ghost" onClick={() => { if (window.confirm('Arrêter le Winter Arc ? Ta progression reste, mais le succès ne sera pas débloqué.')) set({ active: false }) }}>Arrêter</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">❄️ Winter Arc</p>
+            <p className="text-xs text-[var(--text-secondary)]">XP doublée, journées validées seulement si focus + routines sont faits, boss de glace, ambiance hiver.</p>
+            <div className="flex flex-wrap gap-1.5">
+              {ARC_DURATIONS.map(d => (
+                <button key={d.id} type="button" onClick={() => setDuration(d.id)} className="rounded-full px-2.5 py-1 text-xs font-medium" style={duration === d.id ? { background: 'var(--accent)', color: '#fff' } : { background: 'var(--bg-card-soft)', color: 'var(--text-secondary)' }}>{d.label}</button>
+              ))}
+            </div>
+            <Button className="w-full" onClick={start}>Lancer le Winter Arc</Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -242,22 +299,24 @@ export default function TopBar({ onOpenPalette, onNavigate, timer }) {
   const gmail = useGmail()
   const name = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Moi'
   return (
-    <header className="mb-4 flex items-center gap-3 rounded-[26px] bg-[var(--bg-sidebar)] px-3 py-2.5 sm:px-4">
+    <header className="mb-4 flex items-center gap-2 rounded-[26px] sm:gap-3 bg-[var(--bg-sidebar)] px-3 py-2.5 sm:px-4">
       <button
         type="button"
         onClick={onOpenPalette}
-        className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-full bg-[var(--bg-card)] px-4 text-left text-sm text-[var(--text-tertiary)] shadow-[var(--shadow-card)] transition-colors hover:text-[var(--text-secondary)] sm:max-w-md"
+        aria-label="Rechercher"
+        className="flex h-11 w-11 shrink-0 items-center justify-center gap-3 rounded-full bg-[var(--bg-card)] text-left text-sm text-[var(--text-tertiary)] shadow-[var(--shadow-card)] transition-colors hover:text-[var(--text-secondary)] sm:w-auto sm:min-w-0 sm:flex-1 sm:justify-start sm:px-4 sm:max-w-md"
       >
         <Search size={17} className="shrink-0" />
-        <span className="flex-1 truncate">Rechercher une tâche, un client, une page…</span>
+        <span className="hidden flex-1 truncate sm:block">Rechercher une tâche, un client, une page…</span>
         <kbd className="hidden sm:inline">⌘K</kbd>
       </button>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
         {timer && <TimerChip timer={timer} />}
-        <SyncIndicator />
-        <MailMenu onNavigate={onNavigate} />
+        <span className="hidden md:contents"><SyncIndicator /></span>
+        <span className="hidden sm:contents"><MailMenu onNavigate={onNavigate} /></span>
         <NotificationsMenu onNavigate={onNavigate} />
-        <AppearanceMenu />
+        <AppearanceMenu className={ROUND} />
+        <WinterArcMenu />
         <div className="ml-1 hidden items-center gap-3 lg:flex">
           <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--hero-gradient)' }}>{initials(name)}</span>
           <span className="leading-tight">

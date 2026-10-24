@@ -150,7 +150,7 @@ export default function OpenSpace({ onNavigate, timer, onStartTask }) {
       </div>
 
       {/* En-tête flottant */}
-      <div className={`absolute left-4 top-4 z-20 max-w-[min(640px,calc(100%-2rem))] rounded-[22px] px-5 py-3 ${GLASS}`}>
+      <div className={`absolute left-4 top-4 z-20 max-w-[min(640px,calc(100%-2rem))] rounded-[22px] px-5 py-3 md:max-w-[min(640px,calc(100%-31rem))] ${GLASS}`}>
         <div className="flex items-baseline gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">Open space</h1>
           <span className="text-xs text-[var(--text-tertiary)]">Niv. {game.level} · 🔥 {game.streak.current} j · {openTasks} tâches ouvertes</span>

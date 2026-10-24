@@ -44,7 +44,7 @@ function BillingSettings({ onClose }) {
         <p className="font-semibold text-[var(--text-primary)]">Tes informations de facturation</p>
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Fermer"><X size={14} /></Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {f('company', 'Raison sociale / nom')}
         {f('siret', 'SIRET')}
         <label className="text-xs text-[var(--text-tertiary)] sm:col-span-2">Adresse<Textarea rows={2} value={b.address ?? ''} onChange={e => set({ address: e.target.value })} /></label>
@@ -80,7 +80,7 @@ function Editor({ doc, onClose }) {
         <p className="text-lg font-semibold text-[var(--text-primary)]">{kind === 'quote' ? 'Devis' : 'Facture'} {doc.number}</p>
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Fermer"><X size={14} /></Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         <label className="text-xs text-[var(--text-tertiary)] sm:col-span-2">Client
           <select className={SELECT} value={doc.clientId || ''} onChange={e => patch({ clientId: e.target.value })}>
             <option value="">Choisir…</option>

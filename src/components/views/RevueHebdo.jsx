@@ -127,7 +127,7 @@ export default function RevueHebdo({ onNavigate }) {
         <Kpi Icon={Star} value={avgRating} label="note moyenne des journées" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="p-5">
           <p className={SECTION}>Par pôle</p>
           <ul className="space-y-3">

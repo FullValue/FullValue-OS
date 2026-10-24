@@ -149,7 +149,7 @@ export default function Trophees() {
         <Button size="sm" variant="outline" className="mt-3" onClick={() => window.dispatchEvent(new Event('cockpit:open-wrapped'))}>✨ Bilan de la semaine</Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
         <Card className="relative overflow-hidden border-0 p-6 text-white" style={{ background: 'var(--hero-gradient)' }}>
           <span className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full border-[22px] border-white/10" />
           <p className="text-sm text-white/70">Niveau</p>
@@ -165,7 +165,7 @@ export default function Trophees() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <SeasonCard game={game} />
         <BossCard />
       </div>

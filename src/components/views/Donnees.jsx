@@ -78,7 +78,7 @@ export default function Donnees({ onNavigate }) {
         ) : <p className="text-sm text-[var(--text-tertiary)]">Le premier instantané sera créé à ta prochaine modification.</p>}
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card hover className="cursor-pointer p-5" role="button" tabIndex={0} onClick={() => onNavigate('import')} onKeyDown={e => { if (e.key === 'Enter') onNavigate('import') }}>
           <FileJson size={16} className="mb-2 text-[var(--violet-deep)]" />
           <p className={SECTION}>Import bulk</p>

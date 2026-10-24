@@ -94,7 +94,7 @@ export default function Messages({ onNavigate }) {
       </div>
 
       {wa.status !== 'ready' || !wa.conversations.length ? <EmptyState status={wa.status} onNavigate={onNavigate} /> : (
-        <div className="grid gap-4 lg:grid-cols-[320px_1fr]" style={{ height: 'calc(100dvh - 300px)', minHeight: 480 }}>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]" style={{ height: 'calc(100dvh - 300px)', minHeight: 480 }}>
           {/* Liste des conversations */}
           <Card className="flex min-h-0 flex-col overflow-hidden border-0 p-3">
             <div className="mb-2 flex items-center gap-2 rounded-full bg-[var(--bg-card-soft)] px-3">

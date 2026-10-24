@@ -75,7 +75,7 @@ function DealPanel({ deal, onClose }) {
         <p className="font-semibold text-[var(--text-primary)]">{deal.name}</p>
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Fermer"><X size={14} /></Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="text-xs text-[var(--text-tertiary)]">Affaire{field('name')}</label>
         <label className="text-xs text-[var(--text-tertiary)]">Entreprise{field('company')}</label>
         <label className="text-xs text-[var(--text-tertiary)]">Contact{field('contact', { placeholder: 'Nom, email ou téléphone' })}</label>

@@ -113,7 +113,7 @@ export default function Sessions({
         <Timer elapsed={elapsed} isRunning={timerRunning} />
 
         {/* Project + Task selectors */}
-        <div className="mb-6 mt-6 flex gap-3">
+        <div className="mb-6 mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <NativeSelect
             value={timerProject}
             onChange={e => { setTimerProject(e.target.value); setTimerTask('') }}

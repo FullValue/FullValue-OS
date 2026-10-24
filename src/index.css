@@ -325,16 +325,8 @@ html {
 .animate-sheetOut { animation: cockpit-sheet-out 220ms ease-in both; }
 .animate-pulse_ring { animation: cockpit-pulse-ring 1.8s ease-in-out infinite; }
 
-/* macOS-style materials are limited to transient controls and navigation. */
-.appearance-trigger {
-  background: var(--bg-material);
-  border-color: var(--border-medium);
-  box-shadow: var(--shadow-control);
-  backdrop-filter: blur(20px) saturate(140%);
-}
-
 @media (prefers-reduced-transparency: reduce) {
-  .appearance-trigger, .cockpit-material {
+  .cockpit-material {
     background: var(--bg-surface) !important;
     backdrop-filter: none !important;
   }

@@ -164,42 +164,59 @@ ALTER TABLE activity_log     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mcp_tokens       ENABLE ROW LEVEL SECURITY;
 
 -- client_projects : le propriétaire gère, les membres lisent
+DROP POLICY IF EXISTS "client_projects: owner all" ON client_projects;
 CREATE POLICY "client_projects: owner all"   ON client_projects FOR ALL    USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "client_projects: member read" ON client_projects;
 CREATE POLICY "client_projects: member read" ON client_projects FOR SELECT USING (public.is_project_member(id));
 
 -- project_members : le propriétaire du projet gère, le membre voit ses lignes
+DROP POLICY IF EXISTS "project_members: owner all" ON project_members;
 CREATE POLICY "project_members: owner all" ON project_members FOR ALL    USING (public.owns_client_project(client_project_id)) WITH CHECK (public.owns_client_project(client_project_id));
+DROP POLICY IF EXISTS "project_members: self read" ON project_members;
 CREATE POLICY "project_members: self read" ON project_members FOR SELECT USING (auth.uid() = member_id);
 
 -- tasks : un membre lit et met à jour les tâches de ses projets clients
+DROP POLICY IF EXISTS "tasks: member read" ON tasks;
 CREATE POLICY "tasks: member read"   ON tasks FOR SELECT USING (client_project_id IS NOT NULL AND public.is_project_member(client_project_id));
+DROP POLICY IF EXISTS "tasks: member update" ON tasks;
 CREATE POLICY "tasks: member update" ON tasks FOR UPDATE USING (client_project_id IS NOT NULL AND public.is_project_member(client_project_id));
 
 -- clients / pôles : un membre voit le client et le pôle de ses projets
+DROP POLICY IF EXISTS "clients: member read" ON clients;
 CREATE POLICY "clients: member read" ON clients FOR SELECT USING (
   EXISTS (SELECT 1 FROM client_projects cp WHERE cp.client_id = clients.id AND public.is_project_member(cp.id))
 );
+DROP POLICY IF EXISTS "projects: member read" ON projects;
 CREATE POLICY "projects: member read" ON projects FOR SELECT USING (
   EXISTS (SELECT 1 FROM client_projects cp WHERE cp.pole_id = projects.id AND public.is_project_member(cp.id))
 );
 
 -- profiles : visibles entre personnes qui travaillent ensemble
+DROP POLICY IF EXISTS "profiles: shared read" ON profiles;
 CREATE POLICY "profiles: shared read" ON profiles FOR SELECT USING (public.shares_workspace(id));
 
 -- requests : l'émetteur gère, le destinataire lit et met à jour le statut
+DROP POLICY IF EXISTS "requests: owner all" ON requests;
 CREATE POLICY "requests: owner all"        ON requests FOR ALL    USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "requests: recipient read" ON requests;
 CREATE POLICY "requests: recipient read"   ON requests FOR SELECT USING (auth.uid() = recipient_id);
+DROP POLICY IF EXISTS "requests: recipient update" ON requests;
 CREATE POLICY "requests: recipient update" ON requests FOR UPDATE USING (auth.uid() = recipient_id) WITH CHECK (auth.uid() = recipient_id);
 
 -- request_messages : les deux parties lisent et écrivent
+DROP POLICY IF EXISTS "request_messages: read" ON request_messages;
 CREATE POLICY "request_messages: read"   ON request_messages FOR SELECT USING (public.can_access_request(request_id));
+DROP POLICY IF EXISTS "request_messages: insert" ON request_messages;
 CREATE POLICY "request_messages: insert" ON request_messages FOR INSERT WITH CHECK (public.can_access_request(request_id) AND auth.uid() = author_id);
 
 -- activity_log : lecture seule côté app pour le propriétaire (écrit par l'app ou le serveur MCP)
+DROP POLICY IF EXISTS "activity_log: owner read" ON activity_log;
 CREATE POLICY "activity_log: owner read"   ON activity_log FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "activity_log: owner insert" ON activity_log;
 CREATE POLICY "activity_log: owner insert" ON activity_log FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- mcp_tokens : le propriétaire liste, crée et révoque ses jetons
+DROP POLICY IF EXISTS "mcp_tokens: owner all" ON mcp_tokens;
 CREATE POLICY "mcp_tokens: owner all" ON mcp_tokens FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- ── updated_at automatique ───────────────────────────────────
@@ -219,4 +236,13 @@ CREATE TRIGGER trg_requests_updated BEFORE UPDATE ON requests FOR EACH ROW EXECU
 
 -- ── Temps réel pour l'open space ─────────────────────────────
 
-ALTER PUBLICATION supabase_realtime ADD TABLE client_projects, tasks, requests, request_messages, activity_log;
+-- Ré-exécutable : n'ajoute que les tables pas encore publiées.
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['client_projects','tasks','requests','request_messages','activity_log'] LOOP
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = t) THEN
+      EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', t);
+    END IF;
+  END LOOP;
+END $$;

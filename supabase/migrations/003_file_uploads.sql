@@ -38,40 +38,49 @@ ALTER TABLE resources ADD CONSTRAINT resources_type_check
 --   Public: NON | File size limit: 50MB
 
 -- training-files
+DROP POLICY IF EXISTS "training-files: upload own" ON storage.objects;
 CREATE POLICY "training-files: upload own"
   ON storage.objects FOR INSERT
   WITH CHECK (bucket_id = 'training-files' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+DROP POLICY IF EXISTS "training-files: read own" ON storage.objects;
 CREATE POLICY "training-files: read own"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'training-files' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+DROP POLICY IF EXISTS "training-files: delete own" ON storage.objects;
 CREATE POLICY "training-files: delete own"
   ON storage.objects FOR DELETE
   USING (bucket_id = 'training-files' AND auth.uid()::text = (storage.foldername(name))[1]);
 
 -- resource-files
+DROP POLICY IF EXISTS "resource-files: upload own" ON storage.objects;
 CREATE POLICY "resource-files: upload own"
   ON storage.objects FOR INSERT
   WITH CHECK (bucket_id = 'resource-files' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+DROP POLICY IF EXISTS "resource-files: read own" ON storage.objects;
 CREATE POLICY "resource-files: read own"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'resource-files' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+DROP POLICY IF EXISTS "resource-files: delete own" ON storage.objects;
 CREATE POLICY "resource-files: delete own"
   ON storage.objects FOR DELETE
   USING (bucket_id = 'resource-files' AND auth.uid()::text = (storage.foldername(name))[1]);
 
 -- client-documents
+DROP POLICY IF EXISTS "client-documents: upload own" ON storage.objects;
 CREATE POLICY "client-documents: upload own"
   ON storage.objects FOR INSERT
   WITH CHECK (bucket_id = 'client-documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+DROP POLICY IF EXISTS "client-documents: read own" ON storage.objects;
 CREATE POLICY "client-documents: read own"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'client-documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+DROP POLICY IF EXISTS "client-documents: delete own" ON storage.objects;
 CREATE POLICY "client-documents: delete own"
   ON storage.objects FOR DELETE
   USING (bucket_id = 'client-documents' AND auth.uid()::text = (storage.foldername(name))[1]);

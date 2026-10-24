@@ -2,6 +2,9 @@
 // `db` est un client Supabase service role : il contourne la RLS, donc chaque
 // requête filtre explicitement sur ctx.userId et vérifie la propriété des ids reçus.
 
+import { sendText, normalizePhone } from '../whatsapp/core.js'
+import { summarizeConversations } from '../../src/lib/whatsapp.js'
+
 const DATE = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Date AAAA-MM-JJ' }
 const UUID = { type: 'string', description: 'Identifiant (UUID)' }
 
@@ -293,6 +296,41 @@ export const TOOLS = [
       if (args.status) unwrap(await ctx.db.from('requests').update({ status: args.status }).eq('id', args.id).eq('user_id', ctx.userId))
       await logActivity(ctx, 'repondre_demande', 'request', args.id, `Réponse sur « ${request.title} »`)
       return message
+    },
+  },
+  {
+    name: 'lister_conversations_whatsapp',
+    description: "Conversations WhatsApp Business : dernier message, non lus, et si la fenêtre de 24 h pour répondre librement est ouverte.",
+    inputSchema: { type: 'object', properties: { non_lues_seulement: { type: 'boolean' } } },
+    async run(args, ctx) {
+      const since = new Date(Date.now() - 30 * 86400000).toISOString()
+      const rows = unwrap(await ctx.db.from('wa_messages').select('*').eq('user_id', ctx.userId).gte('created_at', since).order('created_at', { ascending: false }).limit(1000))
+      const conv = summarizeConversations(rows).map(c => ({
+        telephone: c.contact_phone, nom: c.contact_name, non_lus: c.unread, fenetre_ouverte: c.windowOpen,
+        dernier_message: { sens: c.last.direction === 'in' ? 'reçu' : 'envoyé', texte: c.last.body, date: c.last.created_at },
+      }))
+      return args.non_lues_seulement ? conv.filter(c => c.non_lus > 0) : conv
+    },
+  },
+  {
+    name: 'lire_conversation_whatsapp',
+    description: 'Lit les derniers messages échangés avec un contact WhatsApp (numéro international).',
+    inputSchema: { type: 'object', required: ['telephone'], properties: { telephone: { type: 'string' }, limit: { type: 'integer', minimum: 1, maximum: 200 } } },
+    async run(args, ctx) {
+      const rows = unwrap(await ctx.db.from('wa_messages').select('direction, body, type, status, created_at, contact_name')
+        .eq('user_id', ctx.userId).eq('contact_phone', normalizePhone(args.telephone))
+        .order('created_at', { ascending: false }).limit(args.limit ?? 30))
+      return rows.reverse().map(m => ({ sens: m.direction === 'in' ? 'reçu' : 'envoyé', texte: m.body, type: m.type, statut: m.status, date: m.created_at }))
+    },
+  },
+  {
+    name: 'repondre_whatsapp',
+    description: "Envoie un message WhatsApp à un client depuis le numéro Business. Possible seulement si le client a écrit dans les dernières 24 h.",
+    inputSchema: { type: 'object', required: ['telephone', 'texte'], properties: { telephone: { type: 'string' }, texte: { type: 'string' } } },
+    async run(args, ctx) {
+      const msg = await sendText({ db: ctx.db, userId: ctx.userId, to: args.telephone, text: args.texte, via: `mcp:${ctx.actorLabel}` })
+      await logActivity(ctx, 'repondre_whatsapp', 'wa_message', msg.id, `Réponse WhatsApp à ${msg.contact_phone}`)
+      return { envoye: true, id: msg.wa_message_id, telephone: msg.contact_phone }
     },
   },
   {

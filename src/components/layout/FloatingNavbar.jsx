@@ -3,7 +3,7 @@ import {
   Home, Inbox, Calendar, CheckSquare, Timer,
   BookOpen, GraduationCap,
   Users, LayoutDashboard, ChevronDown, LogOut, HardDrive, Plug, Flame,
-  Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck,
+  Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck, MessageCircle,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
@@ -11,6 +11,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGame } from '@/hooks/useGame'
+import { useWhatsApp } from '@/contexts/WhatsAppContext'
 import ProjectQuickAdd from '@/components/layout/ProjectQuickAdd'
 import { toast, toastUndo } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ const NAV_GROUPS = [
     items: [
       { id: 'journee',    label: 'Journée',     Icon: Home },
       { id: 'inbox',      label: 'Inbox',       Icon: Inbox,       badge: true },
+      { id: 'messages',   label: 'Messages',    Icon: MessageCircle, waBadge: true },
       { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
       { id: 'sessions',   label: 'Sessions',    Icon: Timer,       timer: true },
     ],
@@ -306,6 +308,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
   const [addingProject, setAddingProject] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const inboxCount = state.inbox.length
+  const wa = useWhatsApp()
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -388,7 +391,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
             <div key={group.label}>
               <SectionLabel>{group.label}</SectionLabel>
               <div className="flex flex-col gap-0.5">
-                {group.items.map(({ id, label, Icon, badge, timer }) => (
+                {group.items.map(({ id, label, Icon, badge, waBadge, timer }) => (
                   <NavRow
                     key={id}
                     id={id}
@@ -396,7 +399,7 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                     Icon={Icon}
                     isActive={activePage === id}
                     onClick={setActivePage}
-                    badgeCount={badge ? inboxCount : 0}
+                    badgeCount={badge ? inboxCount : waBadge ? wa.unread : 0}
                     timerActive={timer && timerRunning}
                   />
                 ))}

@@ -26,6 +26,7 @@ const GROUPS = [
       { keys: ['G', 'F'], label: 'Formation' },
       { keys: ['G', 'O'], label: 'Open space 3D' },
       { keys: ['G', 'H'], label: 'Revue hebdo' },
+      { keys: ['G', 'M'], label: 'Messages WhatsApp' },
     ],
   },
   {

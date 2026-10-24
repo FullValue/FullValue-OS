@@ -25,6 +25,7 @@ import ForgotPasswordPage from '@/components/auth/ForgotPasswordPage'
 import CheckEmailPage from '@/components/auth/CheckEmailPage'
 import UpdatePasswordPage from '@/components/auth/UpdatePasswordPage'
 import { CloudSyncProvider } from '@/contexts/CloudSyncContext'
+import { WhatsAppProvider } from '@/contexts/WhatsAppContext'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
 import ProjetPage from '@/components/views/ProjetPage'
@@ -40,6 +41,7 @@ import ImportPage from '@/components/views/ImportPage'
 import RevueHebdo from '@/components/views/RevueHebdo'
 import Donnees from '@/components/views/Donnees'
 import Integrations from '@/components/views/Integrations'
+import Messages from '@/components/views/Messages'
 
 // three.js est lourd : la page 3D vit dans son propre chunk.
 const OpenSpace = lazy(() => import('@/components/views/OpenSpace'))
@@ -92,7 +94,9 @@ function AuthGate() {
     <StoreProvider>
       <CloudSyncProvider>
         <GmailProvider>
-          <AppInner />
+          <WhatsAppProvider>
+            <AppInner />
+          </WhatsAppProvider>
         </GmailProvider>
       </CloudSyncProvider>
     </StoreProvider>
@@ -290,6 +294,7 @@ function AppInner() {
       case 'revue':          return <RevueHebdo onNavigate={setActivePage} />
       case 'donnees':        return <Donnees onNavigate={setActivePage} />
       case 'integrations':   return <Integrations />
+      case 'messages':       return <Messages onNavigate={setActivePage} />
       case 'open-space':     return (
         <Suspense fallback={<p className="py-20 text-center text-sm text-[var(--text-tertiary)]">Chargement de l'open space…</p>}>
           <OpenSpace onNavigate={setActivePage} />

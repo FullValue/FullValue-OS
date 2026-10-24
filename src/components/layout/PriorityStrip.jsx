@@ -1,8 +1,9 @@
 // Bandeau « À traiter » : les tâches urgentes et les mails importants en pastilles rondes,
 // chacune ouvre une fiche avec les actions utiles (terminer, lancer le focus, transformer un mail en tâche).
-import { Plus, Play, Check, ExternalLink, ListPlus, Mail } from 'lucide-react'
+import { Plus, Play, Check, ExternalLink, ListPlus, Mail, MessageCircle } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useGmail } from '@/contexts/GmailContext'
+import { useWhatsApp } from '@/contexts/WhatsAppContext'
 import { topTasks, URGENCY_LABEL, URGENCY_COLOR, initials, timeAgo } from '@/lib/priorities'
 import { toast } from '@/lib/toast'
 import { Popover, PopoverTrigger, PopoverContent, PopoverClose } from '@/components/ui/popover'
@@ -88,19 +89,44 @@ function MailBubble({ mail }) {
   )
 }
 
+function WhatsAppBubble({ conv, onOpen }) {
+  const name = conv.contact_name || `+${conv.contact_phone}`
+  return (
+    <Popover>
+      <Bubble ring="#25D366" badge={conv.unread} badgeColor="#25D366" label={`WhatsApp — ${name}`}>
+        <span className="text-sm font-bold" style={{ color: '#128C7E' }}>{initials(name)}</span>
+      </Bubble>
+      <PopoverContent className="w-80 space-y-3 bg-[var(--bg-card)]">
+        <div>
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: '#128C7E' }}>
+            <MessageCircle size={12} /> WhatsApp · {timeAgo(new Date(conv.last.created_at).getTime())}
+          </p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">{name}</p>
+          <p className="mt-1 line-clamp-3 text-xs text-[var(--text-secondary)]">{conv.last.body}</p>
+        </div>
+        <PopoverClose asChild>
+          <Button size="sm" className="w-full" onClick={onOpen}>Répondre</Button>
+        </PopoverClose>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export default function PriorityStrip({ onStartTask, onOpenPalette, onNavigate }) {
   const { state } = useStore()
   const gmail = useGmail()
+  const wa = useWhatsApp()
+  const chats = wa.conversations.filter(c => c.unread > 0).slice(0, 6)
   const tasks = topTasks(state.tasks, 7)
   const mails = gmail.status === 'connected' ? gmail.messages.slice(0, 6) : []
   const projectsById = Object.fromEntries(state.projects.map(p => [p.id, p]))
-  const total = tasks.length + mails.length
+  const total = tasks.length + mails.length + chats.length
 
   return (
     <section className="mb-5 flex items-center gap-4 overflow-hidden rounded-[26px] bg-[var(--bg-sidebar)] px-4 py-3">
       <div className="hidden shrink-0 sm:block">
         <p className="text-sm font-semibold text-[var(--text-primary)]">À traiter</p>
-        <p className="text-[11px] text-[var(--text-tertiary)]">{total ? `${tasks.length} tâche${tasks.length > 1 ? 's' : ''} · ${mails.length} mail${mails.length > 1 ? 's' : ''}` : 'Rien d’urgent'}</p>
+        <p className="text-[11px] text-[var(--text-tertiary)]">{total ? [`${tasks.length} tâche${tasks.length > 1 ? 's' : ''}`, `${mails.length} mail${mails.length > 1 ? 's' : ''}`, chats.length ? `${chats.length} WhatsApp` : null].filter(Boolean).join(' · ') : 'Rien d’urgent'}</p>
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto overflow-y-hidden px-1 py-2">
         {tasks.map(({ task, level }) => (
@@ -108,6 +134,8 @@ export default function PriorityStrip({ onStartTask, onOpenPalette, onNavigate }
         ))}
         {tasks.length > 0 && mails.length > 0 && <span className="h-8 w-px shrink-0 bg-[var(--border-medium)]" />}
         {mails.map(m => <MailBubble key={m.id} mail={m} />)}
+        {chats.length > 0 && (tasks.length > 0 || mails.length > 0) && <span className="h-8 w-px shrink-0 bg-[var(--border-medium)]" />}
+        {chats.map(c => <WhatsAppBubble key={c.contact_phone} conv={c} onOpen={() => { wa.setOpenPhone(c.contact_phone); onNavigate('messages') }} />)}
         {gmail.status !== 'connected' && (
           <button
             type="button"

@@ -3,6 +3,7 @@ import { Mail, Bot, CalendarDays, MessageSquare, Check, ExternalLink, Copy, Tras
 import { useStore, nanoid } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useExternalCalendars } from '@/hooks/useExternalCalendars'
+import { useWhatsApp } from '@/contexts/WhatsAppContext'
 import { Input } from '@/components/ui/input'
 import { useGmail } from '@/contexts/GmailContext'
 import { toast } from '@/lib/toast'
@@ -127,6 +128,27 @@ function AppleCalendarCard() {
   )
 }
 
+// WhatsApp Business (API Cloud de Meta) : messages des clients dans le Cockpit, réponses ici ou par MCP.
+function WhatsAppCard({ origin }) {
+  const wa = useWhatsApp()
+  const live = wa.status === 'ready' && wa.conversations.length > 0
+  return (
+    <IntegrationCard
+      Icon={MessageCircle} color="#25D366" name="WhatsApp Business"
+      description="Messages de tes clients dans le Cockpit (page Messages, bandeau « À traiter »), réponses ici ou par Claude / Codex."
+      status={<StatusPill tone={live ? 'ok' : 'warn'}>{live ? `${wa.conversations.length} conversation${wa.conversations.length > 1 ? 's' : ''}` : 'À configurer'}</StatusPill>}
+    >
+      <ol className="list-decimal space-y-1.5 pl-4 text-xs text-[var(--text-secondary)]">
+        <li>Meta for Developers → crée une app de type « Business », ajoute le produit <b>WhatsApp</b> et ton numéro professionnel.</li>
+        <li>Webhook → URL de rappel : <div className="mt-1.5"><CopyLine text={`${origin}/api/whatsapp/webhook`} /></div> Jeton de vérification : la valeur de <code>WHATSAPP_VERIFY_TOKEN</code>. Abonne le champ <b>messages</b>.</li>
+        <li>Dans Vercel, ajoute <code>WHATSAPP_TOKEN</code> (jeton permanent d'un utilisateur système), <code>WHATSAPP_PHONE_NUMBER_ID</code>, <code>WHATSAPP_VERIFY_TOKEN</code>, <code>WHATSAPP_APP_SECRET</code>, <code>WHATSAPP_OWNER_EMAIL</code> (l'email de ton compte Cockpit) et <code>SUPABASE_SERVICE_ROLE_KEY</code>.</li>
+        <li>Exécute la migration <code>007_whatsapp.sql</code> dans Supabase.</li>
+      </ol>
+      <p className="text-[11px] text-[var(--text-tertiary)]">Règle WhatsApp : tu peux répondre librement pendant 24 h après le dernier message d'un client ; au-delà, seul un modèle validé par Meta est autorisé. Le guide complet est dans <code>docs/WHATSAPP.md</code>.</p>
+    </IntegrationCard>
+  )
+}
+
 export default function Integrations() {
   const gmail = useGmail()
   const [tone, label] = GMAIL_STATUS[gmail.status]
@@ -185,9 +207,7 @@ export default function Integrations() {
         </IntegrationCard>
 
         <AppleCalendarCard />
-        <IntegrationCard Icon={MessageCircle} color="#25D366" name="WhatsApp" description="Messages de tes clients dans le Cockpit, réponses depuis la plateforme ou par Claude / Codex." status={<StatusPill tone="off">En préparation</StatusPill>}>
-          <p className="text-xs text-[var(--text-secondary)]">WhatsApp n'offre pas d'accès officiel pour un compte perso : il faut soit un pont « appareil lié » (comme WhatsApp Web) qui tourne en continu sur un petit serveur, soit passer à WhatsApp Business. Le choix est à faire avant de brancher.</p>
-        </IntegrationCard>
+        <WhatsAppCard origin={origin} />
         <IntegrationCard Icon={MessageSquare} color="#611f69" name="Slack" description="Messages directs et mentions importantes dans le bandeau « À traiter »." status={<StatusPill tone="off">Bientôt</StatusPill>} />
       </div>
 

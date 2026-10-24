@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import {
   Home, Inbox, Calendar, CheckSquare, Timer, BookOpen, GraduationCap,
   Users, FileJson, Sun, Moon, Plus, Zap, Focus, ClipboardCheck,
-  Keyboard, Folder, LayoutGrid, Play, Database, Building2, HardDrive,
+  Keyboard, Folder, LayoutGrid, Play, Database, Building2, HardDrive, MessageCircle,
 } from 'lucide-react'
 import {
   CommandDialog, CommandInput, CommandList, CommandEmpty,
@@ -18,6 +18,7 @@ const PAGES = [
   { id: 'revue', label: 'Revue hebdo', Icon: ClipboardCheck, kbd: 'G H' },
   { id: 'donnees', label: 'Données & sauvegardes', Icon: HardDrive },
   { id: 'inbox', label: 'Inbox', Icon: Inbox, kbd: 'G I' },
+  { id: 'messages', label: 'Messages WhatsApp', Icon: MessageCircle, kbd: 'G M' },
   { id: 'calendrier', label: 'Calendrier', Icon: Calendar, kbd: 'G C' },
   { id: 'taches', label: 'Tâches', Icon: CheckSquare, kbd: 'G T' },
   { id: 'sessions', label: 'Sessions', Icon: Timer, kbd: 'G S' },

@@ -14,6 +14,7 @@ const GO_MAP = {
   f: 'formation',
   o: 'open-space',
   h: 'revue',
+  m: 'messages',
 }
 
 /**

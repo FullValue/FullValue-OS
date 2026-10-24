@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, ChevronRight, ClipboardCheck, Plus } from 'lucide-react'
+import { AlertTriangle, ChevronRight, ClipboardCheck, Plus, Mic } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { PrayerWidget } from '@/components/layout/RightSidebar'
 import GameCard from '@/components/widgets/GameCard'
+import HabitsCard from '@/components/widgets/HabitsCard'
 import NextActionCard from '@/components/dashboard/NextActionCard'
 import PrioritiesCard from '@/components/dashboard/PrioritiesCard'
 import {
@@ -129,6 +130,12 @@ export default function Journee({ onStartTask, onNavigate, onOpenPalette, timer 
         {captured
           ? <span className="shrink-0 text-xs font-medium text-[var(--green-deep)]">Capturé ✓</span>
           : <span className="shrink-0 text-[11px] text-[var(--text-tertiary)]">→ Inbox</span>}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('cockpit:voice-toggle'))}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--bg-card-soft)] text-[var(--text-secondary)] hover:text-[var(--accent)]"
+          title="Dictée vocale (V)" aria-label="Dictée vocale"
+        ><Mic size={15} /></button>
       </div>
 
       {driftPct > 30 && (
@@ -168,10 +175,13 @@ export default function Journee({ onStartTask, onNavigate, onOpenPalette, timer 
 
       <div className="grid gap-5 lg:grid-cols-12">
         <div className="lg:col-span-7"><GameCard /></div>
-        <div className="lg:col-span-5"><PrayerWidget nowMinutes={nowMinutes} /></div>
+        <div className="lg:col-span-5"><HabitsCard onNavigate={onNavigate} /></div>
       </div>
 
-      <PrioritiesCard tasks={state.tasks} projects={state.projects} dispatch={dispatch} onStartTask={onStartTask} />
+      <div className="grid gap-5 lg:grid-cols-12">
+        <div className="lg:col-span-8"><PrioritiesCard tasks={state.tasks} projects={state.projects} dispatch={dispatch} onStartTask={onStartTask} /></div>
+        <div className="lg:col-span-4"><PrayerWidget nowMinutes={nowMinutes} /></div>
+      </div>
     </div>
   )
 }

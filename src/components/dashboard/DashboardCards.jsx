@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { ArrowUpRight, Plus, CalendarDays, Play, Pause, Square, Video } from 'lucide-react'
 import { localDateStr } from '@/lib/backup'
 import { initials } from '@/lib/priorities'
+import { northStarOf } from '@/lib/goals'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -203,7 +204,7 @@ export function PolesCard({ state, onNavigate }) {
                     {next ? `Échéance : ${new Date(next.dueDate + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} · ${next.title}` : p.northStar || 'Aucune échéance'}
                   </span>
                 </span>
-                <span className="text-xs font-semibold text-[var(--text-secondary)]">{p.northStarProgress || 0}%</span>
+                <span className="text-xs font-semibold text-[var(--text-secondary)]">{northStarOf(p, state).pct}%</span>
               </button>
             </li>
           )

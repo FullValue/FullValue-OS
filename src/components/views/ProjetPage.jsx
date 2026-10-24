@@ -15,6 +15,7 @@ import { Slider } from '@/components/ui/slider'
 import { EmptyState } from '@/components/ui/empty-state'
 import { UIBadge } from '@/components/ui/Badge'
 import { toast, toastUndo } from '@/lib/toast'
+import { northStarOf } from '@/lib/goals'
 
 function formatDuration(seconds) {
   if (!seconds) return '0m'
@@ -42,7 +43,8 @@ const TABS = [
 ]
 
 function NorthStarBanner({ project }) {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
+  const ns = northStarOf(project, state)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(project.northStar)
 
@@ -84,12 +86,13 @@ function NorthStarBanner({ project }) {
       {/* Progress badge */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <div className="flex items-center gap-1.5">
-          <Progress value={project.northStarProgress} color={project.color} className="w-24" />
-          <span className="font-mono text-[11px] tabular" style={{ color: accentText(project.color) }}>{project.northStarProgress}%</span>
+          <Progress value={ns.pct} color={project.color} className="w-24" />
+          <span className="font-mono text-[11px] tabular" style={{ color: accentText(project.color) }}>{ns.pct}%</span>
+          {ns.auto && <span className="text-[10px] text-[var(--text-tertiary)]">auto · objectifs</span>}
         </div>
 
-        {/* Slider trigger */}
-        <Slider
+        {/* Saisie manuelle seulement si aucun objectif ne pilote la progression */}
+        {!ns.auto && <Slider
           min={0}
           max={100}
           step={1}
@@ -97,7 +100,7 @@ function NorthStarBanner({ project }) {
           onValueChange={([value]) => handleProgress(value)}
           className="w-16 opacity-60 transition-opacity hover:opacity-100"
           aria-label="Progression North Star"
-        />
+        />}
 
         <Button
           variant="ghost"

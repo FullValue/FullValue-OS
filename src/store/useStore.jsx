@@ -2,7 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { keepCorruptCopy, snapshotDaily } from '@/lib/backup'
 import { toast } from '@/lib/toast'
 
-const STATE_VERSION = 4
+const STATE_VERSION = 5
 const nanoid = () => Math.random().toString(36).slice(2, 10)
 
 const PROJECTS = [
@@ -61,7 +61,12 @@ const INITIAL_STATE = {
   appointments: [],
   dailyReviews: [],
   // Jeu : seules les quêtes réclamées sont stockées, le reste se recalcule (src/lib/game.js)
-  game: { questClaims: {} },
+  game: { questClaims: {}, achievements: {} },
+  // v5 : pipeline commercial, habitudes, objectifs trimestriels
+  deals: [],
+  habits: [],
+  habitLogs: {},   // { 'AAAA-MM-JJ': [habitId, …] }
+  goals: [],
 }
 
 // Champs par défaut d'une tâche, partagés par toutes les actions qui en créent une.
@@ -207,6 +212,33 @@ function reducer(state, action) {
     case 'SKIP_DAILY_REVIEW':
       return { ...state, dailyReviews: [...state.dailyReviews, { id: nanoid(), date: action.payload.date, skipped: true, createdAt: new Date().toISOString() }] }
 
+    // Collections v5 (deals, habits, goals) : ajout / modification / suppression génériques
+    case 'ADD_ENTITY': {
+      const { collection, item } = action.payload
+      return { ...state, [collection]: [...(state[collection] || []), { id: nanoid(), createdAt: new Date().toISOString(), ...item }] }
+    }
+    case 'UPDATE_ENTITY': {
+      const { collection, id, patch } = action.payload
+      return { ...state, [collection]: (state[collection] || []).map(x => x.id === id ? { ...x, ...patch, updatedAt: new Date().toISOString() } : x) }
+    }
+    case 'DELETE_ENTITY': {
+      const { collection, id } = action.payload
+      return { ...state, [collection]: (state[collection] || []).filter(x => x.id !== id) }
+    }
+
+    case 'TOGGLE_HABIT': {
+      const { habitId, date } = action.payload
+      const day = state.habitLogs?.[date] || []
+      const next = day.includes(habitId) ? day.filter(id => id !== habitId) : [...day, habitId]
+      return { ...state, habitLogs: { ...state.habitLogs, [date]: next } }
+    }
+
+    case 'UNLOCK_ACHIEVEMENT': {
+      const { id, date } = action.payload
+      if (state.game?.achievements?.[id]) return state
+      return { ...state, game: { ...state.game, achievements: { ...(state.game?.achievements || {}), [id]: date } } }
+    }
+
     case 'CLAIM_QUEST': {
       // payload: { date, id, xp } — idempotent : une quête ne rapporte qu'une fois par jour
       const { date, id, xp } = action.payload
@@ -264,7 +296,11 @@ function loadState() {
           appointments: parsed.appointments || [],
           tagStyles: parsed.tagStyles || {},
           dailyReviews: parsed.dailyReviews || [],
-          game: { questClaims: {}, ...(parsed.game || {}) },
+          game: { questClaims: {}, achievements: {}, ...(parsed.game || {}) },
+          deals: parsed.deals || [],
+          habits: parsed.habits || [],
+          habitLogs: parsed.habitLogs || {},
+          goals: parsed.goals || [],
           settings: { ...INITIAL_STATE.settings, ...(parsed.settings || {}), prayerTimes: { ...INITIAL_STATE.settings.prayerTimes, ...(parsed.settings?.prayerTimes || {}) } },
         }
       }

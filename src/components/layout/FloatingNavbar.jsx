@@ -3,7 +3,7 @@ import {
   Home, Inbox, Calendar, CheckSquare, Timer,
   BookOpen, GraduationCap,
   Users, LayoutDashboard, ChevronDown, LogOut, HardDrive, Plug, Flame,
-  Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck, MessageCircle,
+  Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck, MessageCircle, Repeat, Target, KanbanSquare, Receipt, Trophy,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
@@ -30,6 +30,7 @@ const NAV_GROUPS = [
       { id: 'messages',   label: 'Messages',    Icon: MessageCircle, waBadge: true },
       { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
       { id: 'sessions',   label: 'Sessions',    Icon: Timer,       timer: true },
+      { id: 'habitudes',  label: 'Habitudes',   Icon: Repeat },
     ],
   },
   {
@@ -37,6 +38,9 @@ const NAV_GROUPS = [
     items: [
       { id: 'open-space', label: 'Open space',  Icon: Building2 },
       { id: 'taches',     label: 'Tâches',      Icon: CheckSquare },
+      { id: 'objectifs',  label: 'Objectifs',   Icon: Target },
+      { id: 'pipeline',   label: 'Pipeline',    Icon: KanbanSquare },
+      { id: 'facturation', label: 'Facturation', Icon: Receipt },
       { id: 'revue',      label: 'Revue hebdo', Icon: ClipboardCheck },
     ],
   },
@@ -81,7 +85,7 @@ function LevelCard({ onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="relative mt-3 w-full overflow-hidden rounded-[20px] p-4 text-left text-white"
+      className="relative mt-2 w-full overflow-hidden rounded-[20px] px-4 py-3 text-left text-white"
       style={{ background: 'var(--hero-gradient)' }}
     >
       <span className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full border-[14px] border-white/10" />
@@ -103,7 +107,7 @@ function NavRow({ id, label, Icon, isActive, onClick, badgeCount = 0, timerActiv
       variant="ghost"
       onClick={() => onClick(id)}
       aria-current={isActive ? 'page' : undefined}
-      className="relative h-auto w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.04)]"
+      className="relative h-auto w-full justify-start gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-100 hover:bg-[rgba(var(--ink),0.04)]"
     >
       {isActive && <span className="absolute -left-3 top-1/2 h-7 w-1.5 -translate-y-1/2 rounded-r-full bg-[var(--accent)]" />}
       <span className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
@@ -214,6 +218,11 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
         { id: 'open-space', label: 'Open space',  Icon: Building2 },
         { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
         { id: 'revue',      label: 'Revue hebdo', Icon: ClipboardCheck },
+        { id: 'habitudes',  label: 'Habitudes',   Icon: Repeat },
+        { id: 'objectifs',  label: 'Objectifs',   Icon: Target },
+        { id: 'pipeline',   label: 'Pipeline',    Icon: KanbanSquare },
+        { id: 'facturation', label: 'Facturation', Icon: Receipt },
+        { id: 'trophees',   label: 'Trophées',    Icon: Trophy },
         { id: 'integrations', label: 'Intégrations', Icon: Plug },
         { id: 'donnees',    label: 'Données',     Icon: HardDrive },
       ],
@@ -582,17 +591,18 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
               <NavRow key={id} id={id} label={label} Icon={Icon} isActive={activePage === id} onClick={setActivePage} />
             ))}
           </div>
-        </div>
-
-        {/* Bas : section Général + carte de progression (XP) */}
-        <div className="flex-shrink-0 px-3 pb-3">
           <SectionLabel>Général</SectionLabel>
           <div className="flex flex-col gap-0.5">
+            <NavRow id="trophees" label="Trophées" Icon={Trophy} isActive={activePage === 'trophees'} onClick={setActivePage} />
             <NavRow id="integrations" label="Intégrations" Icon={Plug} isActive={activePage === 'integrations'} onClick={setActivePage} />
             <NavRow id="donnees" label="Données" Icon={HardDrive} isActive={['donnees', 'import', 'migrate'].includes(activePage)} onClick={setActivePage} />
             <NavRow id="logout" label="Déconnexion" Icon={LogOut} isActive={false} onClick={signOut} />
           </div>
-          <LevelCard onOpen={() => setActivePage('journee')} />
+        </div>
+
+        {/* Bas : carte de progression (XP), toujours visible */}
+        <div className="flex-shrink-0 px-3 pb-3">
+          <LevelCard onOpen={() => setActivePage('trophees')} />
         </div>
       </aside>
 

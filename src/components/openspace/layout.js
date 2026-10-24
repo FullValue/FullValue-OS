@@ -1,3 +1,5 @@
+import { northStarOf } from '@/lib/goals'
+
 // Calcule la disposition de l'open space à partir du store local.
 // Fonctions pures : aucune dépendance à three, testables à part.
 
@@ -60,7 +62,8 @@ function postsForPole(pole, state, clientsPole) {
 
 export function buildLayout(state) {
   const clientsPole = clientPoleId(state.projects)
-  const sized = state.projects.map(pole => {
+  const sized = state.projects.map(rawPole => {
+    const pole = { ...rawPole, northStarProgress: northStarOf(rawPole, state).pct }
     const posts = postsForPole(pole, state, clientsPole)
     const rows = Math.max(1, Math.ceil(posts.length / DESKS_PER_ROW))
     return {

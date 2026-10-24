@@ -1,4 +1,5 @@
 import { Search, Mail, Bell, ExternalLink, RefreshCw, AlertTriangle, CalendarClock, Play, Pause, Square, Maximize2, Cloud, CloudOff, Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGmail } from '@/contexts/GmailContext'
@@ -6,6 +7,7 @@ import { useCloudSync } from '@/contexts/CloudSyncContext'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { localDateStr } from '@/lib/backup'
 import { initials, timeAgo } from '@/lib/priorities'
+import { displayStatus, eur, totals } from '@/lib/billing'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import AppearanceMenu from '@/components/ui/AppearanceMenu'
@@ -94,7 +96,9 @@ function NotificationsMenu({ onNavigate }) {
     ...state.calendarEvents.filter(e => e.date === today).map(e => ({ id: e.id, title: e.title, time: e.startTime })),
     ...state.appointments.filter(a => a.date === today).map(a => ({ id: a.id, title: a.title, time: a.time })),
   ].sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-  const count = overdue.length + dueToday.length + events.length
+  const lateInvoices = (state.clientInvoices || []).filter(i => i.kind !== 'quote' && displayStatus(i, today) === 'overdue')
+  const dealActions = (state.deals || []).filter(d => !['won', 'lost'].includes(d.stage) && d.nextActionDate && d.nextActionDate <= today)
+  const count = overdue.length + dueToday.length + events.length + lateInvoices.length + dealActions.length
 
   const Row = ({ Icon, color, title, sub, onClick }) => (
     <li>
@@ -123,6 +127,8 @@ function NotificationsMenu({ onNavigate }) {
             {events.map(e => <Row key={e.id} Icon={CalendarClock} color="var(--blue-deep)" title={e.title} sub={`Aujourd'hui${e.time ? ` à ${e.time}` : ''}`} onClick={() => onNavigate('calendrier')} />)}
             {overdue.map(t => <Row key={t.id} Icon={AlertTriangle} color="var(--red-deep)" title={t.title} sub={`En retard depuis le ${new Date(t.dueDate + 'T12:00:00').toLocaleDateString('fr-FR')}`} onClick={() => onNavigate('revue')} />)}
             {dueToday.map(t => <Row key={t.id} Icon={CalendarClock} color="var(--orange-deep)" title={t.title} sub="Échéance aujourd'hui" onClick={() => onNavigate('taches')} />)}
+            {lateInvoices.map(i => <Row key={i.id} Icon={AlertTriangle} color="var(--red-deep)" title={`Facture ${i.number || i.invoiceNumber} impayée · ${eur(totals(i).ttc)}`} sub={`Échue le ${new Date(i.dueDate + 'T12:00:00').toLocaleDateString('fr-FR')} : à relancer`} onClick={() => onNavigate('facturation')} />)}
+            {dealActions.map(d => <Row key={d.id} Icon={CalendarClock} color="var(--accent)" title={d.nextAction || `Relancer ${d.name}`} sub={`Pipeline · ${d.name}`} onClick={() => onNavigate('pipeline')} />)}
           </ul>
         ) : <p className="px-4 py-6 text-center text-sm text-[var(--text-tertiary)]">Rien d'urgent. Bonne concentration.</p>}
       </PopoverContent>
@@ -164,14 +170,47 @@ function fmtClock(s) {
 }
 
 // Chrono toujours visible en haut à droite : lancer, mettre en pause, enregistrer, plein écran.
+function PomodoroToggle({ pomodoro, dark }) {
+  return (
+    <button
+      type="button"
+      onClick={pomodoro.toggle}
+      aria-pressed={pomodoro.enabled}
+      title={pomodoro.enabled ? `Pomodoro activé (${pomodoro.workMin} min) : cliquer pour désactiver` : 'Activer le mode Pomodoro'}
+      className={dark ? 'flex h-8 w-8 items-center justify-center rounded-full text-sm hover:bg-white/15' : `${ROUND} text-base`}
+      style={{ opacity: pomodoro.enabled ? 1 : 0.45, filter: pomodoro.enabled ? 'none' : 'grayscale(1)' }}
+    >🍅</button>
+  )
+}
+
+// Pause Pomodoro en cours : compte à rebours et « passer ».
+function BreakChip({ pomodoro }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
+  const left = Math.max(0, Math.round((pomodoro.breakEndsAt - now) / 1000))
+  return (
+    <div className="flex h-11 items-center gap-2 rounded-full bg-[var(--green-bg)] pl-4 pr-1 text-[var(--green-deep)] shadow-[var(--shadow-card)]">
+      <span className="text-sm">☕</span>
+      <span className="font-mono text-sm font-semibold tabular-nums">{fmtClock(left)}</span>
+      <span className="hidden text-xs md:inline">Pause</span>
+      <button type="button" onClick={pomodoro.skipBreak} className="rounded-full px-3 py-1.5 text-xs font-medium hover:bg-[rgba(var(--ink),0.06)]">Passer</button>
+    </div>
+  )
+}
+
 function TimerChip({ timer }) {
   const { state } = useStore()
   const active = timer.running || timer.paused
+  const pomo = timer.pomodoro
+  if (!active && pomo?.breakEndsAt) return <BreakChip pomodoro={pomo} />
   if (!active) {
     return (
-      <button type="button" onClick={timer.toggle} className={ROUND} aria-label="Lancer le chrono sur la prochaine action (T)" title="Lancer le chrono sur la prochaine action (T)">
-        <Play size={17} />
-      </button>
+      <div className="flex items-center gap-1">
+        <button type="button" onClick={timer.toggle} className={ROUND} aria-label="Lancer le chrono sur la prochaine action (T)" title="Lancer le chrono sur la prochaine action (T)">
+          <Play size={17} />
+        </button>
+        {pomo && <PomodoroToggle pomodoro={pomo} />}
+      </div>
     )
   }
   const project = state.projects.find(p => p.id === timer.project)
@@ -180,7 +219,9 @@ function TimerChip({ timer }) {
   return (
     <div className="flex h-11 items-center gap-1 rounded-full pl-3 pr-1 text-white shadow-[var(--shadow-card)]" style={{ background: 'var(--hero-dark)' }}>
       <span className={`h-2 w-2 rounded-full ${timer.running ? 'animate-pulse bg-[#4ade80]' : 'bg-white/50'}`} />
-      <span className="ml-1 font-mono text-sm font-semibold tabular-nums">{fmtClock(timer.elapsed)}</span>
+      <span className="ml-1 font-mono text-sm font-semibold tabular-nums" title={pomo?.enabled ? 'Temps restant de la séance' : undefined}>
+        {pomo?.enabled ? `🍅 ${fmtClock(Math.max(0, pomo.workMin * 60 - timer.elapsed))}` : fmtClock(timer.elapsed)}
+      </span>
       <span className="ml-1 hidden max-w-[140px] truncate text-xs text-white/70 md:inline" title={task?.title}>{task?.title || project?.name || 'Focus'}</span>
       <button type="button" onClick={timer.running ? timer.pause : timer.resume} className={icon} aria-label={timer.running ? 'Pause (T)' : 'Reprendre (T)'}>
         {timer.running ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
@@ -188,6 +229,7 @@ function TimerChip({ timer }) {
       <button type="button" onClick={timer.finish} className={icon} aria-label="Arrêter et enregistrer la session">
         <Square size={13} fill="currentColor" />
       </button>
+      {pomo && <PomodoroToggle pomodoro={pomo} dark />}
       <button type="button" onClick={timer.openFocus} className={`${icon} hidden sm:flex`} aria-label="Mode focus plein écran">
         <Maximize2 size={13} />
       </button>

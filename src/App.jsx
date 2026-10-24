@@ -18,6 +18,8 @@ import { useStore } from '@/store/useStore'
 import { localDateStr } from '@/lib/backup'
 import { pickNextAction } from '@/lib/priorities'
 import { toast } from '@/lib/toast'
+import { playSound, notify } from '@/lib/sound'
+import VoiceCapture from '@/components/VoiceCapture'
 import AccessCodePage from '@/components/auth/AccessCodePage'
 import LoginPage from '@/components/auth/LoginPage'
 import SignupPage from '@/components/auth/SignupPage'
@@ -42,11 +44,18 @@ import RevueHebdo from '@/components/views/RevueHebdo'
 import Donnees from '@/components/views/Donnees'
 import Integrations from '@/components/views/Integrations'
 import Messages from '@/components/views/Messages'
+import Habitudes from '@/components/views/Habitudes'
+import Objectifs from '@/components/views/Objectifs'
+import Pipeline from '@/components/views/Pipeline'
+import Facturation from '@/components/views/Facturation'
+import Trophees from '@/components/views/Trophees'
 
 // three.js est lourd : la page 3D vit dans son propre chunk.
 const OpenSpace = lazy(() => import('@/components/views/OpenSpace'))
 
 const TIMER_KEY = 'cockpit_timer'
+const POMO_KEY = 'cockpit:pomodoro'
+const POMO_DEFAULT = { enabled: false, cycles: 0, breakEndsAt: null, last: null }
 const CLOSING_SNOOZE_KEY = 'cockpit:closing-snoozed'
 const EMPTY_TIMER = { accumulated: 0, startedAt: null, project: '', task: '' }
 
@@ -219,19 +228,19 @@ function AppInner() {
 
 
   // Enregistre la session en cours : arrêter ou changer de tâche ne perd jamais de temps.
-  const logCurrentSession = useCallback(() => {
+  const logCurrentSession = useCallback((extra = {}) => {
     if (elapsed <= 0) return
     const task = state.tasks.find(t => t.id === timerTask)
     dispatch({
       type: 'LOG_SESSION',
-      payload: { projectId: timerProject || state.projects[0]?.id, taskId: timerTask || undefined, duration: elapsed, note: task?.title || 'Session de focus' },
+      payload: { projectId: timerProject || state.projects[0]?.id, taskId: timerTask || undefined, duration: elapsed, note: task?.title || 'Session de focus', ...extra },
     })
     const m = Math.round(elapsed / 60)
     toast.success(`Session enregistrée — ${m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${Math.max(1, m)} min`}`)
   }, [elapsed, timerTask, timerProject, state.tasks, state.projects, dispatch])
 
-  const finishTimer = useCallback(() => {
-    logCurrentSession()
+  const finishTimer = useCallback((extra) => {
+    logCurrentSession(extra)
     stopTimer()
   }, [logCurrentSession, stopTimer])
 
@@ -257,10 +266,59 @@ function AppInner() {
     quickStart(next?.projectId, next?.id)
   }, [timerRunning, timerPaused, pauseTimer, resumeTimer, quickStart, state.tasks])
 
+  // Pomodoro : séance de travail, puis pause courte ; pause longue toutes les N séances.
+  const pomoCfg = { work: 25, short: 5, long: 15, every: 4, ...(state.settings?.pomodoro || {}) }
+  const [pomo, setPomo] = useState(() => {
+    try { return { ...POMO_DEFAULT, ...JSON.parse(localStorage.getItem(POMO_KEY) || '{}') } } catch { return POMO_DEFAULT }
+  })
+  useEffect(() => { try { localStorage.setItem(POMO_KEY, JSON.stringify(pomo)) } catch { /* ignore */ } }, [pomo])
+  const pomoRef = useRef(pomo)
+  const pomoCfgRef = useRef(pomoCfg)
+  useEffect(() => { pomoRef.current = pomo; pomoCfgRef.current = pomoCfg })
+  const soundsOn = state.settings?.sounds !== false
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const t = timerRef.current
+      const p = pomoRef.current
+      const cfg = pomoCfgRef.current
+      if (!t || !p.enabled) return
+      if (t.running && t.elapsed >= cfg.work * 60) {
+        const cycles = p.cycles + 1
+        const breakMin = cycles % cfg.every === 0 ? cfg.long : cfg.short
+        t.finish({ pomodoro: true })
+        setPomo(prev => ({ ...prev, cycles, breakEndsAt: Date.now() + breakMin * 60000, last: { project: t.project, task: t.task } }))
+        playSound('bell', soundsOn)
+        notify('Séance terminée 🍅', `Pause de ${breakMin} min`)
+        toast.success(`Séance ${cycles} terminée 🍅`, { description: `Pause de ${breakMin} min. La session est enregistrée.` })
+      } else if (p.breakEndsAt && Date.now() >= p.breakEndsAt) {
+        setPomo(prev => ({ ...prev, breakEndsAt: null }))
+        playSound('bell', soundsOn)
+        notify('Fin de la pause', 'On repart pour une séance ?')
+        toast('Fin de la pause ☕', { duration: 15000, action: { label: 'Reprendre', onClick: () => timerRef.current?.quickStart(p.last?.project, p.last?.task) } })
+      }
+    }, 1000)
+    return () => clearInterval(id)
+  }, [soundsOn])
+
+  const pomodoro = {
+    ...pomo,
+    workMin: pomoCfg.work,
+    toggle: () => {
+      if (!pomo.enabled && 'Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {})
+      setPomo(p => ({ ...POMO_DEFAULT, enabled: !p.enabled }))
+    },
+    skipBreak: () => {
+      setPomo(p => ({ ...p, breakEndsAt: null }))
+      quickStart(pomo.last?.project, pomo.last?.task)
+    },
+  }
+
   const timer = {
     elapsed, running: timerRunning, paused: timerPaused, project: timerProject, task: timerTask,
     start: startTimer, pause: pauseTimer, resume: resumeTimer, stop: stopTimer,
     quickStart, finish: finishTimer, toggle: toggleTimer, openFocus: () => setFocusOpen(true),
+    pomodoro,
   }
   useEffect(() => { timerRef.current = timer })
 
@@ -295,6 +353,11 @@ function AppInner() {
       case 'donnees':        return <Donnees onNavigate={setActivePage} />
       case 'integrations':   return <Integrations />
       case 'messages':       return <Messages onNavigate={setActivePage} />
+      case 'habitudes':      return <Habitudes />
+      case 'objectifs':      return <Objectifs />
+      case 'pipeline':       return <Pipeline onNavigate={setActivePage} />
+      case 'facturation':    return <Facturation />
+      case 'trophees':       return <Trophees />
       case 'open-space':     return (
         <Suspense fallback={<p className="py-20 text-center text-sm text-[var(--text-tertiary)]">Chargement de l'open space…</p>}>
           <OpenSpace onNavigate={setActivePage} />
@@ -368,6 +431,8 @@ function AppInner() {
       <DailyClosingModal isOpen={closingOpen} onClose={closeClosing} />
 
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+
+      <VoiceCapture />
 
       <Toaster theme={theme} />
     </div>

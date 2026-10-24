@@ -322,7 +322,7 @@ function DashboardTab({ client, tasks, sessions, clientNotes, clientDocuments, c
   const docs = clientDocuments.filter(d => d.clientId === client.id)
   const now = new Date()
   const upcomingRdv = appointments.filter(a => a.clientId === client.id && new Date(a.date) >= now && new Date(a.date) <= new Date(now.getTime() + 7 * 86400000))
-  const pendingInvoices = clientInvoices.filter(i => i.clientId === client.id && i.status === 'to_emit')
+  const pendingInvoices = clientInvoices.filter(i => i.clientId === client.id && i.kind !== 'quote' && i.status === 'to_emit')
   const pendingAmount = pendingInvoices.reduce((a, i) => a + (i.amountTtc || 0), 0)
   const overdueTasks = clientTasks.filter(t => t.dueDate && new Date(t.dueDate) < now && t.status !== 'done')
 
@@ -832,7 +832,7 @@ function FacturationTab({ client, accent }) {
   const [showForm, setShowForm] = useState(false)
   const [num, setNum] = useState(''); const [date, setDate] = useState(''); const [amtHt, setAmtHt] = useState(''); const [vat, setVat] = useState('20'); const [desc, setDesc] = useState(''); const [status, setStatus] = useState('to_emit')
 
-  const invoices = state.clientInvoices.filter(i => i.clientId === client.id).sort((a, b) => new Date(b.date) - new Date(a.date))
+  const invoices = state.clientInvoices.filter(i => i.clientId === client.id && i.kind !== 'quote').sort((a, b) => new Date(b.date) - new Date(a.date))
   const totalFact = invoices.filter(i => i.status === 'paid').reduce((a, i) => a + (i.amountTtc || 0), 0)
   const toReceive = invoices.filter(i => i.status === 'sent').reduce((a, i) => a + (i.amountTtc || 0), 0)
   const overdue = invoices.filter(i => i.status === 'overdue').reduce((a, i) => a + (i.amountTtc || 0), 0)

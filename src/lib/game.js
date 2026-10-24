@@ -3,6 +3,7 @@
 // rétroactive et ne stocke rien, sauf les quêtes réclamées (state.game.questClaims).
 
 import { localDateStr } from '@/lib/backup'
+import { isDue } from '@/lib/habits'
 
 export const XP_RULES = {
   taskHigh: 30,
@@ -11,6 +12,8 @@ export const XP_RULES = {
   focusPerMinute: 1,
   focusDailyCap: 240,   // au-delà de 4 h de focus par jour, plus d'XP : on ne récompense pas l'épuisement
   dailyReview: 20,
+  habit: 5,
+  allHabitsBonus: 10,
 }
 
 // Un jour compte pour la série s'il contient une vraie avancée.
@@ -118,6 +121,22 @@ export function questsFor(dateStr, day) {
   return list.map(q => ({ ...q, done: q.value >= q.goal }))
 }
 
+// ── Habitudes : 5 XP par case, bonus si toutes les routines prévues du jour sont faites ──
+
+export function habitXp(state) {
+  const habits = Object.fromEntries((state.habits || []).map(h => [h.id, h]))
+  const out = {}
+  for (const [date, ids] of Object.entries(state.habitLogs || {})) {
+    const valid = ids.filter(id => habits[id])
+    if (!valid.length) continue
+    const d = new Date(date + 'T12:00:00')
+    const due = Object.values(habits).filter(h => !h.archived && isDue(h, d) && (!h.createdAt || h.createdAt.slice(0, 10) <= date))
+    const all = due.length > 0 && due.every(h => valid.includes(h.id))
+    out[date] = valid.length * XP_RULES.habit + (all ? XP_RULES.allHabitsBonus : 0)
+  }
+  return out
+}
+
 // ── Vue d'ensemble ───────────────────────────────────────────────────────────
 
 export function computeGame(state, today = localDateStr()) {
@@ -147,8 +166,12 @@ export function computeGame(state, today = localDateStr()) {
   }
   for (const r of state.dailyReviews || []) if (!r.skipped) xp += XP_RULES.dailyReview
 
+  const habitXpByDay = habitXp(state)
+  for (const n of Object.values(habitXpByDay)) xp += n
+
   const claims = state.game?.questClaims || {}
-  let questXp = 0
+  // XP « bonus » (quêtes, succès) : elle a son propre toast, pas de « +N XP » en double.
+  let questXp = Object.keys(state.game?.achievements || {}).length * 50
   for (const list of Object.values(claims)) for (const c of list) questXp += c.xp || 0
   xp += questXp
 
@@ -159,6 +182,7 @@ export function computeGame(state, today = localDateStr()) {
   const todayXp = (days[today]?.tasks || []).reduce((s, t) => s + taskXp(t), 0)
     + Math.min(XP_RULES.focusDailyCap, Math.floor(days[today]?.focusMin || 0))
     + (days[today]?.reviewed ? XP_RULES.dailyReview : 0)
+    + (habitXpByDay[today] || 0)
     + (claims[today] || []).reduce((s, c) => s + (c.xp || 0), 0)
 
   const level = levelFromXp(xp)

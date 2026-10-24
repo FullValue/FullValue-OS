@@ -56,6 +56,7 @@ import Trophees from '@/components/views/Trophees'
 
 // three.js est lourd : la page 3D vit dans son propre chunk.
 const OpenSpace = lazy(() => import('@/components/views/OpenSpace'))
+const Ascension = lazy(() => import('@/components/views/Ascension'))
 
 const TIMER_KEY = 'cockpit_timer'
 const POMO_KEY = 'cockpit:pomodoro'
@@ -329,6 +330,8 @@ function AppInner() {
   const projectPageMatch = activePage.startsWith('projet_') ? activePage.replace('projet_', '') : null
   const isJournee = activePage === 'journee'
   const isOpenSpace = activePage === 'open-space'
+  // Pages 3D en plein écran (rail d'icônes, sans TopBar) : open space et montagne d'ascension.
+  const isImmersive = isOpenSpace || activePage === 'ascension'
 
   function renderPage() {
     if (projectPageMatch) {
@@ -367,6 +370,11 @@ function AppInner() {
           <OpenSpace onNavigate={setActivePage} timer={timer} onStartTask={quickStart} />
         </Suspense>
       )
+      case 'ascension':      return (
+        <Suspense fallback={<p className="py-20 text-center text-sm text-[var(--text-tertiary)]">Chargement de la montagne…</p>}>
+          <Ascension onNavigate={setActivePage} timer={timer} />
+        </Suspense>
+      )
       default:               return <Journee onStartTask={quickStart} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
     }
   }
@@ -390,11 +398,11 @@ function AppInner() {
         activePage={activePage}
         setActivePage={setActivePage}
         timerRunning={timerRunning}
-        compact={isOpenSpace && !isMobile}
+        compact={isImmersive && !isMobile}
       />
 
       {/* Contenu : barre du haut et bandeau « À traiter » communs, puis la page */}
-      {isOpenSpace && !isMobile ? (
+      {isImmersive && !isMobile ? (
         // Open space en plein écran : rail d'icônes à gauche, la scène occupe tout le reste.
         <main className="fixed inset-y-0 right-0 animate-fadeIn" style={{ left: RAIL_WIDTH - 12 }}>
           {renderPage()}
@@ -409,7 +417,7 @@ function AppInner() {
         >
           <TopBar onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} timer={timer} />
           <PriorityStrip onStartTask={quickStart} onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
-          <div className="mx-auto animate-fadeIn px-0 sm:px-2" style={{ maxWidth: isMobile || isOpenSpace ? '100%' : (isJournee ? 1440 : 1100) }}>
+          <div className="mx-auto animate-fadeIn px-0 sm:px-2" style={{ maxWidth: isMobile || isImmersive ? '100%' : (isJournee ? 1440 : 1100) }}>
             {renderPage()}
           </div>
         </main>

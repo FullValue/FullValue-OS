@@ -5,6 +5,8 @@
 import { localDateStr } from '@/lib/backup'
 
 export const ARC_DEFAULT_FOCUS_MIN = 180
+// Altitude du sommet de la montagne d'ascension (Mont Blanc) : tous les jours validés = sommet.
+export const ARC_SUMMIT_M = 4808
 
 export const ARC_DURATIONS = [
   { id: 'year-end', label: 'Jusqu’au 31 décembre' },

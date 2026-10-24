@@ -13,6 +13,7 @@ const GO_MAP = {
   r: 'hub-ressources',
   f: 'formation',
   o: 'open-space',
+  a: 'ascension',
   h: 'revue',
   m: 'messages',
 }

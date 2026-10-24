@@ -140,6 +140,23 @@ export function arcDaysSummary(state, now = new Date()) {
   return { elapsed, validated, todayValidated: arcDayValidated(state, today, days[today], arc.focusGoalMin), focusTodayMin: Math.round(days[today]?.focusMin || 0) }
 }
 
+// Détail jour par jour de l'Arc (montagne d'ascension) : un jour = une étape du sentier.
+export function arcDaysDetail(state, now = new Date()) {
+  const arc = arcInfo(state, now)
+  if (!arc.startDate) return []
+  const days = activityByDay(state)
+  const today = localDateStr(now)
+  const out = []
+  for (let d = arc.startDate; d <= arc.endDate; d = shiftDay(d, 1)) {
+    out.push({
+      date: d, past: d < today, today: d === today,
+      focusMin: Math.round(days[d]?.focusMin || 0),
+      validated: d <= today && arcDayValidated(state, d, days[d], arc.focusGoalMin),
+    })
+  }
+  return out
+}
+
 // Jour d'Arc validé : objectif de focus atteint et toutes les routines prévues faites.
 function arcDayValidated(state, date, day, focusGoalMin) {
   if ((day?.focusMin || 0) < focusGoalMin) return false

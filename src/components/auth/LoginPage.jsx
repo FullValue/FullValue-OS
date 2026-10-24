@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LogIn, UserRound } from 'lucide-react'
+import { LogIn, UserRound, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { getAuthErrorMessage } from '@/lib/authErrors'
 import AuthLayout from './AuthLayout'
@@ -12,6 +12,23 @@ export default function LoginPage({ onNavigate }) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [linkSent, setLinkSent] = useState(false)
+
+  // Connexion sans mot de passe : un lien envoyé par email (crée le compte s'il n'existe pas).
+  async function sendMagicLink() {
+    setError('')
+    if (!/^\S+@\S+\.\S+$/.test(email)) { setError('Saisis ton email d’abord.'); return }
+    setLoading(true)
+    try {
+      const { error: err } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+      if (err) setError(getAuthErrorMessage(err))
+      else setLinkSent(true)
+    } catch (err) {
+      setError(getAuthErrorMessage(err, 'Connexion au serveur impossible.'))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -73,6 +90,15 @@ export default function LoginPage({ onNavigate }) {
           {!loading && <LogIn size={15} />}
           {loading ? 'Connexion…' : 'Se connecter'}
         </Button>
+        {linkSent ? (
+          <p className="rounded-lg px-3 py-2 text-center text-xs" style={{ background: 'var(--green-bg)', color: 'var(--green-deep)' }}>
+            Lien envoyé à {email}. Ouvre-le sur cet appareil pour te connecter.
+          </p>
+        ) : (
+          <Button type="button" variant="ghost" size="sm" className="w-full" onClick={sendMagicLink} disabled={loading}>
+            <Mail size={14} /> Mot de passe oublié ? Recevoir un lien de connexion
+          </Button>
+        )}
       </form>
 
       <div className="my-5 flex items-center gap-3">

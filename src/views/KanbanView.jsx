@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { TrelloCard } from './TrelloCardsView'
 import TaskDetailModal from './shared/TaskDetailModal'
+import { computeTaskMove } from './shared/moveTask'
 
 const COLUMNS = [
   { id: 'todo',       label: 'À faire',  color: '#A8D4F0' },
@@ -141,11 +142,6 @@ export default function KanbanView({ tasks = [], projects = [], onTaskUpdate, on
       .filter(t => t.status === colId)
       .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
 
-  function findColumnForTask(taskId) {
-    return COLUMNS.find(c => c.tasks?.some?.(t => t.id === taskId))?.id ||
-      tasks.find(t => t.id === taskId)?.status
-  }
-
   function onDragStart({ active }) {
     setActiveTask(tasks.find(t => t.id === active.id) || null)
   }
@@ -161,29 +157,8 @@ export default function KanbanView({ tasks = [], projects = [], onTaskUpdate, on
     setActiveTask(null); setOverColumn(null)
     if (!over) return
 
-    const draggedTask = tasks.find(t => t.id === active.id)
-    if (!draggedTask) return
-
-    const overId = over.id
-    const overIsCol = COLUMNS.some(c => c.id === overId)
-    const overTask = tasks.find(t => t.id === overId)
-
-    const newStatus = overIsCol ? overId : overTask?.status || draggedTask.status
-
-    if (newStatus !== draggedTask.status) {
-      onTaskUpdate?.(draggedTask.id, { status: newStatus })
-    } else if (overTask && overTask.id !== draggedTask.id) {
-      // Reorder within same column
-      const colT = colTasks(draggedTask.status)
-      const oldIdx = colT.findIndex(t => t.id === draggedTask.id)
-      const newIdx = colT.findIndex(t => t.id === overTask.id)
-      if (oldIdx !== -1 && newIdx !== -1) {
-        const reordered = [...colT]
-        reordered.splice(oldIdx, 1)
-        reordered.splice(newIdx, 0, draggedTask)
-        reordered.forEach((t, i) => onTaskUpdate?.(t.id, { orderIndex: i }))
-      }
-    }
+    computeTaskMove(tasks, active.id, over.id, COLUMNS.map(c => c.id))
+      .forEach(({ id, patch }) => onTaskUpdate?.(id, patch))
   }
 
   return (

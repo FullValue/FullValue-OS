@@ -31,12 +31,17 @@ export function AuthProvider({ children }) {
   // undefined = session en cours de lecture, null = personne de connecté
   const [session, setSession] = useState(undefined)
   const [localAccess, setLocalAccess] = useState(hasLocalAccess)
+  // Vrai après un clic sur le lien de réinitialisation : on demande un nouveau mot de passe.
+  const [recovering, setRecovering] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession()
       .then(({ data }) => setSession(data.session ?? null))
       .catch(() => setSession(null))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => setSession(s ?? null))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      setSession(s ?? null)
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true)
+    })
     return () => subscription.unsubscribe()
   }, [])
 
@@ -64,7 +69,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, signOut, signInWithCode, leaveLocalMode }}>
+    <AuthContext.Provider value={{ user, session, signOut, signInWithCode, leaveLocalMode, recovering, endRecovery: () => setRecovering(false) }}>
       {children}
     </AuthContext.Provider>
   )

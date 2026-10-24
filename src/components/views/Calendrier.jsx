@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, X, Trash2, PanelRight, PanelRightClose } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { useExternalCalendars } from '@/hooks/useExternalCalendars'
 import ImageOrFileInput from '@/components/inputs/ImageOrFileInput'
 import BulkImportInterface from '@/components/import/BulkImportInterface'
 import PlanMyDayModal from '@/components/PlanMyDayModal'
@@ -410,6 +411,7 @@ function hourToHHMM(h) {
 
 export default function Calendrier() {
   const { state, dispatch } = useStore()
+  const external = useExternalCalendars()
   const [referenceDate, setReferenceDate] = useState(new Date())
   const [view, setView] = useState('week')
   const [visibleProjects, setVisibleProjects] = useState(new Set(state.projects.map(p => p.id)))
@@ -663,6 +665,24 @@ export default function Calendrier() {
         startHour: sh + sm / 60, durationH,
         label: client?.shortName || client?.name,
         kindLabel: 'RDV client',
+      })
+    })
+
+    // Calendriers externes (iCloud…) : lecture seule
+    external.events.forEach(e => {
+      const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      const startDay = new Date(e.start.getFullYear(), e.start.getMonth(), e.start.getDate())
+      const sameDay = e.allDay
+        ? dayStart >= startDay && dayStart < e.end
+        : e.start.toDateString() === date.toDateString()
+      if (!sameDay) return
+      events.push({
+        id: `ext_${e.sourceId}_${e.uid}_${iso}`, source: 'external', title: e.title, emoji: '📅',
+        color: e.color,
+        startHour: e.allDay ? START_HOUR : e.start.getHours() + e.start.getMinutes() / 60,
+        durationH: e.allDay ? 0.5 : Math.max(0.25, (e.end - e.start) / 3600000),
+        label: e.calendar,
+        kindLabel: `${e.calendar}${e.allDay ? ' · journée' : ''}`,
       })
     })
 

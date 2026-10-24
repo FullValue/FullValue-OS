@@ -59,11 +59,8 @@ function NorthStarBanner({ project }) {
 
   return (
     <div
-      className="px-4 py-3 flex items-center gap-3 border-b"
-      style={{
-        background: project.color + '0D',
-        borderColor: project.color + '25',
-      }}
+      className="flex items-center gap-3 rounded-2xl px-4 py-3"
+      style={{ background: project.color + '18' }}
     >
       <Flag size={14} style={{ color: accentText(project.color) }} className="flex-shrink-0" />
       <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -649,6 +646,8 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
   const [activeTab, setActiveTab] = useState('kanban')
   const [importOpen, setImportOpen] = useState(false)
   const [importSuccessCount, setImportSuccessCount] = useState(null)
+  const [quickTitle, setQuickTitle] = useState('')
+  const [openedAt] = useState(() => Date.now())
 
   const project = state.projects.find(p => p.id === projectId)
   if (!project) return null
@@ -672,78 +671,105 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
     if (snapshot) toastUndo('Tâche supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { tasks: [snapshot] } }))
   }
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      {/* North Star banner */}
-      <NorthStarBanner project={project} />
+  const today = new Date().toISOString().slice(0, 10)
+  const weekAgo = openedAt - 7 * 86400000
+  const openTasks = projectTasks.filter(t => t.status !== 'done')
+  const stats = [
+    { label: 'Ouvertes', value: openTasks.length },
+    { label: 'Terminées · 7 j', value: projectTasks.filter(t => t.completedAt && new Date(t.completedAt).getTime() >= weekAgo).length },
+    { label: 'Focus · 7 j', value: formatDuration(state.sessions.filter(x => x.projectId === project.id && new Date(x.date).getTime() >= weekAgo).reduce((sum, x) => sum + (x.duration || 0), 0)) },
+    { label: 'En retard', value: openTasks.filter(t => t.dueDate && t.dueDate < today).length, alert: true },
+  ]
+  const counts = {
+    kanban: openTasks.length,
+    notes: (project.notes || []).length,
+    ressources: state.resources.filter(r => r.projectId === project.id).length,
+    sessions: state.sessions.filter(x => x.projectId === project.id).length,
+  }
+  const nextTask = openTasks.find(t => t.status === 'inprogress') || openTasks.find(t => t.today) || openTasks.find(t => t.impact === 'high') || openTasks[0]
 
-      {/* Page header */}
-      <div className="w-full">
-        <div className="flex items-center gap-3 mb-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onNavigate('projets')}
-            className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-          >
+  function quickAdd(e) {
+    if (e.key !== 'Enter' || !quickTitle.trim()) return
+    handleTaskCreate({ title: quickTitle.trim(), status: 'todo', impact: 'low', today: false, dueDate: null, notes: '' })
+    setQuickTitle('')
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col gap-5">
+      {/* En-tête de l'espace projet */}
+      <Card className="space-y-4 border-0 p-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => onNavigate('projets')} aria-label="Tous les projets" className="text-[var(--text-tertiary)]">
             <ArrowLeft size={16} />
           </Button>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ background: project.color + '20', border: `1px solid ${project.color}30` }}>
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl" style={{ background: project.color + '30' }}>
             {project.emoji}
           </div>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">{project.name}</h1>
-            <span className="text-[11px] text-[var(--text-tertiary)]">{TIER_LABELS[project.tier]}</span>
+            <p className="text-sm text-[var(--text-tertiary)]">{TIER_LABELS[project.tier]}</p>
           </div>
-          <Button
-            size="sm"
-            onClick={() => { setImportOpen(true); setImportSuccessCount(null) }}
-            className="rounded-xl"
-            style={{ background: project.color + '15', color: accentText(project.color), border: `1px solid ${project.color}25` }}
-          >
-            <FileJson size={13} />
-            Import bulk
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {nextTask && (
+              <Button onClick={() => onStartTask?.(project.id, nextTask.id)} title={`Lancer le chrono sur « ${nextTask.title} »`}>
+                <Play size={14} /> Focus
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => { setImportOpen(true); setImportSuccessCount(null) }}>
+              <FileJson size={14} /> Import bulk
+            </Button>
+          </div>
+        </div>
+
+        <NorthStarBanner project={project} />
+
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {stats.map(st => (
+            <div key={st.label} className="rounded-2xl bg-[var(--bg-card-soft)] px-4 py-3">
+              <p className="text-[11px] text-[var(--text-tertiary)]">{st.label}</p>
+              <p className="text-2xl font-semibold tracking-tight" style={{ color: st.alert && st.value ? 'var(--red-deep)' : 'var(--text-primary)' }}>{st.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3 rounded-full bg-[var(--bg-card-soft)] px-4 py-1">
+          <Plus size={15} className="shrink-0 text-[var(--text-tertiary)]" />
+          <Input
+            value={quickTitle}
+            onChange={e => setQuickTitle(e.target.value)}
+            onKeyDown={quickAdd}
+            placeholder={`Ajouter une tâche à ${project.name}… (Entrée)`}
+            className="h-10 flex-1 border-transparent bg-transparent px-0 shadow-none focus:border-transparent focus:bg-transparent focus:ring-0"
+          />
         </div>
 
         {importSuccessCount !== null && (
-          <div className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs"
-            style={{ background: 'var(--green-bg)', color: 'var(--green-deep)' }}>
+          <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs" style={{ background: 'var(--green-bg)', color: 'var(--green-deep)' }}>
             ✓ {importSuccessCount} élément{importSuccessCount > 1 ? 's' : ''} importé{importSuccessCount > 1 ? 's' : ''} dans {project.name}
           </div>
         )}
+      </Card>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-[rgba(var(--ink),0.06)]">
-          {TABS.map(tab => (
-            <Button
-              type="button"
-              variant="ghost"
-              key={tab.id}
-              onClick={() => !tab.soon && setActiveTab(tab.id)}
-              className={`relative h-auto gap-1.5 rounded-t-lg px-3 py-2 text-xs font-medium transition-all ${
-                tab.soon
-                  ? 'text-[var(--text-tertiary)] cursor-default'
-                  : activeTab === tab.id
-                  ? 'text-[var(--text-primary)] border-b-2 -mb-px'
-                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-              }`}
-              style={activeTab === tab.id && !tab.soon ? { borderBottomColor: project.color, color: accentText(project.color) } : {}}
-            >
-              <tab.Icon size={12} />
-              {tab.label}
-              {tab.soon && (
-                <span className="text-[9px] bg-[rgba(var(--ink),0.08)] text-[var(--text-tertiary)] px-1 py-0.5 rounded ml-0.5">Bientôt</span>
-              )}
-            </Button>
-          ))}
-        </div>
+      {/* Onglets en pilules */}
+      <div className="flex flex-wrap gap-1 self-start rounded-full bg-[var(--bg-sidebar)] p-1">
+        {TABS.map(tab => (
+          <button
+            type="button"
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-[var(--shadow-card)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
+          >
+            <tab.Icon size={14} />
+            {tab.label}
+            {counts[tab.id] !== undefined && <span className="rounded-full bg-[rgba(var(--ink),0.07)] px-1.5 text-[10px] tabular-nums">{counts[tab.id]}</span>}
+          </button>
+        ))}
       </div>
 
       {/* Tab content */}
       <div className="flex-1 w-full">
         {activeTab === 'kanban' && (
-          <div className="p-4">
+          <div>
             <ViewContainer
               contextId={`project:${project.id}`}
               tasks={projectTasks}

@@ -23,6 +23,7 @@ import LoginPage from '@/components/auth/LoginPage'
 import SignupPage from '@/components/auth/SignupPage'
 import ForgotPasswordPage from '@/components/auth/ForgotPasswordPage'
 import CheckEmailPage from '@/components/auth/CheckEmailPage'
+import UpdatePasswordPage from '@/components/auth/UpdatePasswordPage'
 import { CloudSyncProvider } from '@/contexts/CloudSyncContext'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
@@ -64,8 +65,10 @@ function timerElapsed(timer) {
 }
 
 function AuthGate() {
-  const { user, signInWithCode } = useAuth()
+  const { user, signInWithCode, recovering, endRecovery } = useAuth()
   const [authPage, setAuthPage] = useState('login')
+
+  if (recovering) return <UpdatePasswordPage onDone={endRecovery} />
 
   if (user === undefined) {
     return (

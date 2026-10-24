@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Check, MessageCircle, Paperclip } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay,
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, useDroppable,
 } from '@dnd-kit/core'
 import {
   SortableContext, useSortable, verticalListSortingStrategy,
@@ -10,6 +10,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/button'
+import { computeTaskMove } from './shared/moveTask'
 import { Input } from '@/components/ui/input'
 import TaskDetailModal from './shared/TaskDetailModal'
 import { TAG_PALETTE, getTagColor, computeProgress, getUrgencyStyle } from './shared/taskColors'
@@ -314,6 +315,8 @@ function TrelloColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
   const [adding, setAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const taskIds = tasks.map(t => t.id)
+  // La colonne entière est une zone de dépôt, même vide.
+  const { setNodeRef: setDropRef } = useDroppable({ id: col.id })
 
   function submitAdd(e) {
     e?.preventDefault()
@@ -323,7 +326,7 @@ function TrelloColumn({ col, tasks, projects, onOpen, onAddTask, isOver, tagStyl
   }
 
   return (
-    <div className="flex flex-col">
+    <div ref={setDropRef} className="flex flex-col">
       {/* Column header */}
       <div className="flex items-center gap-2 mb-3 px-0.5">
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: col.color }} />
@@ -424,26 +427,8 @@ export default function TrelloCardsView({ tasks = [], projects = [], onTaskUpdat
     setActiveTask(null); setOverColumn(null)
     if (!over) return
 
-    const dragged = tasks.find(t => t.id === active.id)
-    if (!dragged) return
-
-    const overIsCol = COLUMNS.some(c => c.id === over.id)
-    const overTask = tasks.find(t => t.id === over.id)
-    const newStatus = overIsCol ? over.id : (overTask?.status || dragged.status)
-
-    if (newStatus !== dragged.status) {
-      onTaskUpdate?.(dragged.id, { status: newStatus })
-    } else if (overTask && overTask.id !== dragged.id) {
-      const colT = colTasks(dragged.status)
-      const oldIdx = colT.findIndex(t => t.id === dragged.id)
-      const newIdx = colT.findIndex(t => t.id === overTask.id)
-      if (oldIdx !== -1 && newIdx !== -1) {
-        const reordered = [...colT]
-        reordered.splice(oldIdx, 1)
-        reordered.splice(newIdx, 0, dragged)
-        reordered.forEach((t, i) => onTaskUpdate?.(t.id, { orderIndex: i }))
-      }
-    }
+    computeTaskMove(tasks, active.id, over.id, COLUMNS.map(c => c.id))
+      .forEach(({ id, patch }) => onTaskUpdate?.(id, patch))
   }
 
   return (

@@ -1,4 +1,9 @@
-import { Mail, Bot, CalendarDays, MessageSquare, Check, ExternalLink, Copy } from 'lucide-react'
+import { useState } from 'react'
+import { Mail, Bot, CalendarDays, MessageSquare, Check, ExternalLink, Copy, Trash2, RefreshCw, MessageCircle } from 'lucide-react'
+import { useStore, nanoid } from '@/store/useStore'
+import { useAuth } from '@/contexts/AuthContext'
+import { useExternalCalendars } from '@/hooks/useExternalCalendars'
+import { Input } from '@/components/ui/input'
 import { useGmail } from '@/contexts/GmailContext'
 import { toast } from '@/lib/toast'
 import { Card } from '@/components/ui/card'
@@ -47,6 +52,79 @@ const GMAIL_STATUS = {
   expired: ['warn', 'Session expirée'],
   disconnected: ['off', 'Non connecté'],
   unconfigured: ['warn', 'À configurer'],
+}
+
+function randomToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24))
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+// Apple Calendar dans les deux sens : abonnement iPhone au Cockpit, import d'un calendrier iCloud public.
+function AppleCalendarCard() {
+  const { state, dispatch } = useStore()
+  const { user } = useAuth()
+  const external = useExternalCalendars()
+  const [name, setName] = useState('')
+  const [url, setUrl] = useState('')
+  const token = state.settings?.calendarFeedToken
+  const feed = token ? `webcal://${window.location.host}/api/calendar?token=${token}` : null
+  const imports = state.settings?.icsImports || []
+
+  function addImport(e) {
+    e.preventDefault()
+    if (!url.trim()) return
+    dispatch({ type: 'UPDATE_SETTINGS', payload: { icsImports: [...imports, { id: nanoid(), name: name.trim() || 'iCloud', url: url.trim(), color: '#5BA8E0' }] } })
+    setName('')
+    setUrl('')
+    toast.success('Calendrier ajouté : il apparaît dans le Calendrier du Cockpit')
+  }
+
+  return (
+    <IntegrationCard
+      Icon={CalendarDays} color="#FF3B30" name="Apple Calendar"
+      description="Tes échéances, événements et RDV du Cockpit sur ton iPhone, et tes calendriers iCloud dans le Cockpit."
+      status={<StatusPill tone={token || imports.length ? 'ok' : 'off'}>{token || imports.length ? 'Actif' : 'À configurer'}</StatusPill>}
+    >
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-[var(--text-primary)]">1 · Le Cockpit dans le Calendrier de ton iPhone</p>
+        {user?.local ? (
+          <p className="text-xs text-[var(--text-tertiary)]">Active d'abord la synchro (bouton en haut) : le lien lit tes données depuis ton compte.</p>
+        ) : feed ? (
+          <>
+            <CopyLine text={feed} />
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" asChild><a href={feed}>Ouvrir sur cet appareil</a></Button>
+              <Button size="sm" variant="ghost" onClick={() => dispatch({ type: 'UPDATE_SETTINGS', payload: { calendarFeedToken: randomToken() } })}>Révoquer et régénérer</Button>
+            </div>
+            <p className="text-[11px] text-[var(--text-tertiary)]">Sur l'iPhone : ouvre ce lien dans Safari, ou Réglages → Calendrier → Comptes → Ajouter un compte → Autre → « Ajouter un calendrier avec abonnement ». Mise à jour toutes les 15 min environ.</p>
+          </>
+        ) : (
+          <Button size="sm" onClick={() => dispatch({ type: 'UPDATE_SETTINGS', payload: { calendarFeedToken: randomToken() } })}>Générer mon lien d'abonnement</Button>
+        )}
+      </div>
+
+      <div className="space-y-2 border-t border-[var(--border-soft)] pt-4">
+        <p className="text-xs font-semibold text-[var(--text-primary)]">2 · Tes calendriers iCloud dans le Cockpit</p>
+        <p className="text-[11px] text-[var(--text-tertiary)]">Dans Calendrier (Mac ou iPhone) : ⓘ à côté du calendrier → active « Calendrier public » → copie le lien (webcal://…). Les liens Google « adresse secrète au format iCal » marchent aussi.</p>
+        {imports.map(src => (
+          <div key={src.id} className="flex items-center gap-2 rounded-xl bg-[var(--bg-card-soft)] px-3 py-2 text-xs">
+            <span className="h-2 w-2 rounded-full" style={{ background: src.color }} />
+            <span className="font-medium text-[var(--text-primary)]">{src.name}</span>
+            <span className="min-w-0 flex-1 truncate text-[var(--text-tertiary)]">
+              {external.status[src.id]?.error ? <span className="text-[var(--red-deep)]">{external.status[src.id].error}</span> : `${external.status[src.id]?.events?.length ?? '…'} événements`}
+            </span>
+            <button type="button" aria-label="Retirer" onClick={() => dispatch({ type: 'UPDATE_SETTINGS', payload: { icsImports: imports.filter(i => i.id !== src.id) } })} className="text-[var(--text-tertiary)] hover:text-[var(--red-deep)]"><Trash2 size={13} /></button>
+          </div>
+        ))}
+        <form onSubmit={addImport} className="flex flex-wrap gap-2">
+          <Input value={name} onChange={e => setName(e.target.value)} placeholder="Nom (ex. Perso)" className="w-32" />
+          <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="webcal://p…-caldav.icloud.com/published/…" className="min-w-[200px] flex-1" />
+          <Button type="submit" size="sm" className="h-10">Ajouter</Button>
+          {imports.length > 0 && <Button type="button" size="sm" variant="ghost" className="h-10" onClick={external.refresh}><RefreshCw size={13} /></Button>}
+        </form>
+      </div>
+    </IntegrationCard>
+  )
 }
 
 export default function Integrations() {
@@ -106,7 +184,10 @@ export default function Integrations() {
           </p>
         </IntegrationCard>
 
-        <IntegrationCard Icon={CalendarDays} color="#4285F4" name="Google Agenda" description="Rendez-vous du jour dans les rappels et les notifications." status={<StatusPill tone="off">Bientôt</StatusPill>} />
+        <AppleCalendarCard />
+        <IntegrationCard Icon={MessageCircle} color="#25D366" name="WhatsApp" description="Messages de tes clients dans le Cockpit, réponses depuis la plateforme ou par Claude / Codex." status={<StatusPill tone="off">En préparation</StatusPill>}>
+          <p className="text-xs text-[var(--text-secondary)]">WhatsApp n'offre pas d'accès officiel pour un compte perso : il faut soit un pont « appareil lié » (comme WhatsApp Web) qui tourne en continu sur un petit serveur, soit passer à WhatsApp Business. Le choix est à faire avant de brancher.</p>
+        </IntegrationCard>
         <IntegrationCard Icon={MessageSquare} color="#611f69" name="Slack" description="Messages directs et mentions importantes dans le bandeau « À traiter »." status={<StatusPill tone="off">Bientôt</StatusPill>} />
       </div>
 

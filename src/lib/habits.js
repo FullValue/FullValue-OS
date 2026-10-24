@@ -50,7 +50,7 @@ export function dueToday(habits, today = new Date()) {
 export const HABIT_PRESETS = [
   { emoji: '🕌', name: 'Les 5 prières à l’heure' },
   { emoji: '📖', name: 'Lecture 20 min' },
-  { emoji: '💪', name: 'Sport', days: [1, 3, 5] },
+  { emoji: '💪', name: 'Sport', days: [1, 3, 5], time: '18:00' },
   { emoji: '🚶', name: 'Marche 30 min' },
   { emoji: '💧', name: '2 L d’eau' },
   { emoji: '🌙', name: 'Couché avant 23 h' },

@@ -198,7 +198,7 @@ function BreakChip({ pomodoro }) {
   )
 }
 
-function TimerChip({ timer }) {
+export function TimerChip({ timer }) {
   const { state } = useStore()
   const active = timer.running || timer.paused
   const pomo = timer.pomodoro

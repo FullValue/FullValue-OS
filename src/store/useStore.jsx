@@ -2,7 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { keepCorruptCopy, snapshotDaily } from '@/lib/backup'
 import { toast } from '@/lib/toast'
 
-const STATE_VERSION = 5
+const STATE_VERSION = 6
 const nanoid = () => Math.random().toString(36).slice(2, 10)
 
 const PROJECTS = [
@@ -67,6 +67,10 @@ const INITIAL_STATE = {
   habits: [],
   habitLogs: {},   // { 'AAAA-MM-JJ': [habitId, …] }
   goals: [],
+  // v6 : prières (« ontime » | « late » | « missed »), récompenses achetées avec les pièces
+  prayerLogs: {},   // { 'AAAA-MM-JJ': { fajr: 'ontime', … } }
+  rewards: [],
+  rewardClaims: [],
 }
 
 // Champs par défaut d'une tâche, partagés par toutes les actions qui en créent une.
@@ -233,6 +237,17 @@ function reducer(state, action) {
       return { ...state, habitLogs: { ...state.habitLogs, [date]: next } }
     }
 
+    case 'LOG_PRAYER': {
+      const { date, prayer, status } = action.payload
+      return { ...state, prayerLogs: { ...state.prayerLogs, [date]: { ...(state.prayerLogs?.[date] || {}), [prayer]: status } } }
+    }
+
+    case 'CLAIM_BOSS': {
+      const { week, id, xp, coins } = action.payload
+      if (state.game?.bossClaims?.[week]) return state
+      return { ...state, game: { ...state.game, bossClaims: { ...(state.game?.bossClaims || {}), [week]: { id, xp, coins } } } }
+    }
+
     case 'UNLOCK_ACHIEVEMENT': {
       const { id, date } = action.payload
       if (state.game?.achievements?.[id]) return state
@@ -301,6 +316,9 @@ function loadState() {
           habits: parsed.habits || [],
           habitLogs: parsed.habitLogs || {},
           goals: parsed.goals || [],
+          prayerLogs: parsed.prayerLogs || {},
+          rewards: parsed.rewards || [],
+          rewardClaims: parsed.rewardClaims || [],
           settings: { ...INITIAL_STATE.settings, ...(parsed.settings || {}), prayerTimes: { ...INITIAL_STATE.settings.prayerTimes, ...(parsed.settings?.prayerTimes || {}) } },
         }
       }

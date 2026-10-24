@@ -182,9 +182,17 @@ function Chip({ children }) {
   return <span className="rounded-full bg-[var(--bg-page)] px-2 py-0.5 text-[var(--text-secondary)]">{children}</span>
 }
 
-export default function DetailPanel({ entity, game, onClose, onNavigate }) {
+export default function DetailPanel({ entity, game, onClose, onNavigate, embedded = false }) {
   const { state } = useStore()
   if (!entity) return null
+  // Intégré au panneau latéral de l'open space : pas de carte flottante.
+  if (embedded) {
+    return (
+      <div className="space-y-4">
+        <Body entity={entity} state={state} game={game} onNavigate={onNavigate} />
+      </div>
+    )
+  }
   return (
     <Card className="absolute inset-x-2 bottom-2 z-30 max-h-[55%] overflow-y-auto p-4 sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-3 sm:max-h-[calc(100%-1.5rem)] sm:w-80">
       <Button variant="ghost" size="icon-sm" className="absolute right-2 top-2" onClick={onClose} aria-label="Fermer le panneau">

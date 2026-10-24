@@ -104,13 +104,13 @@ export function FocusChart({ state }) {
         <span className="text-xs text-[var(--text-tertiary)]">{fmt(total)} au total</span>
       </div>
       <div className="flex flex-1 items-end justify-between gap-2.5" style={{ minHeight: 170 }}>
-        {days.map(d => {
+        {days.map((d, i) => {
           const h = d.future || !d.minutes ? 0.55 + (d.future ? 0.25 : 0) : Math.max(0.25, d.minutes / max)
           const bg = d.future || !d.minutes
             ? STRIPES
             : d === best ? 'var(--brand-900)' : d.isToday ? 'var(--brand-300)' : 'var(--brand-700)'
           return (
-            <div key={d.label + d.isToday} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
+            <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
               <div className="relative flex w-full max-w-[64px] flex-1 items-end">
                 {d.isToday && d.minutes > 0 && (
                   <span className="absolute left-1/2 -translate-x-1/2 rounded-md border border-[var(--border-medium)] bg-[var(--bg-card)] px-1.5 py-0.5 text-[10px] text-[var(--text-secondary)]" style={{ bottom: `calc(${h * 100}% + 6px)` }}>

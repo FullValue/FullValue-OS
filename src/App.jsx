@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import { StoreProvider } from '@/store/useStore'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
-import FloatingNavbar, { SIDEBAR_WIDTH } from '@/components/layout/FloatingNavbar'
+import FloatingNavbar, { SIDEBAR_WIDTH, RAIL_WIDTH } from '@/components/layout/FloatingNavbar'
 import TopBar from '@/components/layout/TopBar'
 import PriorityStrip from '@/components/layout/PriorityStrip'
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
@@ -20,6 +20,8 @@ import { pickNextAction } from '@/lib/priorities'
 import { toast } from '@/lib/toast'
 import { playSound, notify } from '@/lib/sound'
 import VoiceCapture from '@/components/VoiceCapture'
+import CheckinOverlay from '@/components/CheckinOverlay'
+import WeeklyWrapped from '@/components/WeeklyWrapped'
 import AccessCodePage from '@/components/auth/AccessCodePage'
 import LoginPage from '@/components/auth/LoginPage'
 import SignupPage from '@/components/auth/SignupPage'
@@ -360,7 +362,7 @@ function AppInner() {
       case 'trophees':       return <Trophees />
       case 'open-space':     return (
         <Suspense fallback={<p className="py-20 text-center text-sm text-[var(--text-tertiary)]">Chargement de l'open space…</p>}>
-          <OpenSpace onNavigate={setActivePage} />
+          <OpenSpace onNavigate={setActivePage} timer={timer} onStartTask={quickStart} />
         </Suspense>
       )
       default:               return <Journee onStartTask={quickStart} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
@@ -386,22 +388,30 @@ function AppInner() {
         activePage={activePage}
         setActivePage={setActivePage}
         timerRunning={timerRunning}
+        compact={isOpenSpace && !isMobile}
       />
 
       {/* Contenu : barre du haut et bandeau « À traiter » communs, puis la page */}
-      <main
-        className="transition-all duration-200"
-        style={{
-          marginLeft: isMobile ? 0 : SIDEBAR_WIDTH,
-          padding: isMobile ? '12px 12px 88px' : '12px 12px 64px 0',
-        }}
-      >
-        <TopBar onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} timer={timer} />
-        <PriorityStrip onStartTask={quickStart} onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
-        <div className="mx-auto animate-fadeIn px-0 sm:px-2" style={{ maxWidth: isMobile || isOpenSpace ? '100%' : (isJournee ? 1440 : 1100) }}>
+      {isOpenSpace && !isMobile ? (
+        // Open space en plein écran : rail d'icônes à gauche, la scène occupe tout le reste.
+        <main className="fixed inset-y-0 right-0 animate-fadeIn" style={{ left: RAIL_WIDTH - 12 }}>
           {renderPage()}
-        </div>
-      </main>
+        </main>
+      ) : (
+        <main
+          className="transition-all duration-200"
+          style={{
+            marginLeft: isMobile ? 0 : SIDEBAR_WIDTH,
+            padding: isMobile ? '12px 12px 88px' : '12px 12px 64px 0',
+          }}
+        >
+          <TopBar onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} timer={timer} />
+          <PriorityStrip onStartTask={quickStart} onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
+          <div className="mx-auto animate-fadeIn px-0 sm:px-2" style={{ maxWidth: isMobile || isOpenSpace ? '100%' : (isJournee ? 1440 : 1100) }}>
+            {renderPage()}
+          </div>
+        </main>
+      )}
 
       <CommandPalette
         open={cmdOpen}
@@ -433,6 +443,8 @@ function AppInner() {
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
       <VoiceCapture />
+      <CheckinOverlay />
+      <WeeklyWrapped />
 
       <Toaster theme={theme} />
     </div>

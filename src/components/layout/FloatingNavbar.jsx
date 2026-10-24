@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 
 export const SIDEBAR_WIDTH = 248
+// Rail d'icônes (open space plein écran) : 60 px + marges.
+export const RAIL_WIDTH = 84
 
 // Navigation par moment d'usage : la journée d'abord, puis le pilotage de fond.
 const NAV_GROUPS = [
@@ -94,7 +96,7 @@ function LevelCard({ onOpen }) {
       <span className="mt-3 block h-1.5 overflow-hidden rounded-full bg-white/20">
         <span className="block h-full rounded-full bg-white" style={{ width: `${Math.round(game.progress * 100)}%` }} />
       </span>
-      <span className="mt-1.5 block text-[11px] text-white/70">{game.current} / {game.need} XP</span>
+      <span className="mt-1.5 flex justify-between text-[11px] text-white/70"><span>{game.current} / {game.need} XP</span><span>🪙 {game.coins.balance}</span></span>
     </button>
   )
 }
@@ -311,7 +313,43 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
 
 // ─── Fixed full-height sidebar ────────────────────────────────────────────────
 
-export default function FloatingNavbar({ activePage, setActivePage, timerRunning }) {
+// Barre latérale repliée en rail d'icônes, pour les pages plein écran (open space).
+function NavRail({ activePage, setActivePage, projects, inboxCount, waUnread }) {
+  const game = useGame()
+  const Item = ({ id, label, Icon, emoji, badge }) => {
+    const active = activePage === id
+    return (
+      <button
+        type="button" title={label} aria-label={label} onClick={() => setActivePage(id)}
+        className="relative flex h-10 w-10 items-center justify-center rounded-2xl transition-colors hover:bg-[rgba(var(--ink),0.06)]"
+        style={{ background: active ? 'var(--bg-selection)' : undefined, color: active ? 'var(--accent)' : 'var(--text-tertiary)' }}
+      >
+        {emoji ? <span className="text-base leading-none">{emoji}</span> : <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />}
+        {badge > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white" style={{ background: 'var(--brand-900)' }}>{badge > 9 ? '9+' : badge}</span>}
+      </button>
+    )
+  }
+  return (
+    <aside className="fixed bottom-3 left-3 top-3 z-50 hidden w-[60px] flex-col items-center gap-1 rounded-[26px] bg-[var(--bg-sidebar)] py-4 sm:flex">
+      <button type="button" onClick={() => setActivePage('journee')} title="Journée" className="mb-3 flex h-9 w-9 items-center justify-center rounded-full" style={{ border: '3px solid var(--accent)' }}>
+        <span className="h-3.5 w-3.5 rounded-full" style={{ background: 'var(--accent)' }} />
+      </button>
+      <div className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+        {NAV_GROUPS.flatMap(g => g.items).map(it => (
+          <Item key={it.id} {...it} badge={it.badge ? inboxCount : it.waBadge ? waUnread : 0} />
+        ))}
+        <span className="my-2 h-px w-6 bg-[var(--border-medium)]" />
+        {projects.map(p => <Item key={p.id} id={`projet_${p.id}`} label={p.name} emoji={p.emoji} />)}
+      </div>
+      <button type="button" onClick={() => setActivePage('trophees')} title={`Niveau ${game.level} · ${game.title}`} className="mt-2 flex h-11 w-11 flex-col items-center justify-center rounded-2xl text-white" style={{ background: 'var(--hero-gradient)' }}>
+        <span className="text-[8px] font-semibold uppercase leading-none opacity-80">Niv.</span>
+        <span className="text-sm font-bold leading-tight">{game.level}</span>
+      </button>
+    </aside>
+  )
+}
+
+export default function FloatingNavbar({ activePage, setActivePage, timerRunning, compact = false }) {
   const { state, dispatch } = useStore()
   const { user, signOut } = useAuth()
   const [addingProject, setAddingProject] = useState(false)
@@ -375,9 +413,11 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
 
   return (
     <>
+      {compact && <NavRail activePage={activePage} setActivePage={setActivePage} projects={state.projects} inboxCount={inboxCount} waUnread={wa.unread} />}
+
       {/* Desktop fixed sidebar */}
       <aside
-        className="fixed left-3 top-3 z-50 hidden flex-col overflow-hidden rounded-[26px] sm:flex"
+        className={`fixed left-3 top-3 z-50 hidden flex-col overflow-hidden rounded-[26px] ${compact ? '' : 'sm:flex'}`}
         style={{
           width: SIDEBAR_WIDTH - 24,
           height: 'calc(100dvh - 24px)',

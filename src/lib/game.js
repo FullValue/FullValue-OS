@@ -4,6 +4,7 @@
 
 import { localDateStr } from '@/lib/backup'
 import { isDue } from '@/lib/habits'
+import { prayerXpByDay } from '@/lib/prayers'
 
 export const XP_RULES = {
   taskHigh: 30,
@@ -139,18 +140,38 @@ export function habitXp(state) {
 
 // ── Vue d'ensemble ───────────────────────────────────────────────────────────
 
-export function computeGame(state, today = localDateStr()) {
+// Combos : des tâches terminées à moins d'une heure d'intervalle enchaînent un multiplicateur
+// (+25 % par tâche, plafonné à ×2).
+export const COMBO_WINDOW_MS = 60 * 60 * 1000
+export function comboMultiplier(position) {
+  return Math.min(2, 1 + 0.25 * position)
+}
+
+export function computeGame(state, today = localDateStr(), now = Date.now()) {
   const days = activityByDay(state)
   let xp = 0
+  const xpByDay = {}
+  const addDay = (d, n) => { if (d && n) xpByDay[d] = (xpByDay[d] || 0) + n }
   const xpByPole = {}
   const addPole = (poleId, n) => { if (poleId) xpByPole[poleId] = (xpByPole[poleId] || 0) + n }
 
-  for (const t of state.tasks) {
-    if (t.status !== 'done' || !t.completedAt) continue
-    const n = taskXp(t)
+  // Tâches, avec le multiplicateur de combo selon l'enchaînement
+  const doneTasks = state.tasks.filter(t => t.status === 'done' && t.completedAt)
+    .sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt))
+  let chain = 0
+  let prevAt = null
+  for (const t of doneTasks) {
+    const at = new Date(t.completedAt).getTime()
+    chain = prevAt !== null && at - prevAt <= COMBO_WINDOW_MS ? chain + 1 : 0
+    prevAt = at
+    const n = Math.round(taskXp(t) * comboMultiplier(chain))
     xp += n
+    addDay(dayOf(t.completedAt), n)
     addPole(t.projectId, n)
   }
+  const comboActive = prevAt !== null && now - prevAt <= COMBO_WINDOW_MS
+  const combo = { count: comboActive ? chain + 1 : 0, multiplier: comboActive ? comboMultiplier(chain + 1) : 1, expiresAt: comboActive ? prevAt + COMBO_WINDOW_MS : null }
+
   // Le focus est plafonné par jour, puis réparti entre pôles au prorata.
   const focusByDay = {}
   for (const s of state.sessions) {
@@ -158,38 +179,46 @@ export function computeGame(state, today = localDateStr()) {
     if (!d) continue
     ;(focusByDay[d] ||= []).push(s)
   }
-  for (const list of Object.values(focusByDay)) {
+  for (const [d, list] of Object.entries(focusByDay)) {
     const total = list.reduce((sum, s) => sum + (s.duration || 0) / 60, 0)
     const earned = Math.min(XP_RULES.focusDailyCap, Math.floor(total * XP_RULES.focusPerMinute))
     xp += earned
+    addDay(d, earned)
     for (const s of list) addPole(s.projectId, total ? Math.round(earned * ((s.duration || 0) / 60) / total) : 0)
   }
-  for (const r of state.dailyReviews || []) if (!r.skipped) xp += XP_RULES.dailyReview
+  for (const r of state.dailyReviews || []) if (!r.skipped) { xp += XP_RULES.dailyReview; addDay(r.date, XP_RULES.dailyReview) }
 
   const habitXpByDay = habitXp(state)
-  for (const n of Object.values(habitXpByDay)) xp += n
+  for (const [d, n] of Object.entries(habitXpByDay)) { xp += n; addDay(d, n) }
+  const prayerXp = prayerXpByDay(state)
+  for (const [d, n] of Object.entries(prayerXp)) { xp += n; addDay(d, n) }
 
+  // XP « bonus » (quêtes, succès, boss) : elle a son propre toast, pas de « +N XP » en double.
   const claims = state.game?.questClaims || {}
-  // XP « bonus » (quêtes, succès) : elle a son propre toast, pas de « +N XP » en double.
-  let questXp = Object.keys(state.game?.achievements || {}).length * 50
-  for (const list of Object.values(claims)) for (const c of list) questXp += c.xp || 0
+  let questXp = 0
+  for (const [d, list] of Object.entries(claims)) for (const c of list) { questXp += c.xp || 0; addDay(d, c.xp || 0) }
+  for (const d of Object.values(state.game?.achievements || {})) { questXp += 50; addDay(d, 50) }
+  let bossCoins = 0
+  for (const [weekKey, b] of Object.entries(state.game?.bossClaims || {})) { questXp += b.xp || 0; bossCoins += b.coins || 0; addDay(weekKey, b.xp || 0) }
   xp += questXp
 
   const quests = questsFor(today, days[today]).map(q => ({
     ...q,
     claimed: (claims[today] || []).some(c => c.id === q.id),
   }))
-  const todayXp = (days[today]?.tasks || []).reduce((s, t) => s + taskXp(t), 0)
-    + Math.min(XP_RULES.focusDailyCap, Math.floor(days[today]?.focusMin || 0))
-    + (days[today]?.reviewed ? XP_RULES.dailyReview : 0)
-    + (habitXpByDay[today] || 0)
-    + (claims[today] || []).reduce((s, c) => s + (c.xp || 0), 0)
+
+  // Pièces : 1 pièce pour 10 XP, plus les récompenses de boss, moins les achats en boutique.
+  const spent = (state.rewardClaims || []).reduce((sum, c) => sum + (Number(c.cost) || 0), 0)
+  const coins = { earned: Math.floor(xp / 10) + bossCoins, spent, balance: Math.floor(xp / 10) + bossCoins - spent }
 
   const level = levelFromXp(xp)
   return {
     xp,
     questXp,
-    todayXp,
+    todayXp: xpByDay[today] || 0,
+    xpByDay,
+    combo,
+    coins,
     ...level,
     title: levelTitle(level.level),
     streak: computeStreak(days, today),

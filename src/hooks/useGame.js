@@ -5,6 +5,7 @@ import { computeGame } from '@/lib/game'
 import { localDateStr } from '@/lib/backup'
 import { toast } from '@/lib/toast'
 import { newlyUnlocked } from '@/lib/achievements'
+import { bossStatus, BOSS_REWARD } from '@/lib/boss'
 import { playSound } from '@/lib/sound'
 
 export function useGame() {
@@ -18,6 +19,25 @@ export function useGameNotifications() {
   const game = useGame()
   const prevRef = useRef(null)
   const soundsOn = state.settings?.sounds !== false
+
+  // Boss de la semaine vaincu : récompense versée une seule fois.
+  useEffect(() => {
+    const boss = bossStatus(state)
+    if (!boss.defeated || boss.claimed) return
+    dispatch({ type: 'CLAIM_BOSS', payload: { week: boss.week.key, id: boss.id, ...BOSS_REWARD } })
+    playSound('levelUp', soundsOn)
+    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#3b6ff0', '#FFD66B', '#FF8FA3', '#22a06b'] })
+    toast(`${boss.emoji} ${boss.name} est vaincu !`, { description: `+${BOSS_REWARD.xp} XP · +${BOSS_REWARD.coins} pièces`, duration: 8000 })
+  }, [state, dispatch, soundsOn])
+
+  // Combos : toast quand l'enchaînement grandit.
+  const comboRef = useRef(game.combo.count)
+  useEffect(() => {
+    if (game.combo.count >= 2 && game.combo.count > comboRef.current) {
+      toast(`Combo ×${game.combo.count} 🔥`, { description: `Prochaine tâche dans l'heure : XP ×${game.combo.multiplier.toFixed(2).replace('.00', '')}`, duration: 2500 })
+    }
+    comboRef.current = game.combo.count
+  }, [game.combo.count, game.combo.multiplier])
 
   // Succès : vérifiés à chaque changement, débloqués une seule fois.
   useEffect(() => {

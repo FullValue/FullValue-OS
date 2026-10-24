@@ -41,7 +41,11 @@ export function mergeStates(local, remote) {
     if (r === undefined) out[key] = l
     else if (l === undefined) out[key] = r
     else if (isEntityList(l) && isEntityList(r)) out[key] = mergeList(l, r)
-    else if (key === 'habitLogs') {
+    else if (key === 'prayerLogs') {
+      const days = { ...r }
+      for (const [date, log] of Object.entries(l || {})) days[date] = { ...(r[date] || {}), ...log }
+      out[key] = days
+    } else if (key === 'habitLogs') {
       // Union par jour : une habitude cochée sur un appareil reste cochée.
       const days = { ...r }
       for (const [date, ids] of Object.entries(l || {})) days[date] = [...new Set([...(r[date] || []), ...ids])]
@@ -52,7 +56,7 @@ export function mergeStates(local, remote) {
         const ids = new Set((claims[date] || []).map(c => c.id))
         claims[date] = [...(claims[date] || []), ...list.filter(c => !ids.has(c.id))]
       }
-      out[key] = { ...r, ...l, questClaims: claims, achievements: { ...(r.achievements || {}), ...(l.achievements || {}) } }
+      out[key] = { ...r, ...l, questClaims: claims, achievements: { ...(r.achievements || {}), ...(l.achievements || {}) }, bossClaims: { ...(r.bossClaims || {}), ...(l.bossClaims || {}) } }
     } else if (l && r && typeof l === 'object' && !Array.isArray(l)) out[key] = { ...r, ...l }
     else out[key] = l
   }

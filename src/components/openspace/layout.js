@@ -3,6 +3,8 @@ import { northStarOf } from '@/lib/goals'
 // Calcule la disposition de l'open space à partir du store local.
 // Fonctions pures : aucune dépendance à three, testables à part.
 
+// Hauteur du plateau surélevé des pôles : postes et tableaux sont posés dessus.
+export const PLATFORM_H = 0.14
 const DESK_DX = 2.7
 const DESK_DZ = 2.6
 const DESKS_PER_ROW = 3
@@ -89,13 +91,13 @@ export function buildLayout(state) {
         poleId: z.pole.id,
         position: [
           cx - DESK_DX + (k % DESKS_PER_ROW) * DESK_DX,
-          0,
+          PLATFORM_H,
           cz + z.d / 2 - ZONE_PAD - DESK_DZ / 2 - Math.floor(k / DESKS_PER_ROW) * DESK_DZ + 0.2,
         ],
       }))
       zones.push({
         id: `pole:${z.pole.id}`, pole: z.pole, center: [cx, cz], size: [z.w, z.d], desks,
-        boardPosition: [cx, 0, cz - z.d / 2 + 0.5],
+        boardPosition: [cx, PLATFORM_H, cz - z.d / 2 + 0.5],
         isClientsPole: z.pole.id === clientsPole,
       })
       x += z.w + ZONE_GAP

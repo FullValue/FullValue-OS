@@ -111,6 +111,7 @@ export default function RevueHebdo({ onNavigate }) {
         <div>
           <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Revue hebdo</h1>
           <p className="text-sm text-[var(--text-tertiary)]">Fais le point, trie ce qui traîne, prépare la semaine suivante.</p>
+          <Button size="sm" className="mt-3" onClick={() => window.dispatchEvent(new Event('cockpit:open-wrapped'))}>✨ Voir mon bilan de la semaine</Button>
         </div>
         <div className="-ml-2 flex items-center gap-1">
           <Button variant="ghost" size="icon-sm" onClick={() => setOffset(o => o - 1)} aria-label="Semaine précédente"><ChevronLeft size={15} /></Button>

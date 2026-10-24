@@ -4,6 +4,7 @@ import { useStore } from '@/store/useStore'
 import { PrayerWidget } from '@/components/layout/RightSidebar'
 import GameCard from '@/components/widgets/GameCard'
 import HabitsCard from '@/components/widgets/HabitsCard'
+import BossCard from '@/components/widgets/BossCard'
 import NextActionCard from '@/components/dashboard/NextActionCard'
 import PrioritiesCard from '@/components/dashboard/PrioritiesCard'
 import {
@@ -175,13 +176,15 @@ export default function Journee({ onStartTask, onNavigate, onOpenPalette, timer 
 
       <div className="grid gap-5 lg:grid-cols-12">
         <div className="lg:col-span-7"><GameCard /></div>
-        <div className="lg:col-span-5"><HabitsCard onNavigate={onNavigate} /></div>
+        <div className="lg:col-span-5"><BossCard /></div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-12">
-        <div className="lg:col-span-8"><PrioritiesCard tasks={state.tasks} projects={state.projects} dispatch={dispatch} onStartTask={onStartTask} /></div>
-        <div className="lg:col-span-4"><PrayerWidget nowMinutes={nowMinutes} /></div>
+        <div className="lg:col-span-5"><HabitsCard onNavigate={onNavigate} /></div>
+        <div className="lg:col-span-7"><PrayerWidget nowMinutes={nowMinutes} /></div>
       </div>
+
+      <PrioritiesCard tasks={state.tasks} projects={state.projects} dispatch={dispatch} onStartTask={onStartTask} />
     </div>
   )
 }

@@ -1,7 +1,9 @@
-import { Search, Mail, Bell, ExternalLink, RefreshCw, AlertTriangle, CalendarClock, Play, Pause, Square, Maximize2 } from 'lucide-react'
+import { Search, Mail, Bell, ExternalLink, RefreshCw, AlertTriangle, CalendarClock, Play, Pause, Square, Maximize2, Cloud, CloudOff, Loader2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGmail } from '@/contexts/GmailContext'
+import { useCloudSync } from '@/contexts/CloudSyncContext'
+import { SimpleTooltip } from '@/components/ui/tooltip'
 import { localDateStr } from '@/lib/backup'
 import { initials, timeAgo } from '@/lib/priorities'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
@@ -128,6 +130,32 @@ function NotificationsMenu({ onNavigate }) {
   )
 }
 
+// État de la synchro Supabase ; en mode local, propose de se connecter.
+function SyncIndicator() {
+  const { leaveLocalMode } = useAuth()
+  const { status, lastSyncedAt, error, syncNow } = useCloudSync()
+  if (status === 'local') {
+    return (
+      <SimpleTooltip label="Données uniquement dans ce navigateur. Connecte-toi pour les synchroniser." side="bottom">
+        <button type="button" onClick={leaveLocalMode} className={`${ROUND} w-auto gap-2 px-4 text-xs font-medium`}>
+          <CloudOff size={16} /> <span className="hidden md:inline">Activer la synchro</span>
+        </button>
+      </SimpleTooltip>
+    )
+  }
+  const busy = status === 'connecting' || status === 'syncing'
+  const label = status === 'offline'
+    ? `Synchro en attente : ${error || 'hors ligne'}. Tes modifs sont gardées ici et repartiront automatiquement.`
+    : busy ? 'Synchronisation…' : `Synchronisé${lastSyncedAt ? ` à ${lastSyncedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : ''}`
+  return (
+    <SimpleTooltip label={label} side="bottom">
+      <button type="button" onClick={syncNow} className={ROUND} aria-label={label}>
+        {busy ? <Loader2 size={17} className="animate-spin" /> : status === 'offline' ? <CloudOff size={17} className="text-[var(--red-deep)]" /> : <Cloud size={17} className="text-[var(--accent)]" />}
+      </button>
+    </SimpleTooltip>
+  )
+}
+
 function fmtClock(s) {
   const h = Math.floor(s / 3600)
   const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
@@ -170,7 +198,7 @@ function TimerChip({ timer }) {
 export default function TopBar({ onOpenPalette, onNavigate, timer }) {
   const { user } = useAuth()
   const gmail = useGmail()
-  const name = user?.user_metadata?.full_name || 'Moi'
+  const name = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Moi'
   return (
     <header className="mb-4 flex items-center gap-3 rounded-[26px] bg-[var(--bg-sidebar)] px-3 py-2.5 sm:px-4">
       <button
@@ -184,6 +212,7 @@ export default function TopBar({ onOpenPalette, onNavigate, timer }) {
       </button>
       <div className="ml-auto flex items-center gap-2">
         {timer && <TimerChip timer={timer} />}
+        <SyncIndicator />
         <MailMenu onNavigate={onNavigate} />
         <NotificationsMenu onNavigate={onNavigate} />
         <AppearanceMenu />
@@ -191,7 +220,7 @@ export default function TopBar({ onOpenPalette, onNavigate, timer }) {
           <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'var(--hero-gradient)' }}>{initials(name)}</span>
           <span className="leading-tight">
             <span className="block text-sm font-semibold text-[var(--text-primary)]">{name}</span>
-            <span className="block text-xs text-[var(--text-tertiary)]">{gmail.account || 'Accès local'}</span>
+            <span className="block text-xs text-[var(--text-tertiary)]">{user?.local ? 'Accès local' : user?.email || gmail.account}</span>
           </span>
         </div>
       </div>

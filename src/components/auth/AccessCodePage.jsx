@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export default function AccessCodePage({ onUnlock }) {
+export default function AccessCodePage({ onUnlock, onBack }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
 
@@ -67,6 +67,12 @@ export default function AccessCodePage({ onUnlock }) {
           <ArrowRight size={15} />
         </Button>
       </form>
+
+      {onBack && (
+        <Button type="button" variant="ghost" size="sm" className="mt-4 w-full" onClick={onBack}>
+          ← Se connecter pour synchroniser
+        </Button>
+      )}
     </AuthLayout>
   )
 }

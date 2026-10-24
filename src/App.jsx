@@ -19,6 +19,11 @@ import { localDateStr } from '@/lib/backup'
 import { pickNextAction } from '@/lib/priorities'
 import { toast } from '@/lib/toast'
 import AccessCodePage from '@/components/auth/AccessCodePage'
+import LoginPage from '@/components/auth/LoginPage'
+import SignupPage from '@/components/auth/SignupPage'
+import ForgotPasswordPage from '@/components/auth/ForgotPasswordPage'
+import CheckEmailPage from '@/components/auth/CheckEmailPage'
+import { CloudSyncProvider } from '@/contexts/CloudSyncContext'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
 import ProjetPage from '@/components/views/ProjetPage'
@@ -60,14 +65,33 @@ function timerElapsed(timer) {
 
 function AuthGate() {
   const { user, signInWithCode } = useAuth()
+  const [authPage, setAuthPage] = useState('login')
 
-  if (!user) return <AccessCodePage onUnlock={signInWithCode} />
+  if (user === undefined) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg-page)' }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-2" style={{ borderColor: 'var(--border-medium)', borderTopColor: 'var(--accent)' }} />
+      </div>
+    )
+  }
+
+  if (!user) {
+    switch (authPage) {
+      case 'signup':      return <SignupPage onNavigate={setAuthPage} />
+      case 'forgot':      return <ForgotPasswordPage onNavigate={setAuthPage} />
+      case 'check-email': return <CheckEmailPage onNavigate={setAuthPage} />
+      case 'local':       return <AccessCodePage onUnlock={signInWithCode} onBack={() => setAuthPage('login')} />
+      default:            return <LoginPage onNavigate={setAuthPage} />
+    }
+  }
 
   return (
     <StoreProvider>
-      <GmailProvider>
-        <AppInner />
-      </GmailProvider>
+      <CloudSyncProvider>
+        <GmailProvider>
+          <AppInner />
+        </GmailProvider>
+      </CloudSyncProvider>
     </StoreProvider>
   )
 }

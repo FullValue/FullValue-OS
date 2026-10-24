@@ -8,7 +8,7 @@ export default function AuthLayout({ children }) {
     >
       <div className="fixed right-4 top-4 z-40"><AppearanceMenu /></div>
       <div
-        className="w-full max-w-sm rounded-2xl p-8"
+        className="w-full max-w-sm rounded-[26px] p-8"
         style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border-soft)',
@@ -16,9 +16,11 @@ export default function AuthLayout({ children }) {
         }}
       >
         <div className="mb-8 text-center">
-          <span className="text-2xl">✦</span>
-          <p className="mt-1 text-sm font-medium" style={{ color: 'var(--text-tertiary)' }}>
-            Le Cockpit
+          <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full" style={{ border: '3px solid var(--accent)' }}>
+            <span className="h-4 w-4 rounded-full" style={{ background: 'var(--accent)' }} />
+          </span>
+          <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Cockpit
           </p>
         </div>
         {children}

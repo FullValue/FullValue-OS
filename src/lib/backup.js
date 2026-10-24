@@ -3,6 +3,7 @@
 
 const SNAPSHOT_PREFIX = 'cockpit_backup_'
 const CORRUPT_KEY = 'cockpit_state_corrupt'
+const BEFORE_SYNC_KEY = 'cockpit_state_before_sync'
 const KEEP_SNAPSHOTS = 3
 
 export function localDateStr(d = new Date()) {
@@ -38,6 +39,8 @@ export function listBackups() {
     const items = snapshotKeys().map(key => ({ key, label: `Instantané du ${key.slice(SNAPSHOT_PREFIX.length)}`, size: localStorage.getItem(key)?.length || 0 }))
     const corrupt = localStorage.getItem(CORRUPT_KEY)
     if (corrupt) items.push({ key: CORRUPT_KEY, label: 'Données illisibles mises de côté', size: corrupt.length, corrupt: true })
+    const beforeSync = localStorage.getItem(BEFORE_SYNC_KEY)
+    if (beforeSync) items.push({ key: BEFORE_SYNC_KEY, label: 'État local avant la synchro avec ton compte', size: beforeSync.length })
     return items
   } catch {
     return []

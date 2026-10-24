@@ -102,8 +102,11 @@ export default function Sessions({
   )
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-8 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">Sessions</h1>
+    <div className="mx-auto max-w-4xl">
+      <div className="mb-6">
+        <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Sessions</h1>
+        <p className="text-sm text-[var(--text-tertiary)]">Le chrono complet et l'historique. Astuce : T lance ou met en pause le chrono depuis n'importe quelle page.</p>
+      </div>
 
       {/* Timer block */}
       <div className="mb-6 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-8 text-center shadow-[var(--shadow-card)]">

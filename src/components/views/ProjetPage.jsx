@@ -1,6 +1,6 @@
 import { accentText } from '@/lib/colors'
 import { useState, useRef, useEffect } from 'react'
-import { ArrowLeft, Clock, CheckSquare, BarChart2, Kanban, FileText, Calendar, Flag, Edit2, Check, Plus, Trash2, FileJson, Play, CalendarDays } from 'lucide-react'
+import { ArrowLeft, Clock, CheckSquare, BarChart2, Kanban, FileText, Calendar, Flag, Edit2, Check, Plus, Trash2, FileJson, Play, CalendarDays, Link2, ExternalLink } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import ViewContainer from '@/views/ViewContainer'
 import Drawer from '@/components/ui/Drawer'
@@ -34,9 +34,10 @@ function getWeekStart() {
 const TIER_LABELS = { 1: 'Tier 1 — Core', 2: 'Tier 2 — Growth', 3: 'Tier 3 — Side', 4: 'Tier 4 — Explore' }
 
 const TABS = [
-  { id: 'kanban', label: 'Kanban', Icon: Kanban },
-  { id: 'dashboard', label: 'Dashboard', Icon: BarChart2 },
+  { id: 'kanban', label: 'Tâches', Icon: Kanban },
+  { id: 'dashboard', label: 'Tableau de bord', Icon: BarChart2 },
   { id: 'notes', label: 'Notes', Icon: FileText },
+  { id: 'ressources', label: 'Ressources', Icon: Link2 },
   { id: 'sessions', label: 'Sessions', Icon: Calendar },
 ]
 
@@ -542,6 +543,59 @@ function NotesTab({ project }) {
   )
 }
 
+// Liens, prompts et templates rattachés au projet (mêmes données que le Hub Ressources).
+function ResourcesTab({ project }) {
+  const { state, dispatch } = useStore()
+  const [title, setTitle] = useState('')
+  const [url, setUrl] = useState('')
+  const resources = state.resources.filter(r => r.projectId === project.id)
+
+  function add(e) {
+    e.preventDefault()
+    if (!title.trim() || !url.trim()) return
+    const href = /^https?:\/\//.test(url.trim()) ? url.trim() : `https://${url.trim()}`
+    dispatch({ type: 'ADD_RESOURCE', payload: { type: 'lien', title: title.trim(), url: href, projectId: project.id, category: 'Autre', tag: 'Autre', description: '', content: '' } })
+    setTitle('')
+    setUrl('')
+    toast.success('Lien ajouté')
+  }
+
+  function remove(r) {
+    dispatch({ type: 'DELETE_RESOURCE', payload: r.id })
+    toastUndo('Ressource supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { resources: [r] } }))
+  }
+
+  return (
+    <div className="space-y-4 p-4">
+      <form onSubmit={add} className="flex flex-wrap gap-2">
+        <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Nom du lien" className="min-w-[160px] flex-1" />
+        <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" className="min-w-[200px] flex-[2]" />
+        <Button type="submit" size="sm" className="h-10"><Plus size={13} /> Ajouter</Button>
+      </form>
+      {resources.length ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {resources.map(r => (
+            <Card key={r.id} className="group flex items-start gap-3 p-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-100)] text-[var(--accent)]">
+                {r.type === 'lien' ? <Link2 size={15} /> : <FileText size={15} />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-[var(--text-primary)]">{r.title}</p>
+                {r.url
+                  ? <a href={r.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 truncate text-xs text-[var(--accent)] hover:underline">{r.url.replace(/^https?:\/\//, '')} <ExternalLink size={10} /></a>
+                  : <p className="line-clamp-2 text-xs text-[var(--text-tertiary)]">{r.description || r.content}</p>}
+              </div>
+              <Button variant="ghost" size="icon-sm" onClick={() => remove(r)} aria-label="Supprimer" className="opacity-0 group-hover:opacity-100"><Trash2 size={12} /></Button>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <p className="py-8 text-center text-sm text-[var(--text-tertiary)]">Aucune ressource pour {project.name}. Ajoute un lien ci-dessus, ou via le « + » du projet dans la barre latérale.</p>
+      )}
+    </div>
+  )
+}
+
 function SessionsTab({ project, sessions }) {
   const weekStart = getWeekStart()
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0)
@@ -624,7 +678,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
       <NorthStarBanner project={project} />
 
       {/* Page header */}
-      <div className="px-4 pt-4 pb-0 max-w-5xl mx-auto w-full">
+      <div className="w-full">
         <div className="flex items-center gap-3 mb-4">
           <Button
             variant="ghost"
@@ -638,7 +692,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
             {project.emoji}
           </div>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-[var(--text-primary)] leading-none">{project.name}</h1>
+            <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">{project.name}</h1>
             <span className="text-[11px] text-[var(--text-tertiary)]">{TIER_LABELS[project.tier]}</span>
           </div>
           <Button
@@ -654,7 +708,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
 
         {importSuccessCount !== null && (
           <div className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs"
-            style={{ background: 'rgba(168,230,189,0.1)', border: '1px solid rgba(168,230,189,0.25)', color: '#A8E6BD' }}>
+            style={{ background: 'var(--green-bg)', color: 'var(--green-deep)' }}>
             ✓ {importSuccessCount} élément{importSuccessCount > 1 ? 's' : ''} importé{importSuccessCount > 1 ? 's' : ''} dans {project.name}
           </div>
         )}
@@ -687,7 +741,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 max-w-5xl mx-auto w-full">
+      <div className="flex-1 w-full">
         {activeTab === 'kanban' && (
           <div className="p-4">
             <ViewContainer
@@ -704,6 +758,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
           <DashboardTab project={project} tasks={state.tasks} sessions={state.sessions} onStartTask={onStartTask} />
         )}
         {activeTab === 'notes' && <NotesTab project={project} />}
+        {activeTab === 'ressources' && <ResourcesTab project={project} />}
         {activeTab === 'sessions' && <SessionsTab project={project} sessions={state.sessions} />}
       </div>
 

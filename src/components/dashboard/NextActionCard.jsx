@@ -1,24 +1,10 @@
 import { Play, Check, Target } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { pickNextAction } from '@/lib/priorities'
 
 // ── Prochaine action ─────────────────────────────────────────────────────────
 // Une seule tâche mise en avant : en cours > fort impact > échéance la plus proche.
-
-function pickNextAction(tasks, today) {
-  const rank = t => [
-    t.status === 'inprogress' ? 0 : 1,
-    t.today ? 0 : 1,
-    t.impact === 'high' ? 0 : 1,
-    t.dueDate || '9999',
-  ]
-  const candidates = tasks.filter(t => t.status !== 'done' && (t.today || (t.dueDate && t.dueDate <= today)))
-  return candidates.sort((a, b) => {
-    const ra = rank(a), rb = rank(b)
-    for (let i = 0; i < ra.length; i++) if (ra[i] !== rb[i]) return ra[i] < rb[i] ? -1 : 1
-    return 0
-  })[0] || null
-}
 
 export default function NextActionCard({ tasks, projects, dispatch, onStartTask }) {
   const d = new Date()

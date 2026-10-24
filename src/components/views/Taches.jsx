@@ -183,7 +183,11 @@ export default function Taches() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-6">
+        <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Tâches</h1>
+        <p className="text-sm text-[var(--text-tertiary)]">Toutes tes tâches, tous pôles confondus. Capture en haut, trie et coche en dessous.</p>
+      </div>
       {/* Capture */}
       <div className="mb-6">
         <div className="relative">

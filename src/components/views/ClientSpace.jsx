@@ -1232,8 +1232,12 @@ export default function ClientSpace({ onStartTask }) {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Switcher horizontal */}
-      <div className="px-4 pt-4 pb-0 max-w-5xl mx-auto w-full">
-        <div className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: 'rgba(0,0,0,0.18)' }}>
+      <div className="w-full">
+        <div className="mb-5">
+          <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Clients</h1>
+          <p className="text-sm text-[var(--text-tertiary)]">Notes, documents, factures, sessions et tâches de chaque client.</p>
+        </div>
+        <div className="flex items-center gap-1 p-1 rounded-full overflow-x-auto" style={{ background: 'var(--bg-sidebar)' }}>
           {activeClients.map(c => (
             <Button
               type="button"

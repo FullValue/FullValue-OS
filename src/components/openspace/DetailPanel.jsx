@@ -115,7 +115,7 @@ function Body({ entity, state, game, onNavigate }) {
       const today = state.tasks.filter(t => t.today && t.status !== 'done')
       return (
         <>
-          <Header title="Ton bureau" subtitle={`Niv. ${game.level} · ${game.title}`} color="#8B7CFF" />
+          <Header title="Ton bureau" subtitle={`Niv. ${game.level} · ${game.title}`} color="#3B6FF0" />
           <div>
             <Progress value={Math.round(game.progress * 100)} />
             <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">

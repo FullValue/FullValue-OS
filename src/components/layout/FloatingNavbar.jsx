@@ -11,6 +11,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGame } from '@/hooks/useGame'
+import ProjectQuickAdd from '@/components/layout/ProjectQuickAdd'
 import { toast, toastUndo } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -482,7 +483,12 @@ export default function FloatingNavbar({ activePage, setActivePage, timerRunning
                             </Button>
 
                             {/* Edit / delete on hover */}
-                            <div className="pointer-events-none absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+                            <div className="pointer-events-none absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 has-[[data-state=open]]:pointer-events-auto has-[[data-state=open]]:opacity-100">
+                              <ProjectQuickAdd
+                                project={p}
+                                triggerClassName="h-6 w-6 rounded-md p-1"
+                                triggerStyle={{ color: 'var(--on-accent)', background: 'var(--accent)' }}
+                              />
                               <Button
                                 type="button"
                                 variant="ghost"

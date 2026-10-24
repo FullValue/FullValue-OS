@@ -43,7 +43,7 @@ export default function Donnees({ onNavigate }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-[var(--text-primary)]">Données</h1>
+        <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Données</h1>
         <p className="text-sm text-[var(--text-tertiary)]">
           Tes données vivent dans ce navigateur ({formatSize(usage)}). Exporte-les régulièrement tant que la synchro Supabase n'est pas active.
         </p>

@@ -311,10 +311,10 @@ export default function HubRessources() {
   if (search) resources = resources.filter(r => r.title.toLowerCase().includes(search.toLowerCase()) || r.description?.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-primary)]">Hub Ressources</h1>
+          <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Hub Ressources</h1>
           <p className="text-[var(--text-tertiary)] text-sm mt-0.5">{state.resources.length} ressource{state.resources.length > 1 ? 's' : ''}</p>
         </div>
         <Button onClick={() => setAddDrawer(true)}>

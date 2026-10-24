@@ -109,7 +109,7 @@ export default function RevueHebdo({ onNavigate }) {
       {/* Le coin haut droit est occupé par la recherche et l'apparence : la navigation reste sous le titre */}
       <div className="space-y-2">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-[var(--text-primary)]">Revue hebdo</h1>
+          <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Revue hebdo</h1>
           <p className="text-sm text-[var(--text-tertiary)]">Fais le point, trie ce qui traîne, prépare la semaine suivante.</p>
         </div>
         <div className="-ml-2 flex items-center gap-1">

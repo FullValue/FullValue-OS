@@ -150,7 +150,7 @@ export default function Journee({ onStartTask, onNavigate, onOpenPalette, timer 
         <div className="lg:col-span-4"><PolesCard state={state} onNavigate={onNavigate} /></div>
         <div className="lg:col-span-5"><ClientsCard state={state} onNavigate={onNavigate} /></div>
         <div className="lg:col-span-3"><ProgressGauge state={state} /></div>
-        <div className="lg:col-span-4"><TimeTrackerCard timer={timer} state={state} dispatch={dispatch} onNavigate={onNavigate} /></div>
+        <div className="lg:col-span-4"><TimeTrackerCard timer={timer} state={state} /></div>
       </div>
 
       {weekend && (

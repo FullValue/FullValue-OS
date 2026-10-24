@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { ArrowUpRight, Plus, CalendarDays, Play, Pause, Square, Video } from 'lucide-react'
 import { localDateStr } from '@/lib/backup'
 import { initials } from '@/lib/priorities'
-import { toast } from '@/lib/toast'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -239,7 +238,7 @@ export function ClientsCard({ state, onNavigate }) {
             const [label, bg, fg] = CLIENT_STATUS[c.status] || CLIENT_STATUS.active
             return (
               <li key={c.id} className="flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ background: `${c.accentColor || '#2f8f5b'}33`, color: 'var(--text-primary)' }}>{initials(c.name)}</span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ background: `${c.accentColor || '#3b6ff0'}33`, color: 'var(--text-primary)' }}>{initials(c.name)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-[var(--text-primary)]">{c.name}</span>
                   <span className="block truncate text-[11px] text-[var(--text-tertiary)]">
@@ -321,33 +320,21 @@ export function ProgressGauge({ state }) {
 
 // ── Chrono (carte vert foncé) ────────────────────────────────────────────────
 
-export function TimeTrackerCard({ timer, state, dispatch, onNavigate }) {
+export function TimeTrackerCard({ timer, state }) {
   const fmt = s => [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60].map(n => String(n).padStart(2, '0')).join(':')
   const task = state.tasks.find(t => t.id === timer.task)
   const project = state.projects.find(p => p.id === timer.project)
   const active = timer.running || timer.paused
 
-  // Arrêter enregistre la session : le temps n'est jamais perdu.
-  function stop() {
-    if (timer.elapsed > 0) {
-      dispatch({
-        type: 'LOG_SESSION',
-        payload: { projectId: timer.project || state.projects[0]?.id, taskId: timer.task || undefined, duration: timer.elapsed, note: task?.title || 'Focus depuis le tableau de bord' },
-      })
-      toast.success(`Session enregistrée — ${fmt(timer.elapsed)}`)
-    }
-    timer.stop()
-  }
-
   return (
-    <Card className="relative flex h-full min-h-[200px] flex-col overflow-hidden border-0 p-5 text-white" style={{ background: 'radial-gradient(130% 120% at 100% 0%, #2f8f5b 0%, #0f4a2e 45%, #08261a 100%)' }}>
+    <Card className="relative flex h-full min-h-[200px] flex-col overflow-hidden border-0 p-5 text-white" style={{ background: 'var(--hero-dark)' }}>
       <span className="pointer-events-none absolute -bottom-16 -right-10 h-48 w-48 rounded-full border-[22px] border-white/5" />
       <p className="text-[17px] font-semibold">Chrono</p>
-      <p className="mt-1 truncate text-xs text-white/60">{active ? `${project ? `${project.emoji} ${project.name}` : 'Sans projet'}${task ? ` · ${task.title}` : ''}` : 'Aucune session en cours'}</p>
+      <p className="mt-1 truncate text-xs text-white/60">{active ? `${project ? `${project.emoji} ${project.name}` : 'Sans projet'}${task ? ` · ${task.title}` : ''}` : 'Démarre sur ta prochaine action, ici même (raccourci T)'}</p>
       <p className="my-auto py-3 text-center font-mono text-[44px] font-semibold tracking-tight tabular-nums">{fmt(timer.elapsed)}</p>
       <div className="flex justify-center gap-3">
         {!active && (
-          <button type="button" onClick={() => onNavigate('sessions')} aria-label="Démarrer une session" className="flex h-12 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[var(--brand-900)]">
+          <button type="button" onClick={timer.toggle} aria-label="Démarrer le chrono (T)" className="flex h-12 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[var(--brand-900)]">
             <Play size={16} fill="currentColor" /> Démarrer
           </button>
         )}
@@ -357,7 +344,7 @@ export function TimeTrackerCard({ timer, state, dispatch, onNavigate }) {
           </button>
         )}
         {active && (
-          <button type="button" onClick={stop} aria-label="Arrêter et enregistrer" className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e5484d] text-white">
+          <button type="button" onClick={timer.finish} aria-label="Arrêter et enregistrer" className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e5484d] text-white">
             <Square size={16} fill="currentColor" />
           </button>
         )}

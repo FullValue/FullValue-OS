@@ -1,4 +1,4 @@
-import { Search, Mail, Bell, ExternalLink, RefreshCw, AlertTriangle, CalendarClock } from 'lucide-react'
+import { Search, Mail, Bell, ExternalLink, RefreshCw, AlertTriangle, CalendarClock, Play, Pause, Square, Maximize2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGmail } from '@/contexts/GmailContext'
@@ -128,7 +128,46 @@ function NotificationsMenu({ onNavigate }) {
   )
 }
 
-export default function TopBar({ onOpenPalette, onNavigate }) {
+function fmtClock(s) {
+  const h = Math.floor(s / 3600)
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
+  const ss = String(s % 60).padStart(2, '0')
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
+}
+
+// Chrono toujours visible en haut à droite : lancer, mettre en pause, enregistrer, plein écran.
+function TimerChip({ timer }) {
+  const { state } = useStore()
+  const active = timer.running || timer.paused
+  if (!active) {
+    return (
+      <button type="button" onClick={timer.toggle} className={ROUND} aria-label="Lancer le chrono sur la prochaine action (T)" title="Lancer le chrono sur la prochaine action (T)">
+        <Play size={17} />
+      </button>
+    )
+  }
+  const project = state.projects.find(p => p.id === timer.project)
+  const task = state.tasks.find(t => t.id === timer.task)
+  const icon = 'flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/15'
+  return (
+    <div className="flex h-11 items-center gap-1 rounded-full pl-3 pr-1 text-white shadow-[var(--shadow-card)]" style={{ background: 'var(--hero-dark)' }}>
+      <span className={`h-2 w-2 rounded-full ${timer.running ? 'animate-pulse bg-[#4ade80]' : 'bg-white/50'}`} />
+      <span className="ml-1 font-mono text-sm font-semibold tabular-nums">{fmtClock(timer.elapsed)}</span>
+      <span className="ml-1 hidden max-w-[140px] truncate text-xs text-white/70 md:inline" title={task?.title}>{task?.title || project?.name || 'Focus'}</span>
+      <button type="button" onClick={timer.running ? timer.pause : timer.resume} className={icon} aria-label={timer.running ? 'Pause (T)' : 'Reprendre (T)'}>
+        {timer.running ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
+      </button>
+      <button type="button" onClick={timer.finish} className={icon} aria-label="Arrêter et enregistrer la session">
+        <Square size={13} fill="currentColor" />
+      </button>
+      <button type="button" onClick={timer.openFocus} className={`${icon} hidden sm:flex`} aria-label="Mode focus plein écran">
+        <Maximize2 size={13} />
+      </button>
+    </div>
+  )
+}
+
+export default function TopBar({ onOpenPalette, onNavigate, timer }) {
   const { user } = useAuth()
   const gmail = useGmail()
   const name = user?.user_metadata?.full_name || 'Moi'
@@ -144,6 +183,7 @@ export default function TopBar({ onOpenPalette, onNavigate }) {
         <kbd className="hidden sm:inline">⌘K</kbd>
       </button>
       <div className="ml-auto flex items-center gap-2">
+        {timer && <TimerChip timer={timer} />}
         <MailMenu onNavigate={onNavigate} />
         <NotificationsMenu onNavigate={onNavigate} />
         <AppearanceMenu />

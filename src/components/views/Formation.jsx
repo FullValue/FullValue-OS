@@ -487,10 +487,10 @@ export default function Formation() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--text-primary)]">Formation</h1>
+          <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Formation</h1>
           <p className="text-[var(--text-tertiary)] text-sm mt-0.5">{state.learningResources.length} ressource{state.learningResources.length > 1 ? 's' : ''}</p>
         </div>
         <Button onClick={() => setAddDrawer(true)}>

@@ -107,11 +107,11 @@ export default function Inbox({ onNavigate }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <div className="mx-auto max-w-4xl">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">Inbox</h1>
+          <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Inbox</h1>
           <p className="mt-0.5 text-sm text-[var(--text-tertiary)] tabular">{state.inbox.length} élément{state.inbox.length > 1 ? 's' : ''} à trier</p>
         </div>
         <div className="flex items-center gap-2">

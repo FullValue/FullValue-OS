@@ -21,6 +21,7 @@ const GO_MAP = {
  *   ⌘K / Ctrl+K   → palette
  *   N ou C        → palette (création/capture)
  *   ?             → aide raccourcis
+ *   T             → lancer / mettre en pause le chrono
  *   G puis lettre → navigation (voir GO_MAP)
  *
  * Ignorés pendant la saisie (input/textarea/contenteditable) et
@@ -82,6 +83,12 @@ export function useShortcuts(handlers) {
       if (e.key === '?') {
         e.preventDefault()
         h.openShortcuts?.()
+        return
+      }
+
+      if (key === 't') {
+        e.preventDefault()
+        h.toggleTimer?.()
         return
       }
 

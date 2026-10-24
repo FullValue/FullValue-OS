@@ -7,6 +7,7 @@ const GROUPS = [
     items: [
       { keys: ['⌘', 'K'], label: 'Palette de commandes' },
       { keys: ['N'], label: 'Créer / capturer (via la palette)' },
+      { keys: ['T'], label: 'Lancer / mettre en pause le chrono' },
       { keys: ['?'], label: 'Afficher cette aide' },
       { keys: ['Esc'], label: 'Fermer la fenêtre active' },
     ],

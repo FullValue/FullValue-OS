@@ -677,7 +677,7 @@ export default function Calendrier() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4 flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-[var(--text-primary)]">Calendrier</h1>
+          <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Calendrier</h1>
           <div className="flex gap-1 bg-[rgba(var(--ink),0.05)] rounded-xl p-1">
             {[
               { id: 'week', label: 'Semaine' },

@@ -3,8 +3,8 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Html, RoundedBox, ContactShadows } from '@react-three/drei'
 
 const PALETTES = {
-  light: { floor: '#E3E7E0', desk: '#FFFFFF', leg: '#9AA39C', chair: '#2B3A31', screenOff: '#1C2620', wall: '#D3DAD0', glass: '#BFE0CD', board: '#FFFFFF', track: '#E3E8E1', bg: '#EEF0EC', plant: '#2F8F5B', plantDark: '#1A6B44', pot: '#C9B9A3' },
-  dark:  { floor: '#26302A', desk: '#3A483F', leg: '#66746B', chair: '#141A16', screenOff: '#0B110D', wall: '#33403A', glass: '#3F7A5A', board: '#33403A', track: '#46544B', bg: '#0E1310', plant: '#3FA36F', plantDark: '#2F8F5B', pot: '#7A6A58' },
+  light: { floor: '#E2E6EE', desk: '#FFFFFF', leg: '#98A0B0', chair: '#1E2A44', screenOff: '#111A2E', wall: '#D2D8E4', glass: '#BCD0FF', board: '#FFFFFF', track: '#E2E7F0', bg: '#ECEFF4', plant: '#2F8F5B', plantDark: '#1A6B44', pot: '#C9B9A3' },
+  dark:  { floor: '#1E2638', desk: '#344058', leg: '#66718A', chair: '#0E1424', screenOff: '#070B16', wall: '#2A3448', glass: '#3B5FB8', board: '#2A3448', track: '#3E4A63', bg: '#0A0E17', plant: '#3FA36F', plantDark: '#2F8F5B', pot: '#7A6A58' },
 }
 
 // Les étiquettes HTML restent sous les dialogues de l'app (palette ⌘K, modales).
@@ -123,7 +123,7 @@ function Mailbox({ count, position }) {
   return (
     <group position={position}>
       <mesh position-y={0.45}><cylinderGeometry args={[0.04, 0.04, 0.9, 8]} /><meshStandardMaterial color="#6B6B75" /></mesh>
-      <RoundedBox args={[0.5, 0.36, 0.7]} radius={0.12} position-y={1.0} castShadow><meshStandardMaterial color="#1A6B44" /></RoundedBox>
+      <RoundedBox args={[0.5, 0.36, 0.7]} radius={0.12} position-y={1.0} castShadow><meshStandardMaterial color="#1F4FD1" /></RoundedBox>
       <mesh position={[0.27, count ? 1.25 : 1.05, -0.1]} rotation-z={count ? 0 : -Math.PI / 2}>
         <boxGeometry args={[0.04, 0.3, 0.14]} /><meshStandardMaterial color={count ? '#E5484D' : '#9AA39C'} />
       </mesh>
@@ -211,17 +211,17 @@ function Hub({ palette, inboxCount, mailCount, game, selected, hovered, onSelect
       {[-0.65, 0.65].map(x => (
         <group key={x}>
           <mesh position={[x, 1.2, -0.4]} castShadow><boxGeometry args={[1.1, 0.62, 0.05]} /><meshStandardMaterial color={palette.screenOff} /></mesh>
-          <mesh position={[x, 1.2, -0.37]}><planeGeometry args={[1.0, 0.54]} /><meshStandardMaterial color="#8B7CFF" emissive="#8B7CFF" emissiveIntensity={0.5} /></mesh>
+          <mesh position={[x, 1.2, -0.37]}><planeGeometry args={[1.0, 0.54]} /><meshStandardMaterial color="#3B6FF0" emissive="#3B6FF0" emissiveIntensity={0.5} /></mesh>
         </group>
       ))}
-      <Avatar color="#8B7CFF" position={[0, 0, 1.1]} />
+      <Avatar color="#3B6FF0" position={[0, 0, 1.1]} />
       {/* Caisses = éléments de l'Inbox à trier */}
       {Array.from({ length: crates }, (_, k) => (
         <mesh key={k} position={[2.2 + (k % 2) * 0.5, 0.2 + Math.floor(k / 2) * 0.4, 0.2]} castShadow>
           <boxGeometry args={[0.42, 0.38, 0.42]} /><meshStandardMaterial color="#D9A86C" />
         </mesh>
       ))}
-      {(selected || hovered) && <SelectionRing color="#8B7CFF" radius={2} />}
+      {(selected || hovered) && <SelectionRing color="#3B6FF0" radius={2} />}
       <StreakFlame streak={game.streak.current} position={[-2, 0, 0.3]} />
       <Mailbox count={mailCount} position={[2.3, 0, -0.9]} />
       <Plant palette={palette} position={[-2.2, 0, -0.9]} />
@@ -229,7 +229,7 @@ function Hub({ palette, inboxCount, mailCount, game, selected, hovered, onSelect
         position={[0, 2.2, 0]}
         title={`Ton bureau · Niv. ${game.level}`}
         subtitle={[game.streak.current ? `🔥 ${game.streak.current} j` : null, inboxCount ? `${inboxCount} dans l'Inbox` : 'Inbox vide'].filter(Boolean).join(' · ')}
-        accent="#8B7CFF" strong
+        accent="#3B6FF0" strong
       />
     </group>
   )
@@ -240,7 +240,7 @@ function AgentsCorner({ agents, palette, selectedId, hoveredId, onSelect, setHov
     <group>
       <mesh rotation-x={-Math.PI / 2} position={[-9, 0.004, 4]} receiveShadow>
         <planeGeometry args={[6.5, 4]} />
-        <meshStandardMaterial color="#BFE0CD" transparent opacity={0.45} />
+        <meshStandardMaterial color="#BCD0FF" transparent opacity={0.45} />
       </mesh>
       {agents.desks.map(agent => {
         const id = `agent:${agent.id}`

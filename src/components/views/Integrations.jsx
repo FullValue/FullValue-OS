@@ -57,7 +57,7 @@ export default function Integrations() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[32px] font-semibold tracking-tight text-[var(--text-primary)]">Intégrations</h1>
+        <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Intégrations</h1>
         <p className="text-sm text-[var(--text-tertiary)]">Branche tes outils pour que le Cockpit remonte ce qui compte, et que tes agents IA puissent agir.</p>
       </div>
 
@@ -93,7 +93,7 @@ export default function Integrations() {
         </IntegrationCard>
 
         <IntegrationCard
-          Icon={Bot} color="#1a6b44" name="Claude & Codex (MCP)"
+          Icon={Bot} color="#1f4fd1" name="Claude & Codex (MCP)"
           description="Tes agents lisent et modifient pôles, projets clients, tâches et demandes via le serveur MCP du Cockpit."
           status={<StatusPill tone="warn">Attend Supabase</StatusPill>}
         >

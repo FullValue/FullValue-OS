@@ -25,7 +25,7 @@ export default function OpenSpace({ onNavigate }) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-[var(--text-primary)]">Open space</h1>
+          <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Open space</h1>
           <p className="text-sm text-[var(--text-tertiary)]">
             Niv. {game.level} · {game.streak.current ? `🔥 ${game.streak.current} j · ` : ''}{state.projects.length} pôles · {clientCount} clients · {openTasks} tâches ouvertes
           </p>
@@ -49,7 +49,7 @@ export default function OpenSpace({ onNavigate }) {
         <div className="absolute left-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-1.5 sm:max-w-[60%]">
           {[
             ...layout.zones.map(z => ({ id: z.id, label: `${z.pole.emoji || ''} ${z.pole.name}`.trim(), color: z.pole.color })),
-            { id: 'hub', label: '🏠 Bureau', color: '#2f8f5b' },
+            { id: 'hub', label: '🏠 Bureau', color: '#3b6ff0' },
             { id: 'agent:claude', label: '🤖 Agents', color: '#D97757' },
             { id: 'meeting', label: '🤝 Prestataires', color: '#5BA8E0' },
           ].map(z => (

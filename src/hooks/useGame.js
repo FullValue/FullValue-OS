@@ -31,7 +31,7 @@ export function useGameNotifications() {
     prevRef.current = { earnedXp, level: game.level }
     if (!prev) return
     if (game.level > prev.level) {
-      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#8B7CFF', '#FFD66B', '#A8E6BD', '#FF8FA3'] })
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#3b6ff0', '#93b4ff', '#FFD66B', '#FF8FA3'] })
       toast(`Niveau ${game.level} atteint 🎉`, { description: `Tu es maintenant ${game.title}.` })
     } else if (earnedXp > prev.earnedXp) {
       toast(`+${earnedXp - prev.earnedXp} XP`, { duration: 1800 })

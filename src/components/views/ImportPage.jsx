@@ -20,7 +20,7 @@ export default function ImportPage({ onNavigate }) {
             <FileJson size={18} style={{ color: 'var(--violet-deep)' }} />
           </div>
           <div>
-            <h1 className="text-xl font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>Import bulk</h1>
+            <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Import bulk</h1>
             <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
               Colle du JSON généré par ton GPT, Gemini ou Claude Project pour créer tâches, notes, RDV et ressources en un clic.
             </p>
@@ -30,7 +30,7 @@ export default function ImportPage({ onNavigate }) {
 
       {successMsg !== null && (
         <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl text-sm"
-          style={{ background: 'rgba(168,230,189,0.1)', border: '1px solid rgba(168,230,189,0.25)', color: '#A8E6BD' }}>
+          style={{ background: 'var(--green-bg)', color: 'var(--green-deep)' }}>
           ✓ {successMsg} élément{successMsg > 1 ? 's' : ''} importé{successMsg > 1 ? 's' : ''} avec succès ! Visible immédiatement dans les pages concernées.
         </div>
       )}

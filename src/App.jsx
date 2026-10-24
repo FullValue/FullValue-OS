@@ -8,7 +8,6 @@ import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
 import { GmailProvider } from '@/contexts/GmailContext'
 import CommandPalette from '@/components/CommandPalette'
 import ShortcutsDialog from '@/components/ShortcutsDialog'
-import StickyTimer from '@/components/ui/StickyTimer'
 import FocusMode from '@/components/ui/FocusMode'
 import DailyClosingModal from '@/components/DailyClosingModal'
 import { Toaster } from '@/components/ui/sonner'
@@ -17,6 +16,8 @@ import { useShortcuts } from '@/hooks/useShortcuts'
 import { useGameNotifications } from '@/hooks/useGame'
 import { useStore } from '@/store/useStore'
 import { localDateStr } from '@/lib/backup'
+import { pickNextAction } from '@/lib/priorities'
+import { toast } from '@/lib/toast'
 import AccessCodePage from '@/components/auth/AccessCodePage'
 import Journee from '@/components/views/Journee'
 import Projets from '@/components/views/Projets'
@@ -72,12 +73,13 @@ function AuthGate() {
 }
 
 function AppInner() {
-  const { state } = useStore()
+  const { state, dispatch } = useStore()
   const [activePage, setActivePage] = useState('journee')
   const [cmdOpen, setCmdOpen] = useState(false)
   const [focusOpen, setFocusOpen] = useState(false)
   const [closingOpen, setClosingOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const timerRef = useRef(null)
 
   const { theme, setThemePreference } = useTheme()
   useGameNotifications()
@@ -142,6 +144,7 @@ function AppInner() {
     openPalette: () => setCmdOpen(true),
     navigate: setActivePage,
     openShortcuts: () => setShortcutsOpen(true),
+    toggleTimer: () => timerRef.current?.toggle(),
   })
 
   const startTimer = useCallback((projectId = '', taskId = '') => {
@@ -183,16 +186,52 @@ function AppInner() {
 
   useEffect(() => () => clearInterval(intervalRef.current), [])
 
+
+  // Enregistre la session en cours : arrêter ou changer de tâche ne perd jamais de temps.
+  const logCurrentSession = useCallback(() => {
+    if (elapsed <= 0) return
+    const task = state.tasks.find(t => t.id === timerTask)
+    dispatch({
+      type: 'LOG_SESSION',
+      payload: { projectId: timerProject || state.projects[0]?.id, taskId: timerTask || undefined, duration: elapsed, note: task?.title || 'Session de focus' },
+    })
+    const m = Math.round(elapsed / 60)
+    toast.success(`Session enregistrée — ${m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${Math.max(1, m)} min`}`)
+  }, [elapsed, timerTask, timerProject, state.tasks, state.projects, dispatch])
+
+  const finishTimer = useCallback(() => {
+    logCurrentSession()
+    stopTimer()
+  }, [logCurrentSession, stopTimer])
+
+  // Lance le chrono sur place, depuis n'importe quel bouton « Focus », sans changer de page.
+  const quickStart = useCallback((projectId = '', taskId = '') => {
+    if (timerRunning || timerPaused) {
+      logCurrentSession()
+      clearInterval(intervalRef.current)
+      elapsedRef.current = 0
+      setElapsed(0)
+    }
+    setTimerProject(projectId || '')
+    setTimerTask(taskId || '')
+    startTimer(projectId, taskId)
+    const task = state.tasks.find(t => t.id === taskId)
+    toast(`Chrono lancé${task ? ` · ${task.title}` : ''}`, { description: 'Il tourne en haut à droite. T pour pause, ⏹ pour enregistrer.' })
+  }, [timerRunning, timerPaused, logCurrentSession, startTimer, state.tasks])
+
+  const toggleTimer = useCallback(() => {
+    if (timerRunning) return pauseTimer()
+    if (timerPaused) return resumeTimer()
+    const next = pickNextAction(state.tasks, localDateStr())
+    quickStart(next?.projectId, next?.id)
+  }, [timerRunning, timerPaused, pauseTimer, resumeTimer, quickStart, state.tasks])
+
   const timer = {
     elapsed, running: timerRunning, paused: timerPaused, project: timerProject, task: timerTask,
     start: startTimer, pause: pauseTimer, resume: resumeTimer, stop: stopTimer,
+    quickStart, finish: finishTimer, toggle: toggleTimer, openFocus: () => setFocusOpen(true),
   }
-
-  const goToSessionsWithTask = useCallback((projectId, taskId) => {
-    if (projectId) setTimerProject(projectId)
-    if (taskId) setTimerTask(taskId)
-    setActivePage('sessions')
-  }, [])
+  useEffect(() => { timerRef.current = timer })
 
   const projectPageMatch = activePage.startsWith('projet_') ? activePage.replace('projet_', '') : null
   const isJournee = activePage === 'journee'
@@ -200,10 +239,10 @@ function AppInner() {
 
   function renderPage() {
     if (projectPageMatch) {
-      return <ProjetPage projectId={projectPageMatch} onNavigate={setActivePage} onStartTask={goToSessionsWithTask} />
+      return <ProjetPage projectId={projectPageMatch} onNavigate={setActivePage} onStartTask={quickStart} />
     }
     switch (activePage) {
-      case 'journee':    return <Journee onStartTask={goToSessionsWithTask} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
+      case 'journee':    return <Journee onStartTask={quickStart} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
       case 'inbox':      return <Inbox onNavigate={setActivePage} />
       case 'calendrier': return <Calendrier />
       case 'taches':     return <Taches />
@@ -217,7 +256,7 @@ function AppInner() {
       )
       case 'hub-ressources': return <HubRessources />
       case 'formation':      return <Formation />
-      case 'ulycom_clients': return <ClientSpace onStartTask={goToSessionsWithTask} />
+      case 'ulycom_clients': return <ClientSpace onStartTask={quickStart} />
       case 'projets':        return <Projets onNavigate={setActivePage} />
       case 'migrate':        return <MigratePage />
       case 'import':         return <ImportPage />
@@ -229,7 +268,7 @@ function AppInner() {
           <OpenSpace onNavigate={setActivePage} />
         </Suspense>
       )
-      default:               return <Journee onStartTask={goToSessionsWithTask} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
+      default:               return <Journee onStartTask={quickStart} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
     }
   }
 
@@ -262,8 +301,8 @@ function AppInner() {
           padding: isMobile ? '12px 12px 88px' : '12px 12px 64px 0',
         }}
       >
-        <TopBar onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
-        <PriorityStrip onStartTask={goToSessionsWithTask} onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
+        <TopBar onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} timer={timer} />
+        <PriorityStrip onStartTask={quickStart} onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
         <div className="mx-auto animate-fadeIn px-0 sm:px-2" style={{ maxWidth: isMobile || isOpenSpace ? '100%' : (isJournee ? 1440 : 1100) }}>
           {renderPage()}
         </div>
@@ -278,19 +317,7 @@ function AppInner() {
         onOpenFocus={() => setFocusOpen(true)}
         onOpenClosing={() => setClosingOpen(true)}
         onOpenShortcuts={() => setShortcutsOpen(true)}
-        onStartTask={goToSessionsWithTask}
-      />
-
-      <StickyTimer
-        elapsed={elapsed}
-        timerRunning={timerRunning}
-        timerPaused={timerPaused}
-        timerProject={timerProject}
-        timerTask={timerTask}
-        onPause={pauseTimer}
-        onResume={resumeTimer}
-        onStop={stopTimer}
-        onOpenFocus={() => setFocusOpen(true)}
+        onStartTask={quickStart}
       />
 
       <FocusMode

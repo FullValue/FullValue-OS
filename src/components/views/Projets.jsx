@@ -27,8 +27,11 @@ export default function Projets({ onNavigate }) {
   const TIER_LABELS = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3', 4: 'Tier 4' }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-heading font-bold text-[var(--text-primary)] text-2xl mb-6">Projets</h1>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-[34px] font-semibold leading-tight tracking-tight text-[var(--text-primary)]">Projets</h1>
+        <p className="text-sm text-[var(--text-tertiary)]">Chaque pôle a son espace : tâches, notes, liens et sessions. Le « + » à côté de chaque projet dans la barre latérale ajoute sans quitter ta page.</p>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {state.projects.map(project => {

@@ -45,8 +45,8 @@ export const Button = forwardRef(function Button(
       disabled={disabled || loading}
       {...props}
     >
-      {loading && <Loader2 size={14} className="animate-spin" />}
-      {children}
+      {/* Avec asChild, Slot exige un seul enfant : pas d'icône de chargement ajoutée. */}
+      {asChild ? children : <>{loading && <Loader2 size={14} className="animate-spin" />}{children}</>}
     </Comp>
   )
 })

@@ -96,7 +96,10 @@ export default function CheckinOverlay() {
           key={current.key}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           className="fixed inset-0 z-[140] flex items-center justify-center p-6 text-white"
-          style={{ background: 'var(--hero-dark)' }}
+          // Une fenêtre Radix ouverte dessous (ex. « Fin de journée ») met pointer-events: none sur <body> :
+          // on réactive les clics ici, et on n'avertit pas cette fenêtre (sinon elle se fermerait).
+          style={{ background: 'var(--hero-dark)', pointerEvents: 'auto' }}
+          onPointerDown={e => e.stopPropagation()}
           role="dialog" aria-modal="true" aria-label="Check-in"
         >
           <motion.div initial={{ y: 24, scale: 0.97 }} animate={{ y: 0, scale: 1 }} transition={{ type: 'spring', damping: 22 }} className="w-full max-w-lg text-center">

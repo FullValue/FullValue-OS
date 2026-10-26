@@ -142,7 +142,8 @@ export default function WeeklyWrapped() {
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           className="fixed inset-0 z-[150] flex flex-col text-white"
-          style={{ background: BACKGROUNDS[index % BACKGROUNDS.length], transition: 'background 0.6s' }}
+          style={{ background: BACKGROUNDS[index % BACKGROUNDS.length], transition: 'background 0.6s', pointerEvents: 'auto' }}
+          onPointerDown={e => e.stopPropagation()}
           role="dialog" aria-modal="true" aria-label="Bilan de la semaine"
           onClick={e => setIndex(i => (e.clientX < window.innerWidth / 3 ? Math.max(0, i - 1) : Math.min(slides.length - 1, i + 1)))}
         >

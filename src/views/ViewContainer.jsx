@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import ViewSwitcher, { getStoredView, setStoredView } from './shared/ViewSwitcher'
 import ViewFilters, { DEFAULT_FILTERS, applyFilters } from './shared/ViewFilters'
-import KanbanView from './KanbanView'
 import BoardView from './BoardView'
 import CalendarView from './CalendarView'
 import ListView from './ListView'
@@ -55,7 +54,6 @@ export default function ViewContainer({
       </div>
 
       {/* Active view */}
-      {activeView === 'kanban'   && <KanbanView {...sharedProps} />}
       {activeView === 'calendar' && <CalendarView {...sharedProps} />}
       {activeView === 'list'     && <ListView {...sharedProps} />}
       {activeView === 'gantt'    && <GanttView {...sharedProps} />}

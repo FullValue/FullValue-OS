@@ -22,6 +22,14 @@ export function getAuthErrorMessage(error, fallback = 'Une erreur est survenue. 
     return 'Confirme ton adresse email avant de te connecter.'
   }
 
+  if (normalized.includes('rate limit') || normalized.includes('over_email_send_rate_limit') || normalized.includes('security purposes')) {
+    return 'Trop d’emails envoyés en peu de temps (limite du service d’envoi). Réessaie dans quelques minutes.'
+  }
+
+  if (normalized.includes('error sending') || normalized.includes('sending confirmation') || normalized.includes('sending magic link')) {
+    return 'L’email n’a pas pu être envoyé par le service de connexion. Réessaie plus tard ou continue en local.'
+  }
+
   if (normalized.includes('user already registered')) {
     return 'Un compte existe déjà avec cette adresse email.'
   }

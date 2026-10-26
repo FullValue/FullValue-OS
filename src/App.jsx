@@ -83,6 +83,8 @@ function timerElapsed(timer) {
 function AuthGate() {
   const { user, signInWithCode, recovering, endRecovery } = useAuth()
   const [authPage, setAuthPage] = useState('login')
+  const [pendingEmail, setPendingEmail] = useState('')
+  const checkEmail = email => { setPendingEmail(email); setAuthPage('check-email') }
 
   if (recovering) return <UpdatePasswordPage onDone={endRecovery} />
 
@@ -96,11 +98,11 @@ function AuthGate() {
 
   if (!user) {
     switch (authPage) {
-      case 'signup':      return <SignupPage onNavigate={setAuthPage} />
+      case 'signup':      return <SignupPage onNavigate={setAuthPage} onCheckEmail={checkEmail} />
       case 'forgot':      return <ForgotPasswordPage onNavigate={setAuthPage} />
-      case 'check-email': return <CheckEmailPage onNavigate={setAuthPage} />
+      case 'check-email': return <CheckEmailPage email={pendingEmail} onNavigate={setAuthPage} />
       case 'local':       return <AccessCodePage onUnlock={signInWithCode} onBack={() => setAuthPage('login')} />
-      default:            return <LoginPage onNavigate={setAuthPage} />
+      default:            return <LoginPage onNavigate={setAuthPage} onCheckEmail={checkEmail} />
     }
   }
 

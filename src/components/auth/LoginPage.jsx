@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export default function LoginPage({ onNavigate }) {
+export default function LoginPage({ onNavigate, onCheckEmail }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [linkSent, setLinkSent] = useState(false)
+  const [unconfirmed, setUnconfirmed] = useState(false)
 
   // Connexion sans mot de passe : un lien envoyé par email (crée le compte s'il n'existe pas).
   async function sendMagicLink() {
@@ -36,6 +37,7 @@ export default function LoginPage({ onNavigate }) {
     setLoading(true)
     try {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+      setUnconfirmed(!!err && /email not confirmed/i.test(err.message || ''))
       if (err) setError(getAuthErrorMessage(err))
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Connexion au serveur impossible.'))
@@ -83,6 +85,11 @@ export default function LoginPage({ onNavigate }) {
         {error && (
           <p className="rounded-lg px-3 py-2 text-xs" style={{ background: 'var(--red-bg)', color: 'var(--red-deep)' }}>
             {error}
+            {unconfirmed && (
+              <button type="button" onClick={() => onCheckEmail(email)} className="mt-1 block font-semibold underline">
+                Renvoyer l’email de confirmation
+              </button>
+            )}
           </p>
         )}
 

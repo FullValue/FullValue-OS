@@ -70,7 +70,7 @@ export function mergeStates(local, remote) {
  * Renvoie { action: 'push' | 'adopt' | 'merge' | 'none' }
  */
 export function planInitialSync({ local, remote, meta }) {
-  if (!remote) return { action: 'push' }
+  if (!remote) return { action: isDemoState(local) ? 'none' : 'push' }
   const remoteChanged = remote.updated_at !== meta.lastRemoteAt
   if (!meta.linked) return { action: isDemoState(local) ? 'adopt' : 'merge' }
   if (meta.dirty) return { action: remoteChanged ? 'merge' : 'push' }

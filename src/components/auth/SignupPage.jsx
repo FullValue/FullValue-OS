@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export default function SignupPage({ onNavigate }) {
+export default function SignupPage({ onNavigate, onCheckEmail }) {
   const [fullName, setFullName] = useState('')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -22,13 +22,21 @@ export default function SignupPage({ onNavigate }) {
     if (password.length < 6)  { setError('Le mot de passe doit contenir au moins 6 caractères.'); return }
     setLoading(true)
     try {
-      const { error: err } = await supabase.auth.signUp({
+      const { data, error: err } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        // Le lien de confirmation ramène sur ce site (sinon Supabase utilise sa « Site URL »).
+        options: { data: { full_name: fullName }, emailRedirectTo: window.location.origin },
       })
       if (err) { setError(getAuthErrorMessage(err)); return }
-      onNavigate('check-email')
+      // Confirmation par email désactivée côté Supabase : la session est ouverte tout de suite.
+      if (data?.session) return
+      // Adresse déjà inscrite : Supabase répond sans erreur mais sans identité.
+      if (data?.user && !data.user.identities?.length) {
+        setError('Un compte existe déjà avec cette adresse : connecte-toi, ou utilise « Mot de passe oublié ».')
+        return
+      }
+      onCheckEmail(email)
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Connexion au serveur impossible.'))
     } finally {

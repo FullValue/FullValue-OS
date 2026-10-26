@@ -91,7 +91,8 @@ export function GmailProvider({ children }) {
           subject: header(d.payload?.headers, 'Subject') || '(sans objet)',
           snippet: d.snippet,
           date: Number(d.internalDate),
-          url: `https://mail.google.com/mail/u/${encodeURIComponent(profile.emailAddress)}/#inbox/${d.threadId}`,
+          // authuser choisit le bon compte Google ; #all trouve le fil même s'il est archivé.
+          url: `https://mail.google.com/mail/?authuser=${encodeURIComponent(profile.emailAddress)}#all/${d.threadId}`,
         }
       }))
       setError(null)

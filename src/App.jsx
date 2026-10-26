@@ -186,12 +186,24 @@ function AppInner() {
   }, [state.dailyReviews, state.settings])
 
   // Raccourcis clavier globaux : ⌘K, N/C, ?, G+lettre
+  // Plein écran du cockpit (touche F) : le navigateur masque ses barres ; Échap en sort.
+  function toggleFullscreen() {
+    const doc = document
+    const el = doc.documentElement
+    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+      (doc.exitFullscreen || doc.webkitExitFullscreen)?.call(doc)
+    } else {
+      (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)?.catch?.(() => {})
+    }
+  }
+
   useShortcuts({
     togglePalette: () => setCmdOpen(o => !o),
     openPalette: () => setCmdOpen(true),
     navigate: setActivePage,
     openShortcuts: () => setShortcutsOpen(true),
     toggleTimer: () => timerRef.current?.toggle(),
+    toggleFullscreen,
   })
 
   const startTimer = useCallback((projectId = '', taskId = '') => {

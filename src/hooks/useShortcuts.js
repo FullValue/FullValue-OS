@@ -24,6 +24,7 @@ const GO_MAP = {
  *   N ou C        → palette (création/capture)
  *   ?             → aide raccourcis
  *   T             → lancer / mettre en pause le chrono
+ *   F             → plein écran (Échap pour en sortir, géré par le navigateur)
  *   G puis lettre → navigation (voir GO_MAP)
  *
  * Ignorés pendant la saisie (input/textarea/contenteditable) et
@@ -91,6 +92,12 @@ export function useShortcuts(handlers) {
       if (key === 't') {
         e.preventDefault()
         h.toggleTimer?.()
+        return
+      }
+
+      if (key === 'f') {
+        e.preventDefault()
+        h.toggleFullscreen?.()
         return
       }
 

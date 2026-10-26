@@ -1,7 +1,8 @@
-import { Columns3, Calendar, List, GanttChart } from 'lucide-react'
+import { LayoutGrid, Columns3, Calendar, List, GanttChart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const VIEWS = [
+  { id: 'board',   Icon: LayoutGrid, label: 'Board' },
   { id: 'kanban',  Icon: Columns3,   label: 'Kanban' },
   { id: 'calendar',Icon: Calendar,   label: 'Calendrier' },
   { id: 'list',    Icon: List,       label: 'Liste' },
@@ -11,7 +12,7 @@ const VIEWS = [
 const STORAGE_PREFIX = 'cockpit:view:'
 
 export function getStoredView(contextId) {
-  try { return localStorage.getItem(STORAGE_PREFIX + contextId) || 'kanban' } catch { return 'kanban' }
+  try { return localStorage.getItem(STORAGE_PREFIX + contextId) || 'board' } catch { return 'board' }
 }
 
 export function setStoredView(contextId, viewId) {

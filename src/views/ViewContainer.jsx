@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ViewSwitcher, { getStoredView, setStoredView } from './shared/ViewSwitcher'
 import ViewFilters, { DEFAULT_FILTERS, applyFilters } from './shared/ViewFilters'
 import KanbanView from './KanbanView'
+import BoardView from './BoardView'
 import CalendarView from './CalendarView'
 import ListView from './ListView'
 import GanttView from './GanttView'
@@ -30,6 +31,17 @@ export default function ViewContainer({
     onTaskUpdate,
     onTaskCreate,
     onTaskDelete,
+  }
+
+  // Board (style Yoovi) : il a sa propre barre de recherche et ses filtres, le sélecteur de vue s'y range.
+  if (activeView === 'board') {
+    return (
+      <BoardView
+        tasks={tasks} projects={projects}
+        onTaskUpdate={onTaskUpdate} onTaskCreate={onTaskCreate} onTaskDelete={onTaskDelete}
+        toolbarRight={<ViewSwitcher activeView={activeView} onChange={handleViewChange} />}
+      />
+    )
   }
 
   return (

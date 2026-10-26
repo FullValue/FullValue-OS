@@ -7,6 +7,7 @@ import { STUDIO_CONNECTORS, veilleStats } from '@/lib/studio'
 import Veille from '@/components/studio/Veille'
 import Assets from '@/components/studio/Assets'
 import Montages from '@/components/studio/Montages'
+import { KiePoller } from '@/components/studio/KieGenerate'
 
 const TABS = [
   { id: 'library', label: 'Veille', add: 'Ajouter une créa' },
@@ -20,6 +21,7 @@ export default function StudioCreatif() {
   const [tab, setTab] = useState('library')
   const [adding, setAdding] = useState(false)
   const [montageOpen, setMontageOpen] = useState(null)
+  const [generating, setGenerating] = useState(false)
   const creatives = state.creatives || []
   const montages = state.montages || []
   const { angles, todo, dup } = useMemo(() => veilleStats(state.creatives || []), [state.creatives])
@@ -70,8 +72,8 @@ export default function StudioCreatif() {
         <span className="flex items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)]"><Plug size={13} /> Connecteurs</span>
         {STUDIO_CONNECTORS.map(c => (
           <span key={c.id} title={c.role} className="flex items-center gap-1.5 rounded-full bg-[var(--bg-card)] px-3 py-1 text-[12px] text-[var(--text-secondary)] shadow-[var(--shadow-card)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--text-tertiary)] opacity-60" /> {c.name}
-            <span className="hidden text-[var(--text-tertiary)] md:inline">· à brancher</span>
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c.live ? 'var(--green-solid, #22a06b)' : 'var(--text-tertiary)', opacity: c.live ? 1 : 0.6 }} /> {c.name}
+            <span className="hidden text-[var(--text-tertiary)] md:inline">· {c.live ? 'connecté' : 'à brancher'}</span>
           </span>
         ))}
       </div>
@@ -86,7 +88,8 @@ export default function StudioCreatif() {
       </div>
 
       {(tab === 'library' || tab === 'angles') && <Veille view={tab} adding={adding} setAdding={setAdding} />}
-      {tab === 'assets' && <Assets adding={adding} setAdding={setAdding} onAddToMontage={addToMontage} />}
+      {tab === 'assets' && <Assets adding={adding} setAdding={setAdding} onAddToMontage={addToMontage} generating={generating} setGenerating={setGenerating} />}
+      <KiePoller />
       {tab === 'montages' && <Montages adding={adding} setAdding={setAdding} openId={montageOpen} setOpenId={setMontageOpen} />}
     </div>
   )

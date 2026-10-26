@@ -37,7 +37,7 @@ export const MONTAGE_STATUS = {
 
 // Connecteurs prévus : affichés dans le Studio, branchés au fur et à mesure.
 export const STUDIO_CONNECTORS = [
-  { id: 'kie', name: 'Kie.ai', role: 'Génération d’assets (images, vidéos, voix)' },
+  { id: 'kie', name: 'Kie.ai', role: 'Génération d’assets (images, vidéos, voix)', live: true },
   { id: 'claude', name: 'Claude Opus 5.5 · MCP', role: 'Montage, reprise et assemblage des assets' },
   { id: 'gemini', name: 'Gemini', role: 'Analyse des créas (verdict, angle, accroche)' },
   { id: 'meta', name: 'Meta · Bibliothèque publicitaire', role: 'Toutes les créas et données des concurrents' },

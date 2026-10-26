@@ -2,7 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { keepCorruptCopy, snapshotDaily } from '@/lib/backup'
 import { toast } from '@/lib/toast'
 
-const STATE_VERSION = 7
+const STATE_VERSION = 8
 const nanoid = () => Math.random().toString(36).slice(2, 10)
 
 const PROJECTS = [
@@ -75,6 +75,8 @@ const INITIAL_STATE = {
   creatives: [],
   creativeAssets: [],
   montages: [],
+  // v8 : Sourcing & comparatif Etsy — sélections propres à chaque compte (aucune donnée Etsy réelle stockée ici).
+  etsy: { mode: 'demo', shops: [], collections: [], favorites: [], notes: {}, columns: null, observations: [] },
 }
 
 // Champs par défaut d'une tâche, partagés par toutes les actions qui en créent une.
@@ -167,6 +169,9 @@ function reducer(state, action) {
 
     case 'UPDATE_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.payload } }
+
+    case 'ETSY_UPDATE':
+      return { ...state, etsy: { ...INITIAL_STATE.etsy, ...(state.etsy || {}), ...action.payload } }
 
     // ── Clients ─────────────────────────────────────────────────────────
     case 'ADD_CLIENT':
@@ -326,6 +331,7 @@ function loadState() {
           creatives: parsed.creatives || [],
           creativeAssets: parsed.creativeAssets || [],
           montages: parsed.montages || [],
+          etsy: { ...INITIAL_STATE.etsy, ...(parsed.etsy || {}) },
           settings: { ...INITIAL_STATE.settings, ...(parsed.settings || {}), prayerTimes: { ...INITIAL_STATE.settings.prayerTimes, ...(parsed.settings?.prayerTimes || {}) } },
         }
       }

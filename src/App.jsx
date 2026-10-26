@@ -54,6 +54,7 @@ import Pipeline from '@/components/views/Pipeline'
 import Facturation from '@/components/views/Facturation'
 import Trophees from '@/components/views/Trophees'
 import StudioCreatif from '@/components/views/StudioCreatif'
+import EtsySourcing from '@/components/views/EtsySourcing'
 
 // three.js est lourd : la page 3D vit dans son propre chunk.
 const OpenSpace = lazy(() => import('@/components/views/OpenSpace'))
@@ -381,6 +382,7 @@ function AppInner() {
       case 'facturation':    return <Facturation />
       case 'trophees':       return <Trophees />
       case 'studio':         return <StudioCreatif />
+      case 'etsy':           return <EtsySourcing />
       case 'open-space':     return (
         <Suspense fallback={<p className="py-20 text-center text-sm text-[var(--text-tertiary)]">Chargement de l'open space…</p>}>
           <OpenSpace onNavigate={setActivePage} timer={timer} onStartTask={quickStart} />

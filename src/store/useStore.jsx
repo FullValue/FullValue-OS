@@ -2,7 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { keepCorruptCopy, snapshotDaily } from '@/lib/backup'
 import { toast } from '@/lib/toast'
 
-const STATE_VERSION = 6
+const STATE_VERSION = 7
 const nanoid = () => Math.random().toString(36).slice(2, 10)
 
 const PROJECTS = [
@@ -71,6 +71,10 @@ const INITIAL_STATE = {
   prayerLogs: {},   // { 'AAAA-MM-JJ': { fajr: 'ontime', … } }
   rewards: [],
   rewardClaims: [],
+  // v7 : Studio Créatif — veille concurrents, assets (upload / Kie.ai) et montages
+  creatives: [],
+  creativeAssets: [],
+  montages: [],
 }
 
 // Champs par défaut d'une tâche, partagés par toutes les actions qui en créent une.
@@ -319,6 +323,9 @@ function loadState() {
           prayerLogs: parsed.prayerLogs || {},
           rewards: parsed.rewards || [],
           rewardClaims: parsed.rewardClaims || [],
+          creatives: parsed.creatives || [],
+          creativeAssets: parsed.creativeAssets || [],
+          montages: parsed.montages || [],
           settings: { ...INITIAL_STATE.settings, ...(parsed.settings || {}), prayerTimes: { ...INITIAL_STATE.settings.prayerTimes, ...(parsed.settings?.prayerTimes || {}) } },
         }
       }

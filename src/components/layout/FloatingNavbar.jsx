@@ -3,7 +3,7 @@ import {
   Home, Inbox, Calendar, CheckSquare, Timer,
   BookOpen, GraduationCap,
   Users, LayoutDashboard, ChevronDown, LogOut, HardDrive, Plug, Flame,
-  Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck, MessageCircle, Repeat, Target, KanbanSquare, Receipt, Trophy, Mountain,
+  Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck, MessageCircle, Repeat, Target, KanbanSquare, Receipt, Trophy, Mountain, Clapperboard,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
@@ -40,6 +40,7 @@ const NAV_GROUPS = [
     items: [
       { id: 'open-space', label: 'Open space',  Icon: Building2 },
       { id: 'ascension',  label: 'Ascension',   Icon: Mountain },
+      { id: 'studio',     label: 'Studio Créatif', Icon: Clapperboard },
       { id: 'taches',     label: 'Tâches',      Icon: CheckSquare },
       { id: 'objectifs',  label: 'Objectifs',   Icon: Target },
       { id: 'pipeline',   label: 'Pipeline',    Icon: KanbanSquare },
@@ -220,6 +221,7 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
       items: [
         { id: 'open-space', label: 'Open space',  Icon: Building2 },
         { id: 'ascension',  label: 'Ascension',   Icon: Mountain },
+        { id: 'studio',     label: 'Studio Créatif', Icon: Clapperboard },
         { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
         { id: 'revue',      label: 'Revue hebdo', Icon: ClipboardCheck },
         { id: 'habitudes',  label: 'Habitudes',   Icon: Repeat },

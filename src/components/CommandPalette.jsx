@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import {
   Home, Inbox, Calendar, CheckSquare, Timer, BookOpen, GraduationCap,
   Users, FileJson, Sun, Moon, Plus, Zap, Focus, ClipboardCheck,
-  Keyboard, Folder, LayoutGrid, Play, Database, Building2, HardDrive, MessageCircle, Repeat, Target, KanbanSquare, Receipt, Trophy, Mountain,
+  Keyboard, Folder, LayoutGrid, Play, Database, Building2, HardDrive, MessageCircle, Repeat, Target, KanbanSquare, Receipt, Trophy, Mountain, Clapperboard,
 } from 'lucide-react'
 import {
   CommandDialog, CommandInput, CommandList, CommandEmpty,
@@ -16,6 +16,7 @@ const PAGES = [
   { id: 'journee', label: 'Journée', Icon: Home, kbd: 'G J' },
   { id: 'open-space', label: 'Open space 3D', Icon: Building2, kbd: 'G O' },
   { id: 'ascension', label: 'Ascension (montagne du Winter Arc)', Icon: Mountain, kbd: 'G A' },
+  { id: 'studio', label: 'Studio Créatif (veille, assets, montages)', Icon: Clapperboard, kbd: 'G E' },
   { id: 'revue', label: 'Revue hebdo', Icon: ClipboardCheck, kbd: 'G H' },
   { id: 'donnees', label: 'Données & sauvegardes', Icon: HardDrive },
   { id: 'inbox', label: 'Inbox', Icon: Inbox, kbd: 'G I' },

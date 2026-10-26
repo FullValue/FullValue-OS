@@ -28,6 +28,7 @@ const GROUPS = [
       { keys: ['G', 'F'], label: 'Formation' },
       { keys: ['G', 'O'], label: 'Open space 3D' },
       { keys: ['G', 'A'], label: 'Ascension (Winter Arc)' },
+      { keys: ['G', 'E'], label: 'Studio Créatif' },
       { keys: ['G', 'H'], label: 'Revue hebdo' },
       { keys: ['G', 'M'], label: 'Messages WhatsApp' },
     ],

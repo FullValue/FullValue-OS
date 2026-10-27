@@ -16,8 +16,9 @@ import ShopsPanel from '@/components/etsy/ShopsPanel'
 import ComparePanel from '@/components/etsy/ComparePanel'
 import CollectionsPanel from '@/components/etsy/CollectionsPanel'
 import FeasibilityPanel from '@/components/etsy/FeasibilityPanel'
+import ProductSearch from '@/components/etsy/ProductSearch'
 
-const TABS = [['products', 'Produits'], ['shops', 'Boutiques'], ['compare', 'Comparer'], ['collections', 'Collections'], ['feasibility', 'Faisabilité']]
+const TABS = [['search', 'Recherche produit'], ['products', 'Produits des boutiques'], ['shops', 'Boutiques'], ['compare', 'Comparer'], ['collections', 'Collections'], ['feasibility', 'Faisabilité']]
 const DEFAULT_WS = { mode: 'demo', shops: [], collections: [], favorites: [], notes: {}, columns: null, observations: [] }
 
 export default function EtsySourcing() {
@@ -25,7 +26,7 @@ export default function EtsySourcing() {
   const ws = { ...DEFAULT_WS, ...(state.etsy || {}) }
   const update = patch => dispatch({ type: 'ETSY_UPDATE', payload: patch })
   const [status, setStatus] = useState(null)
-  const [tab, setTab] = useState('products')
+  const [tab, setTab] = useState('search')
   const [query, setQuery] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState(null)
@@ -37,7 +38,8 @@ export default function EtsySourcing() {
 
   useEffect(() => { connectorStatus().then(setStatus) }, [])
   const liveAvailable = !!status?.live && !!status?.configured
-  const mode = liveAvailable && ws.mode === 'live' ? 'live' : 'demo'
+  // Données réelles par défaut dès que le connecteur est actif, sauf si la démonstration a été choisie.
+  const mode = liveAvailable && !(ws.mode === 'demo' && ws.modeChosen) ? 'live' : 'demo'
 
   const demo = useMemo(() => demoDataset(), [])
   const tracked = ws.shops.filter(s => s.source === (mode === 'live' ? 'etsy' : 'demo'))
@@ -112,7 +114,7 @@ export default function EtsySourcing() {
             : <Pill bg="var(--green-bg)" color="var(--green-deep)">Données Etsy réelles</Pill>}
           <span className="text-[11px] text-[var(--text-tertiary)]">Connecteur Etsy : {status === null ? 'vérification…' : liveAvailable ? 'actif' : 'désactivé (autorisations en attente)'}</span>
           {liveAvailable && (
-            <button type="button" onClick={() => update({ mode: mode === 'live' ? 'demo' : 'live' })} className="text-[11px] font-semibold text-[var(--accent)]">
+            <button type="button" onClick={() => update({ mode: mode === 'live' ? 'demo' : 'live', modeChosen: true })} className="text-[11px] font-semibold text-[var(--accent)]">
               Passer en {mode === 'live' ? 'démonstration' : 'données réelles'}
             </button>
           )}
@@ -150,6 +152,7 @@ export default function EtsySourcing() {
         </div>
       </div>
 
+      {tab === 'search' && <ProductSearch mode={mode} demo={demo} workspace={ws} onUpdate={update} ctx={ctx} />}
       {tab === 'products' && (shops.length === 0
         ? <p className="rounded-[22px] bg-[var(--bg-card)] py-12 text-center text-[14px] text-[var(--text-tertiary)] shadow-[var(--shadow-card)]">Ajoute une boutique (ou charge les boutiques de démonstration) pour voir ses fiches.</p>
         : <ProductsTable listings={listings} shopsById={shopsById} taxonomy={pool.taxonomy} favorites={ws.favorites} onOpen={l => setOpenId(l.id)}

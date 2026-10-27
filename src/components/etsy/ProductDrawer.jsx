@@ -42,6 +42,11 @@ export default function ProductDrawer({ listing: l, shop, workspace, ctx, onClos
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         <MetricBlock label="Prix" m={l.metrics.price} />
         <MetricBlock label="Favoris" m={l.metrics.favorites} />
+        {l.metrics.views && <MetricBlock label="Vues" m={l.metrics.views} />}
+        {l.metrics.viewsPerDay && <MetricBlock label="Vues / jour" m={l.metrics.viewsPerDay} />}
+        {l.metrics.favoritesPerDay && <MetricBlock label="Favoris / jour" m={l.metrics.favoritesPerDay} />}
+        {l.metrics.favRate && <MetricBlock label="Favoris / vues" m={l.metrics.favRate} suffix=" %" />}
+        {l.metrics.shopSold && <MetricBlock label="Ventes de la boutique" m={l.metrics.shopSold} />}
         <MetricBlock label="Avis" m={l.metrics.reviews} />
         <MetricBlock label="Dernier avis" m={l.metrics.lastReviewAt?.status === 'unavailable' ? l.metrics.lastReviewAt : { ...l.metrics.lastReviewAt, value: new Date(l.metrics.lastReviewAt.value).toLocaleDateString('fr-FR') }} />
         <MetricBlock label="Ancienneté" m={l.metrics.ageDays} suffix=" jours" />

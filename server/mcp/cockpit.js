@@ -3,6 +3,23 @@
 import { readState, mutateState, findById, newId } from './state.js'
 import { demoDataset } from '../../src/lib/etsy/demo.js'
 import { estimateListingSales } from '../../src/lib/etsy/estimation.js'
+import { liveClient, loadShop, searchProducts } from '../etsy/service.js'
+
+// Version compacte d'une fiche pour les IA : valeurs seules, « null » = indisponible (jamais 0 par défaut).
+const val = m => (m && m.status !== 'unavailable' ? m.value : null)
+function compactListing(l, shopsById = {}) {
+  const m = l.metrics
+  return {
+    id: l.id, titre: l.title, url: l.url, boutique: shopsById[l.shopId]?.name || l.shopId, categorie: l.category, type: l.type,
+    prix: val(m.price), devise: l.currency, vues: val(m.views), favoris: val(m.favorites), vues_par_jour: val(m.viewsPerDay),
+    favoris_par_jour: val(m.favoritesPerDay), ratio_favoris_vues_pct: val(m.favRate), ventes_boutique_cumul: val(m.shopSold),
+    avis_12_mois: val(m.reviews), anciennete_jours: val(m.ageDays), personnalisable: l.isPersonalizable, tags: l.tags,
+  }
+}
+const compactShop = s => ({
+  id: s.id, nom: s.name, url: s.url, pays: s.country, devise: s.currency, ventes_cumul: val(s.metrics.soldCount), favoris: val(s.metrics.favorites),
+  avis: val(s.metrics.reviewCount), note: val(s.metrics.reviewAverage), fiches_actives: val(s.metrics.activeListings), anciennete_jours: val(s.metrics.ageDays),
+})
 
 const DATE = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Date AAAA-MM-JJ' }
 const ID = { type: 'string', description: 'Identifiant' }
@@ -337,8 +354,9 @@ export const COCKPIT_TOOLS = [
     async run(args, ctx) {
       const { state } = await readState(ctx)
       const ws = { shops: [], collections: [], favorites: [], notes: {}, ...(state.etsy || {}) }
-      if (ws.mode === 'live') {
-        return { mode: 'live', avertissement: 'Les données Etsy réelles ne sont pas stockées : ouvre l’onglet Sourcing Etsy pour les recharger. Connecteur en attente d’autorisation Etsy.', boutiques_suivies: ws.shops.filter(s => s.source === 'etsy') }
+      if (process.env.ETSY_LIVE_ENABLED === 'true') {
+        return { mode: 'live', boutiques_suivies: ws.shops.filter(s => s.source === 'etsy'), favoris: ws.favorites, notes: ws.notes,
+          info: 'Données réelles : utilise « etsy_recherche_produits » (niche par mots-clés) et « etsy_boutique » (catalogue complet d’une boutique).' }
       }
       const demo = demoDataset()
       const tracked = new Set(ws.shops.filter(s => s.source === 'demo').map(s => s.id))
@@ -353,6 +371,39 @@ export const COCKPIT_TOOLS = [
         boutiques: shops, fiches: listings, favoris: ws.favorites, collections: ws.collections,
         ...(shops.length ? {} : { info: `Aucune boutique suivie. Boutiques de démo disponibles : ${demo.shops.map(s => s.name).join(', ')}.` }),
       }
+    },
+  },
+  {
+    name: 'etsy_recherche_produits',
+    description: "Recherche produit sur tout Etsy (données réelles, API officielle) : fiches actives par mots-clés avec prix, vues, favoris, vues/jour, favoris/jour, ratio favoris/vues, ventes cumulées de la boutique et ancienneté. Idéal pour évaluer une niche. Les vues et favoris sont cumulés depuis la création de la fiche ; aucune vente par fiche n'est fournie par Etsy : ne l'invente pas. Coût : ~2 appels API par 100 fiches (quota 5 000/jour).",
+    inputSchema: {
+      type: 'object',
+      required: ['mots_cles'],
+      properties: {
+        mots_cles: { type: 'string', description: 'En anglais de préférence (marché Etsy principal)' },
+        prix_min: { type: 'number' }, prix_max: { type: 'number' },
+        tri: { type: 'string', enum: ['score', 'created', 'price'], description: 'score = pertinence Etsy' },
+        nombre: { type: 'integer', minimum: 25, maximum: 300 },
+      },
+    },
+    async run(args) {
+      const client = liveClient()
+      const r = await searchProducts(client, { keywords: args.mots_cles, minPrice: args.prix_min, maxPrice: args.prix_max, sortOn: args.tri || 'score', maxItems: args.nombre ?? 100 })
+      const shopsById = Object.fromEntries(r.shops.map(s => [s.id, s]))
+      return {
+        mots_cles: r.keywords, resultats_etsy_total: r.total, fiches_analysees: r.fetched, releve_le: r.fetchedAt, note: r.note,
+        fiches: r.listings.map(l => compactListing(l, shopsById)), boutiques: r.shops.map(compactShop), quota: client.quota(),
+      }
+    },
+  },
+  {
+    name: 'etsy_boutique',
+    description: "Catalogue complet d'une boutique Etsy réelle (nom, identifiant ou URL) : stats de la boutique et toutes ses fiches actives avec vues, favoris, ratios et avis des 12 derniers mois par fiche.",
+    inputSchema: { type: 'object', required: ['boutique'], properties: { boutique: { type: 'string' } } },
+    async run(args) {
+      const client = liveClient()
+      const r = await loadShop(client, args.boutique)
+      return { boutique: compactShop(r.shop), catalogue: r.catalog, fiches: r.listings.map(l => compactListing(l, { [r.shop.id]: r.shop })), quota: client.quota() }
     },
   },
   {

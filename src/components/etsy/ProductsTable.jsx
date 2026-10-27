@@ -14,13 +14,18 @@ const COLUMNS = [
   { id: 'currency', label: 'Devise' },
   { id: 'category', label: 'Catégorie', sort: 'category' },
   { id: 'favorites', label: 'Favoris', sort: 'favorites', metric: 'favorites' },
+  { id: 'views', label: 'Vues', sort: 'views', metric: 'views' },
+  { id: 'viewsPerDay', label: 'Vues / jour', sort: 'viewsPerDay', metric: 'viewsPerDay' },
+  { id: 'favoritesPerDay', label: 'Favoris / jour', sort: 'favoritesPerDay', metric: 'favoritesPerDay' },
+  { id: 'favRate', label: 'Favoris / vues', sort: 'favRate', metric: 'favRate', suffix: ' %' },
+  { id: 'shopSold', label: 'Ventes boutique', sort: 'shopSold', metric: 'shopSold' },
   { id: 'reviews', label: 'Avis (12 mois)', sort: 'reviews', metric: 'reviews' },
   { id: 'ageDays', label: 'Ancienneté', sort: 'ageDays', metric: 'ageDays', suffix: ' j' },
   { id: 'type', label: 'Type' },
   { id: 'estSales', label: 'Ventes est.', sort: 'estSales', metric: 'estSales' },
   { id: 'estRevenue', label: 'CA est.', sort: 'estRevenue', metric: 'estRevenue' },
 ]
-const DEFAULT_COLUMNS = ['image', 'title', 'shop', 'price', 'currency', 'category', 'favorites', 'reviews', 'ageDays', 'estSales', 'estRevenue']
+const DEFAULT_COLUMNS = ['image', 'title', 'shop', 'price', 'currency', 'favorites', 'views', 'viewsPerDay', 'favoritesPerDay', 'favRate', 'shopSold', 'reviews', 'ageDays']
 const TYPE_LABEL = { physical: 'Physique', download: 'Numérique', both: 'Les deux' }
 
 function NumRange({ label, min, max, onMin, onMax, unit }) {
@@ -92,6 +97,7 @@ export default function ProductsTable({ listings, shopsById, taxonomy, favorites
         <div className="grid grid-cols-1 gap-3 rounded-[20px] bg-[var(--bg-card)] p-4 shadow-[var(--shadow-card)] sm:grid-cols-2 lg:grid-cols-4">
           <NumRange label="Prix" min={filters.priceMin} max={filters.priceMax} onMin={v => set({ priceMin: v })} onMax={v => set({ priceMax: v })} />
           <NumRange label="Favoris" min={filters.favMin} max={filters.favMax} onMin={v => set({ favMin: v })} onMax={v => set({ favMax: v })} />
+          <NumRange label="Vues (min)" min={filters.viewsMin} max="" onMin={v => set({ viewsMin: v })} onMax={() => {}} />
           <NumRange label="Ancienneté" min={filters.ageMinDays} max={filters.ageMaxDays} onMin={v => set({ ageMinDays: v })} onMax={v => set({ ageMaxDays: v })} unit="jours" />
           <div>
             <span className={LABEL}>Avis minimum</span>

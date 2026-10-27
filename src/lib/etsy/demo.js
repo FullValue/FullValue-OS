@@ -77,6 +77,7 @@ export function demoRaw(now = Date.now()) {
         price: s.shop_id === 900004 && i === 2 ? undefined : { amount, divisor: 100, currency_code: s.currency_code },
         quantity: digital ? 999 : 1 + Math.floor(rand() * 25),
         num_favorers: s.shop_id === 900004 && i === 3 ? undefined : Math.floor(rand() * rand() * 900),
+        views: 40 + Math.floor(rand() * rand() * 24000),
         tags: Array.from({ length: 4 + Math.floor(rand() * 6) }, () => TAGS[Math.floor(rand() * TAGS.length)]).filter((t, k, a) => a.indexOf(t) === k),
         materials: digital ? [] : ['coton', 'laiton', 'lin', 'papier recyclé', 'cuir végétal'].filter(() => rand() > 0.6),
         taxonomy_id: s.shop_id === 900005 && i === 1 ? null : tax,

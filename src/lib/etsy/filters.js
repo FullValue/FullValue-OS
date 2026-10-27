@@ -4,7 +4,7 @@
 import { numeric } from './metrics.js'
 
 export const DEFAULT_FILTERS = {
-  priceMin: '', priceMax: '', favMin: '', favMax: '', reviewsMin: '', ageMaxDays: '', ageMinDays: '',
+  priceMin: '', priceMax: '', favMin: '', favMax: '', viewsMin: '', reviewsMin: '', ageMaxDays: '', ageMinDays: '',
   include: '', exclude: '', categories: [], type: 'all', shops: [], currency: '',
   keepUnavailable: false,
 }
@@ -34,6 +34,7 @@ export function applyFilters(listings, f = DEFAULT_FILTERS) {
     if (f.type === 'digital' && l.type !== 'download' && l.type !== 'both') return false
     if (!inRange(l.metrics.price, num(f.priceMin), num(f.priceMax), keep)) return false
     if (!inRange(l.metrics.favorites, num(f.favMin), num(f.favMax), keep)) return false
+    if (!inRange(l.metrics.views, num(f.viewsMin), null, keep)) return false
     if (!inRange(l.metrics.reviews, num(f.reviewsMin), null, keep)) return false
     if (!inRange(l.metrics.ageDays, num(f.ageMinDays), num(f.ageMaxDays), keep)) return false
     return true
@@ -49,6 +50,11 @@ export const SORT_KEYS = {
   favorites: l => numeric(l.metrics.favorites),
   reviews: l => numeric(l.metrics.reviews),
   ageDays: l => numeric(l.metrics.ageDays),
+  views: l => numeric(l.metrics.views),
+  viewsPerDay: l => numeric(l.metrics.viewsPerDay),
+  favoritesPerDay: l => numeric(l.metrics.favoritesPerDay),
+  favRate: l => numeric(l.metrics.favRate),
+  shopSold: l => numeric(l.metrics.shopSold),
   estSales: l => numeric(l.metrics.estSales),
   estRevenue: l => numeric(l.metrics.estRevenue),
 }

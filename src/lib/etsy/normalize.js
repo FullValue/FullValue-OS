@@ -88,13 +88,21 @@ export function normalizeListing(raw, { source = 'etsy', fetchedAt = new Date().
     whenMade: optStr(raw.when_made),
     whoMade: optStr(raw.who_made),
     hasVariations: raw.has_variations === true,
+    isPersonalizable: raw.is_personalizable === true,
+    language: optStr(raw.language),
+    processing: optNum(raw.processing_min) != null ? { min: optNum(raw.processing_min), max: optNum(raw.processing_max) } : null,
     createdAt: created ? new Date(created * 1000).toISOString() : null,
+    updatedAt: optNum(raw.last_modified_timestamp) ? new Date(raw.last_modified_timestamp * 1000).toISOString() : null,
     metrics: {
       // Prix minimum de la fiche (variantes possibles), dans la devise de la boutique.
       price: observed(moneyToNumber(price), { ...meta, currency, period: 'Prix affiché actuel (minimum)', note: raw.has_variations ? 'Prix minimum : la fiche a des variantes' : null }),
       favorites: observed(optNum(raw.num_favorers), { ...meta, period: 'Valeur actuelle', note: 'Les favoris ne sont pas des ventes' }),
       quantity: observed(optNum(raw.quantity), { ...meta, period: 'Valeur actuelle', note: 'Stock affiché : une variation n’est pas une vente' }),
+      views: observed(optNum(raw.views), { ...meta, period: 'Cumul depuis la création de la fiche', note: 'Les vues ne sont pas des ventes' }),
       ageDays: computed(daysSince(created, now), { source: meta.source, observedAt: fetchedAt, note: 'Depuis la création de la fiche' }),
+      ...rates(optNum(raw.views), optNum(raw.num_favorers), daysSince(created, now), { source: meta.source, observedAt: fetchedAt }),
+      // Ventes cumulées de la boutique (si la boutique est incluse dans la réponse) : jamais attribuées à la fiche.
+      shopSold: isObj(raw.shop) ? observed(optNum(raw.shop.transaction_sold_count), { ...meta, source: 'Etsy · boutique incluse', period: 'Cumul de la boutique', note: 'Ventes de toute la boutique, pas de cette fiche' }) : unavailable('Boutique non incluse'),
       // Remplis par attachReviews si les avis ont été récupérés ; sinon indisponibles.
       reviews: unavailable('Avis non récupérés pour cette fiche'),
       lastReviewAt: unavailable('Avis non récupérés pour cette fiche'),
@@ -102,6 +110,17 @@ export function normalizeListing(raw, { source = 'etsy', fetchedAt = new Date().
       estSales: unavailable('Estimation non disponible'),
       estRevenue: unavailable('Estimation non disponible'),
     },
+  }
+}
+
+// Ratios moyens calculés à partir des compteurs cumulés (moyenne sur la vie de la fiche, pas une tendance récente).
+function rates(views, favs, ageDays, meta) {
+  const days = ageDays != null ? Math.max(1, ageDays) : null
+  const period = 'Moyenne depuis la création de la fiche'
+  return {
+    viewsPerDay: views != null && days ? computed(Math.round((views / days) * 10) / 10, { ...meta, period, note: 'Vues cumulées ÷ ancienneté' }) : unavailable('Vues ou ancienneté indisponibles'),
+    favoritesPerDay: favs != null && days ? computed(Math.round((favs / days) * 100) / 100, { ...meta, period, note: 'Favoris actuels ÷ ancienneté' }) : unavailable('Favoris ou ancienneté indisponibles'),
+    favRate: views != null && views > 0 && favs != null ? computed(Math.round((favs / views) * 1000) / 10, { ...meta, period, note: 'Favoris ÷ vues, en %' }) : unavailable('Vues ou favoris indisponibles'),
   }
 }
 

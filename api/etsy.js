@@ -3,22 +3,15 @@
 //   GET /api/etsy?action=status                → état du connecteur (sans aucun secret)
 //   GET /api/etsy?action=shop&q=<nom|id|url>   → boutique + catalogue actif + avis récents (normalisés)
 //   GET /api/etsy?action=search&q=<nom>        → boutiques correspondant au nom
+//   GET /api/etsy?action=products&q=<mots-clés>[&min_price&max_price&sort_on&taxonomy_id] → recherche produit
 // Accès : session Supabase valide + email présent dans ETSY_ALLOWED_EMAILS.
 // Aucune donnée Etsy n'est stockée côté serveur (seul un cache mémoire de courte durée).
 import { createClient } from '@supabase/supabase-js'
-import { createEtsyClient, flattenTaxonomy, EtsyApiError } from '../server/etsy/client.js'
-import { normalizeShop, normalizeListing, normalizeReview, attachReviews, parseShopQuery, EtsyValidationError } from '../src/lib/etsy/normalize.js'
+import { EtsyApiError } from '../server/etsy/client.js'
+import { EtsyValidationError } from '../src/lib/etsy/normalize.js'
+import { etsyStatus, liveClient, loadShop, searchProducts } from '../server/etsy/service.js'
 
-const cache = new Map() // partagé entre requêtes d'une même instance, borné par le client
-let taxonomyCache = null
-
-function status() {
-  return {
-    live: process.env.ETSY_LIVE_ENABLED === 'true',
-    configured: !!(process.env.ETSY_API_KEY && process.env.ETSY_SHARED_SECRET),
-    trackingAllowed: process.env.ETSY_TRACKING_ALLOWED === 'true',
-  }
-}
+const status = etsyStatus
 
 async function authorize(req) {
   const token = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization || '')?.[1]
@@ -33,32 +26,6 @@ async function authorize(req) {
   return { user }
 }
 
-async function loadShop(client, query) {
-  const parsed = parseShopQuery(query)
-  if (!parsed) throw new EtsyApiError('Indique un nom, un identifiant ou une URL de boutique.', { status: 400 })
-  let shopRaw
-  if (parsed.kind === 'shopId') shopRaw = await client.getShop(parsed.value)
-  else if (parsed.kind === 'listingId') shopRaw = await client.getShop((await client.getListing(parsed.value)).shop_id)
-  else {
-    const found = await client.findShops(parsed.value)
-    const exact = found.results.find(s => s.shop_name?.toLowerCase() === String(parsed.value).toLowerCase()) || found.results[0]
-    if (!exact) throw new EtsyApiError('Aucune boutique trouvée.', { status: 404, code: 'not_found' })
-    shopRaw = await client.getShop(exact.shop_id)
-  }
-  const fetchedAt = new Date().toISOString()
-  if (!taxonomyCache) taxonomyCache = flattenTaxonomy(await client.getTaxonomy())
-  const shop = normalizeShop(shopRaw, { fetchedAt })
-  const active = await client.getActiveListings(shop.id, { maxItems: 300 })
-  const withImages = await client.getListingsWithImages(active.results.map(l => l.listing_id))
-  const byId = new Map(withImages.map(l => [l.listing_id, l]))
-  let listings = active.results.map(l => normalizeListing(byId.get(l.listing_id) || l, { fetchedAt, taxonomy: taxonomyCache }))
-  const minCreated = Math.floor(Date.now() / 1000) - 365 * 86400
-  const rv = await client.getShopReviews(shop.id, { minCreated, maxItems: 500 })
-  const reviews = rv.results.map(normalizeReview)
-  listings = attachReviews(listings, reviews, { complete: rv.complete, from: new Date(minCreated * 1000).toISOString(), to: fetchedAt, fetched: reviews.length, total: rv.total }, fetchedAt)
-  return { shop, listings, catalog: { fetched: listings.length, total: active.total, complete: active.complete } }
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end()
   const action = String(req.query.action || 'status')
@@ -69,10 +36,19 @@ export default async function handler(req, res) {
   const auth = await authorize(req)
   if (auth.error) return res.status(auth.status).json({ error: auth.error })
   try {
-    const client = createEtsyClient({ apiKey: process.env.ETSY_API_KEY, sharedSecret: process.env.ETSY_SHARED_SECRET, cache })
+    const client = liveClient()
     if (action === 'search') {
       const found = await client.findShops(String(req.query.q || '').slice(0, 80))
       return res.status(200).json({ shops: found.results.map(s => ({ id: s.shop_id, name: s.shop_name, url: s.url ?? null })), quota: client.quota() })
+    }
+    if (action === 'products') {
+      const q = req.query
+      const data = await searchProducts(client, {
+        keywords: String(q.q || '').slice(0, 200), taxonomyId: q.taxonomy_id, minPrice: q.min_price, maxPrice: q.max_price,
+        sortOn: ['score', 'created', 'price', 'updated'].includes(q.sort_on) ? q.sort_on : 'score', sortOrder: q.sort_order === 'asc' ? 'asc' : 'desc',
+        maxItems: Math.min(300, Number(q.max) || 200),
+      })
+      return res.status(200).json({ ...data, quota: client.quota() })
     }
     if (action === 'shop') {
       const data = await loadShop(client, String(req.query.q || '').slice(0, 300))

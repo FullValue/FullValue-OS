@@ -114,12 +114,15 @@ export function createEtsyClient({ apiKey, sharedSecret, fetchImpl = globalThis.
     getShop: id => request(`/shops/${Number(id)}`),
     // findAllActiveListingsByShop n'accepte pas « includes » : les images passent par le batch.
     getActiveListings: (id, opts) => paginate(`/shops/${Number(id)}/listings/active`, {}, { ...opts, kind: 'listings' }),
-    // getListingsByListingIds avec includes=Images, par lots de 100 identifiants.
-    async getListingsWithImages(ids = []) {
+    // Recherche par mots-clés sur toutes les fiches actives d'Etsy (findAllListingsActive), paginée.
+    searchListings: ({ keywords, taxonomyId, minPrice, maxPrice, sortOn = 'score', sortOrder = 'desc', maxItems = 200 } = {}) =>
+      paginate('/listings/active', { keywords, taxonomy_id: taxonomyId, min_price: minPrice, max_price: maxPrice, sort_on: sortOn, sort_order: sortOrder }, { maxItems, kind: 'listings' }),
+    // getListingsByListingIds par lots de 100 : images et, si demandé, la boutique de chaque fiche (1 appel pour 100 fiches).
+    async getListingsWithImages(ids = [], includes = 'Images') {
       const out = []
       for (let i = 0; i < ids.length; i += PAGE_LIMIT) {
         const chunk = ids.slice(i, i + PAGE_LIMIT).map(Number).join(',')
-        out.push(...validateList(await request('/listings/batch', { listing_ids: chunk, includes: 'Images' }, { kind: 'listings' }), 'getListingsByListingIds').results)
+        out.push(...validateList(await request('/listings/batch', { listing_ids: chunk, includes }, { kind: 'listings' }), 'getListingsByListingIds').results)
       }
       return out
     },

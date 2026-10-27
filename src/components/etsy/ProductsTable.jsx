@@ -15,6 +15,7 @@ const COLUMNS = [
   { id: 'category', label: 'Catégorie', sort: 'category' },
   { id: 'favorites', label: 'Favoris', sort: 'favorites', metric: 'favorites' },
   { id: 'views', label: 'Vues', sort: 'views', metric: 'views' },
+  { id: 'allocSales', label: 'Ventes 7 j (est.)', sort: 'allocSales', metric: 'allocSales', digits: 1 },
   { id: 'viewsTrend', label: 'Vues 7 j', sort: 'viewsTrend', metric: 'viewsTrend' },
   { id: 'favoritesTrend', label: 'Favoris 7 j', sort: 'favoritesTrend', metric: 'favoritesTrend' },
   { id: 'viewsPerDay', label: 'Vues / jour', sort: 'viewsPerDay', metric: 'viewsPerDay' },
@@ -27,7 +28,7 @@ const COLUMNS = [
   { id: 'estSales', label: 'Ventes est.', sort: 'estSales', metric: 'estSales' },
   { id: 'estRevenue', label: 'CA est.', sort: 'estRevenue', metric: 'estRevenue' },
 ]
-const DEFAULT_COLUMNS = ['image', 'title', 'shop', 'price', 'currency', 'favorites', 'views', 'viewsTrend', 'favoritesTrend', 'viewsPerDay', 'favoritesPerDay', 'favRate', 'shopSold', 'reviews', 'ageDays']
+const DEFAULT_COLUMNS = ['image', 'title', 'shop', 'price', 'currency', 'allocSales', 'favorites', 'views', 'viewsTrend', 'favoritesTrend', 'viewsPerDay', 'favoritesPerDay', 'favRate', 'shopSold', 'reviews', 'ageDays']
 const TYPE_LABEL = { physical: 'Physique', download: 'Numérique', both: 'Les deux' }
 
 function NumRange({ label, min, max, onMin, onMax, unit }) {
@@ -171,7 +172,7 @@ export default function ProductsTable({ listings, shopsById, taxonomy, favorites
                       {c.id === 'currency' && <span className="text-[12px] text-[var(--text-secondary)]">{l.currency || <i className="text-[var(--text-tertiary)]">Indisponible</i>}</span>}
                       {c.id === 'category' && <span className="text-[12px] text-[var(--text-secondary)]">{l.category || <i className="text-[var(--text-tertiary)]">Indisponible</i>}</span>}
                       {c.id === 'type' && <span className="text-[12px] text-[var(--text-secondary)]">{TYPE_LABEL[l.type] || <i className="text-[var(--text-tertiary)]">Indisponible</i>}</span>}
-                      {c.metric && <MetricCell m={l.metrics[c.metric]} suffix={c.suffix} />}
+                      {c.metric && <MetricCell m={l.metrics[c.metric]} suffix={c.suffix} digits={c.digits} />}
                     </td>
                   ))}
                   <td className="px-2" onClick={e => e.stopPropagation()}>

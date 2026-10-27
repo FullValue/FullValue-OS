@@ -14,7 +14,28 @@ const KIND = {
   missing: { label: 'valeur manquante dans une observation', color: 'var(--text-tertiary)' },
 }
 
-function Variations({ shop, observations, trackingNote }) {
+// Ventes réelles par relevé (écart du compteur boutique), 14 derniers relevés.
+function DailySales({ days }) {
+  if (!days?.length) return null
+  const last = days.slice(-14)
+  const max = Math.max(1, ...last.map(d => d.sales ?? 0))
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[12px] font-semibold text-[var(--text-primary)]">Ventes réelles par jour (compteur Etsy de la boutique)</p>
+      <div className="flex h-16 items-end gap-1">
+        {last.map(d => (
+          <div key={d.day} className="flex flex-1 flex-col items-center gap-0.5" title={`${d.day}${d.span > 1 ? ` (sur ${d.span} j)` : ''} : ${d.sales ?? 'correction / indisponible'}`}>
+            <span className="text-[10px] tabular-nums text-[var(--text-tertiary)]">{d.sales ?? '—'}</span>
+            <div className="w-full rounded-t" style={{ height: `${d.sales == null ? 2 : Math.max(2, (d.sales / max) * 40)}px`, background: d.sales == null ? 'var(--border-medium)' : 'var(--accent)' }} />
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-[var(--text-tertiary)]">Différence du compteur de ventes entre deux relevés quotidiens. Barre grise : correction du compteur ou valeur manquante.</p>
+    </div>
+  )
+}
+
+function Variations({ shop, observations, trackingNote, days }) {
   const segs = counterVariations(observations, shop.id, 'soldCount')
   const summary = summarizeVariation(segs)
   return (
@@ -23,6 +44,7 @@ function Variations({ shop, observations, trackingNote }) {
         <p className="text-[12px] font-semibold text-[var(--text-primary)]">Compteur de ventes boutique · suivi</p>
         {trackingNote && <Pill bg="#FFF3D1" color="#9A6B00">{trackingNote}</Pill>}
       </div>
+      <DailySales days={days} />
       {!segs.length ? (
         <p className="text-[12px] italic text-[var(--text-tertiary)]">Pas assez d’observations (il en faut au moins deux). Aucun historique n’est reconstruit à partir d’une seule lecture.</p>
       ) : (
@@ -50,7 +72,7 @@ function Variations({ shop, observations, trackingNote }) {
   )
 }
 
-export default function ShopsPanel({ shops, listings, observations, trackingNote, onRemove, selected, onToggleSelect }) {
+export default function ShopsPanel({ dailySales, shops, listings, observations, trackingNote, onRemove, selected, onToggleSelect }) {
   if (!shops.length) return <p className="rounded-[22px] bg-[var(--bg-card)] py-12 text-center text-[14px] text-[var(--text-tertiary)] shadow-[var(--shadow-card)]">Ajoute une boutique pour commencer.</p>
   return (
     <div className="space-y-4">
@@ -88,7 +110,7 @@ export default function ShopsPanel({ shops, listings, observations, trackingNote
               </div>
             </div>
             <p className="text-[11px] italic text-[var(--text-tertiary)]">Le compteur de ventes est global à la boutique : il n’est jamais réparti entre les fiches.</p>
-            <Variations shop={shop} observations={observations} trackingNote={trackingNote} />
+            <Variations shop={shop} observations={observations} trackingNote={trackingNote} days={dailySales?.get(shop.id)} />
           </div>
         )
       })}

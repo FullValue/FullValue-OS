@@ -4,7 +4,7 @@ import { readState, mutateState, findById, newId } from './state.js'
 import { demoDataset } from '../../src/lib/etsy/demo.js'
 import { estimateListingSales } from '../../src/lib/etsy/estimation.js'
 import { liveClient, loadShop, searchProducts } from '../etsy/service.js'
-import { listingTrends, shopObservationsFromRows, counterVariations, summarizeVariation } from '../../src/lib/etsy/observations.js'
+import { listingTrends, shopObservationsFromRows, counterVariations, summarizeVariation, shopDailySales, allocateListingSales } from '../../src/lib/etsy/observations.js'
 
 // Version compacte d'une fiche pour les IA : valeurs seules, « null » = indisponible (jamais 0 par défaut).
 const val = m => (m && m.status !== 'unavailable' ? m.value : null)
@@ -410,7 +410,7 @@ export const COCKPIT_TOOLS = [
   },
   {
     name: 'etsy_tendances',
-    description: "Tendances mesurées par le suivi quotidien (relevés des boutiques ajoutées et des fiches en favori) : vues et favoris gagnés par fiche sur la période, et variation du compteur de ventes de chaque boutique. Ce sont des variations entre relevés, pas des ventes par fiche.",
+    description: "Tendances mesurées par le suivi quotidien (relevés des boutiques ajoutées et des fiches en favori) : vues et favoris gagnés par fiche sur la période, et variation du compteur de ventes de chaque boutique. Les ventes par jour des boutiques sont réelles (compteur Etsy) ; « ventes_estimees » par fiche = ventes réelles de la boutique réparties au prorata des vues gagnées : c'est une estimation, présente-la comme telle.",
     inputSchema: { type: 'object', properties: { jours: { type: 'integer', minimum: 1, maximum: 90, description: 'Fenêtre (7 par défaut)' }, limit: { type: 'integer', minimum: 1, maximum: 200 } } },
     async run(args, ctx) {
       const since = new Date(Date.now() - 90 * 86400e3).toISOString().slice(0, 10)
@@ -419,10 +419,12 @@ export const COCKPIT_TOOLS = [
       if (!rows.length) return { info: 'Aucun relevé : ajoute des boutiques réelles dans l’onglet Sourcing Etsy ou mets des fiches en favori. Le relevé est quotidien (5 h UTC).' }
       const trends = listingTrends(rows, { days: args.jours ?? 7 })
       const titles = new Map(rows.filter(r => r.kind === 'listing').map(r => [Number(r.entity_id), { titre: r.vals?.title, boutique: r.shop_id, prix: r.vals?.price, vues: r.vals?.views, favoris: r.vals?.favorites }]))
-      const fiches = [...trends].filter(([, t]) => t.span).map(([id, t]) => ({ id, ...titles.get(id), vues_gagnees: t.views, favoris_gagnes: t.favorites, sur_jours: t.span }))
+      const alloc = allocateListingSales(rows, { days: args.jours ?? 7 })
+      const fiches = [...trends].filter(([, t]) => t.span).map(([id, t]) => ({ id, ...titles.get(id), vues_gagnees: t.views, favoris_gagnes: t.favorites, ventes_estimees: alloc.get(id)?.sales ?? null, sur_jours: t.span }))
         .sort((a, b) => (b.vues_gagnees ?? -1) - (a.vues_gagnees ?? -1)).slice(0, args.limit ?? 50)
       const obs = shopObservationsFromRows(rows)
-      const boutiques = [...new Set(obs.map(o => o.shopId))].map(id => ({ shop_id: id, ventes: summarizeVariation(counterVariations(obs, id, 'soldCount')) }))
+      const daily = shopDailySales(rows)
+      const boutiques = [...new Set(obs.map(o => o.shopId))].map(id => ({ shop_id: id, ventes: summarizeVariation(counterVariations(obs, id, 'soldCount')), ventes_reelles_par_releve: daily.get(id) || [] }))
       return { premier_releve: rows[0].day, dernier_releve: rows.at(-1).day, fiches_suivies: trends.size, fiches, boutiques, ...(fiches.length ? {} : { info: 'Un seul relevé pour l’instant : les tendances apparaissent après le prochain relevé.' }) }
     },
   },

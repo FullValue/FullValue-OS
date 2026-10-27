@@ -10,7 +10,7 @@ import { attachTrends } from '@/lib/etsy/normalize'
 
 const SORTS = [['score', 'Pertinence Etsy'], ['created', 'Plus récentes'], ['price', 'Prix']]
 
-export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx, trends, onQuota }) {
+export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx, trends, alloc, onQuota }) {
   const [form, setForm] = useState({ q: '', minPrice: '', maxPrice: '', sortOn: 'score', max: '200' })
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -42,7 +42,7 @@ export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx, tr
   }
 
   const shopsById = Object.fromEntries((result?.shops || []).map(s => [s.id, s]))
-  const shown = result ? attachTrends(result.listings, trends) : []
+  const shown = result ? attachTrends(result.listings, trends, alloc) : []
   const opened = shown.find(l => l.id === openId)
   const toggle = id => setSelected(prev => {
     const n = new Set(prev)

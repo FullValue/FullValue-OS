@@ -123,3 +123,68 @@ export function listingTrends(rows = [], { days = 7 } = {}) {
   }
   return out
 }
+
+// Ventes réelles par jour d'une boutique : écart du compteur de ventes entre relevés successifs.
+// Un écart sur plusieurs jours est rapporté au jour du relevé, avec sa durée ; une baisse = correction (null).
+export function shopDailySales(rows = []) {
+  const byShop = new Map()
+  for (const r of rows) if (r.kind === 'shop') byShop.set(Number(r.entity_id), [...(byShop.get(Number(r.entity_id)) || []), r])
+  const out = new Map()
+  for (const [id, list] of byShop) {
+    list.sort((a, b) => a.at.localeCompare(b.at))
+    const days = []
+    for (let i = 1; i < list.length; i++) {
+      const a = list[i - 1].vals?.soldCount
+      const b = list[i].vals?.soldCount
+      const span = Math.max(1, Math.round((Date.parse(list[i].at) - Date.parse(list[i - 1].at)) / DAY))
+      days.push({ day: list[i].day, span, sales: typeof a === 'number' && typeof b === 'number' && b >= a ? b - a : null })
+    }
+    out.set(id, days)
+  }
+  return out
+}
+
+// Répartition des ventes réelles d'une boutique entre ses fiches, au prorata des vues gagnées
+// (favoris gagnés à défaut) sur la même fenêtre. C'est une estimation : Etsy ne publie pas les ventes par fiche.
+export function allocateListingSales(rows = [], { days = 7 } = {}) {
+  const shops = new Map()
+  for (const r of rows) if (r.kind === 'shop') shops.set(Number(r.entity_id), [...(shops.get(Number(r.entity_id)) || []), r])
+  const listings = new Map()
+  for (const r of rows) if (r.kind === 'listing' && r.shop_id) {
+    const key = Number(r.shop_id)
+    if (!listings.has(key)) listings.set(key, new Map())
+    const m = listings.get(key)
+    m.set(Number(r.entity_id), [...(m.get(Number(r.entity_id)) || []), r])
+  }
+  const out = new Map()
+  for (const [shopId, list] of shops) {
+    list.sort((a, b) => a.at.localeCompare(b.at))
+    const last = list.at(-1)
+    const base = [...list].reverse().find(r => Date.parse(r.at) <= Date.parse(last.at) - days * DAY) || list[0]
+    if (base === last) continue
+    const a = base.vals?.soldCount
+    const b = last.vals?.soldCount
+    if (typeof a !== 'number' || typeof b !== 'number' || b < a) continue
+    const shopSales = b - a
+    const span = Math.round(((Date.parse(last.at) - Date.parse(base.at)) / DAY) * 10) / 10
+    const gains = []
+    for (const [lid, snaps] of listings.get(shopId) || []) {
+      const at = k => snaps.find(s => s.day === k)
+      const s0 = at(base.day)
+      const s1 = at(last.day)
+      if (!s0 || !s1) continue
+      const d = k => (typeof s0.vals?.[k] === 'number' && typeof s1.vals?.[k] === 'number' && s1.vals[k] >= s0.vals[k] ? s1.vals[k] - s0.vals[k] : 0)
+      gains.push({ lid, views: d('views'), favorites: d('favorites') })
+    }
+    const key = gains.some(g => g.views > 0) ? 'views' : gains.some(g => g.favorites > 0) ? 'favorites' : null
+    const total = key ? gains.reduce((s, g) => s + g[key], 0) : 0
+    for (const g of gains) {
+      out.set(g.lid, {
+        sales: key ? Math.round((shopSales * g[key] / total) * 10) / 10 : null,
+        share: key ? Math.round((g[key] / total) * 1000) / 10 : null,
+        basis: key, shopSales, span, from: base.at, to: last.at,
+      })
+    }
+  }
+  return out
+}

@@ -43,6 +43,7 @@ export default function ProductDrawer({ listing: l, shop, workspace, ctx, onClos
         <MetricBlock label="Prix" m={l.metrics.price} />
         <MetricBlock label="Favoris" m={l.metrics.favorites} />
         {l.metrics.views && <MetricBlock label="Vues" m={l.metrics.views} />}
+        {l.metrics.allocSales && <MetricBlock label="Ventes 7 j (estimation)" m={l.metrics.allocSales} />}
         {l.metrics.viewsTrend && <MetricBlock label="Vues gagnées (7 j)" m={l.metrics.viewsTrend} />}
         {l.metrics.favoritesTrend && <MetricBlock label="Favoris gagnés (7 j)" m={l.metrics.favoritesTrend} />}
         {l.metrics.viewsPerDay && <MetricBlock label="Vues / jour" m={l.metrics.viewsPerDay} />}

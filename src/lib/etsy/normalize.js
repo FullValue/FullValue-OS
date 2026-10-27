@@ -1,7 +1,7 @@
 // Validation et normalisation des réponses Etsy Open API v3 (schémas Shop, ShopListing, ListingReview
 // de la spécification officielle) vers le modèle interne, avec des métriques traçables.
 // Utilisé par le connecteur serveur et par le mode démonstration (mêmes formats d'entrée).
-import { observed, computed, unavailable, moneyToNumber } from './metrics.js'
+import { observed, computed, estimated, unavailable, moneyToNumber } from './metrics.js'
 
 export class EtsyValidationError extends Error {
   constructor(message, path) {
@@ -178,12 +178,19 @@ export function parseShopQuery(input) {
 }
 
 // Ajoute aux fiches les variations mesurées entre relevés quotidiens (listingTrends).
-export function attachTrends(listings, trends) {
+export function attachTrends(listings, trends, alloc) {
   if (!trends) return listings
   return listings.map(l => {
     const t = trends.get(l.id)
     const meta = t?.span ? { source: 'Relevés quotidiens Cockpit', observedAt: t.to, period: `Sur ${t.span} j (du ${t.from.slice(0, 10)} au ${t.to.slice(0, 10)})`, note: 'Variation du compteur entre deux relevés' } : null
     const metric = k => (meta && t[k] != null ? computed(t[k], meta) : unavailable(t ? (t.span ? 'Compteur corrigé entre deux relevés' : 'Un seul relevé pour l’instant : tendance demain') : 'Fiche non suivie (ajoute la boutique ou mets-la en favori)'))
-    return { ...l, metrics: { ...l.metrics, viewsTrend: metric('views'), favoritesTrend: metric('favorites') } }
+    const a = alloc?.get(l.id)
+    const allocSales = a && a.sales != null
+      ? estimated(a.sales, {
+        method: `Ventes réelles de la boutique (+${a.shopSales} sur ${a.span} j) réparties au prorata des ${a.basis === 'views' ? 'vues' : 'favoris'} gagnés (${a.share} % de la boutique)`,
+        source: 'Relevés quotidiens Cockpit', observedAt: a.to, period: `Sur ${a.span} j`, note: 'Estimation : Etsy ne publie pas les ventes par fiche',
+      })
+      : unavailable(a ? 'Pas de vues ni de favoris gagnés sur la période' : 'Nécessite au moins deux relevés de la boutique entière (ajoute la boutique)')
+    return { ...l, metrics: { ...l.metrics, viewsTrend: metric('views'), favoritesTrend: metric('favorites'), allocSales } }
   })
 }

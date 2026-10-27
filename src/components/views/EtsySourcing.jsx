@@ -7,7 +7,7 @@ import { useStore } from '@/store/useStore'
 import { Pill } from '@/components/studio/StudioUI'
 import { parseShopQuery } from '@/lib/etsy/normalize'
 import { demoDataset, demoObservations, DEMO_TAXONOMY } from '@/lib/etsy/demo'
-import { shopObservationsFromRows, listingTrends } from '@/lib/etsy/observations'
+import { shopObservationsFromRows, listingTrends, allocateListingSales, shopDailySales } from '@/lib/etsy/observations'
 import { attachTrends } from '@/lib/etsy/normalize'
 import { estimateListingSales, revenueScenario } from '@/lib/etsy/estimation'
 import { connectorStatus, loadLiveShop, loadHistory } from '@/lib/etsy/api'
@@ -55,11 +55,13 @@ export default function EtsySourcing() {
   const shopsById = Object.fromEntries(shops.map(s => [s.id, s]))
   const observations = mode === 'live' ? (tracking ? shopObservationsFromRows(history || []) : []) : demoObservations(demo.shops)
   const trends = mode === 'live' && tracking && history ? listingTrends(history) : null
+  const alloc = trends ? allocateListingSales(history) : null
+  const dailySales = trends ? shopDailySales(history) : null
   const lastSnapshot = history?.length ? history.at(-1).at : null
   const ctx = { trackingAllowed: mode === 'live' ? !!status?.trackingAllowed : false, observationCount: 0 }
 
   // Le moteur d'estimation est branché : sans modèle validé, il renvoie « non disponible ».
-  const listings = attachTrends(pool.listings.filter(l => shopsById[l.shopId]), trends).map(l => {
+  const listings = attachTrends(pool.listings.filter(l => shopsById[l.shopId]), trends, alloc).map(l => {
     const estSales = estimateListingSales(l, ctx)
     return { ...l, metrics: { ...l.metrics, estSales, estRevenue: revenueScenario(estSales, l.metrics.price) } }
   })
@@ -165,13 +167,13 @@ export default function EtsySourcing() {
         </div>
       </div>
 
-      {tab === 'search' && <ProductSearch mode={mode} demo={demo} workspace={ws} onUpdate={update} ctx={ctx} trends={trends} onQuota={setQuota} />}
+      {tab === 'search' && <ProductSearch mode={mode} demo={demo} workspace={ws} onUpdate={update} ctx={ctx} trends={trends} alloc={alloc} onQuota={setQuota} />}
       {tab === 'products' && (shops.length === 0
         ? <p className="rounded-[22px] bg-[var(--bg-card)] py-12 text-center text-[14px] text-[var(--text-tertiary)] shadow-[var(--shadow-card)]">Ajoute une boutique (ou charge les boutiques de démonstration) pour voir ses fiches.</p>
         : <ProductsTable listings={listings} shopsById={shopsById} taxonomy={pool.taxonomy} favorites={ws.favorites} onOpen={l => setOpenId(l.id)}
             selected={selListings} onToggleSelect={toggle(setSelListings)} columns={ws.columns} onColumnsChange={columns => update({ columns })}
             onToggleFavorite={id => update({ favorites: ws.favorites.includes(id) ? ws.favorites.filter(x => x !== id) : [...ws.favorites, id] })} />)}
-      {tab === 'shops' && <ShopsPanel shops={shops} listings={listings} observations={observations} onRemove={removeShop} selected={selShops} onToggleSelect={toggle(setSelShops)}
+      {tab === 'shops' && <ShopsPanel dailySales={dailySales} shops={shops} listings={listings} observations={observations} onRemove={removeShop} selected={selShops} onToggleSelect={toggle(setSelShops)}
         trackingNote={mode === 'demo' ? 'Observations synthétiques' : tracking ? null : 'Suivi non autorisé : aucune observation conservée'} />}
       {tab === 'compare' && <ComparePanel mode={compareMode} setMode={setCompareMode} shopsById={shopsById}
         shops={shops.filter(s => selShops.has(s.id))} listings={listings.filter(l => selListings.has(l.id))} />}

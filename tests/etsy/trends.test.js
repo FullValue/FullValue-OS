@@ -15,3 +15,17 @@ test('variation sur ~7 jours entre relevés, correction non calculée, relevé u
   assert.equal(t.get(2).favorites, 5)
   assert.equal(t.get(3).span, 0)
 })
+
+import { allocateListingSales, shopDailySales } from '../../src/lib/etsy/observations.js'
+const shop = (day, sold) => ({ kind: 'shop', entity_id: 9, day, at: `${day}T05:00:00.000Z`, vals: { soldCount: sold } })
+const lst = (id, day, views) => ({ kind: 'listing', entity_id: id, shop_id: 9, day, at: `${day}T05:00:00.000Z`, vals: { views, favorites: 0 } })
+
+test('ventes réelles par jour et répartition au prorata des vues gagnées', () => {
+  const rows = [shop('2026-10-01', 100), shop('2026-10-02', 104), shop('2026-10-08', 120),
+    lst(1, '2026-10-01', 0), lst(1, '2026-10-08', 300), lst(2, '2026-10-01', 0), lst(2, '2026-10-08', 100)]
+  assert.deepEqual(shopDailySales(rows).get(9).map(d => d.sales), [4, 16])
+  const a = allocateListingSales(rows)
+  assert.equal(a.get(1).sales, 15)
+  assert.equal(a.get(2).sales, 5)
+  assert.equal(a.get(1).shopSales, 20)
+})

@@ -110,6 +110,8 @@ export function createEtsyClient({ apiKey, sharedSecret, fetchImpl = globalThis.
 
   return {
     quota: () => lastQuota,
+    // Appel minimal (non mis en cache) pour lire le quota restant.
+    ping: () => request('/openapi-ping', {}, { useCache: false }),
     findShops: name => request('/shops', { shop_name: name, limit: 25 }).then(b => validateList(b, 'findShops')),
     getShop: id => request(`/shops/${Number(id)}`),
     // findAllActiveListingsByShop n'accepte pas « includes » : les images passent par le batch.

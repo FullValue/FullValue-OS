@@ -33,7 +33,18 @@ async function authorize(req) {
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end()
   const action = String(req.query.action || 'status')
-  if (action === 'status') return res.status(200).json(status())
+  if (action === 'status') {
+    const st = status()
+    if (!st.live || !st.configured) return res.status(200).json(st)
+    // Quota lu par un ping (1 appel), pour la jauge de l'onglet.
+    try {
+      const client = liveClient()
+      await client.ping()
+      return res.status(200).json({ ...st, quota: client.quota() })
+    } catch {
+      return res.status(200).json(st)
+    }
+  }
   const st = status()
   if (!st.live) return res.status(503).json({ error: 'Connecteur Etsy désactivé : en attente de l’approbation de l’application et de l’autorisation écrite d’Etsy.', disabled: true })
   if (!st.configured) return res.status(503).json({ error: 'Connecteur Etsy non configuré.', disabled: true })

@@ -10,7 +10,7 @@ import { attachTrends } from '@/lib/etsy/normalize'
 
 const SORTS = [['score', 'Pertinence Etsy'], ['created', 'Plus récentes'], ['price', 'Prix']]
 
-export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx, trends }) {
+export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx, trends, onQuota }) {
   const [form, setForm] = useState({ q: '', minPrice: '', maxPrice: '', sortOn: 'score', max: '200' })
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -30,8 +30,11 @@ export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx, tr
     }
     setBusy(true)
     try {
-      setResult(await searchLiveProducts({ q: form.q, sort_on: form.sortOn, max: form.max, ...(form.minPrice ? { min_price: form.minPrice } : {}), ...(form.maxPrice ? { max_price: form.maxPrice } : {}) }))
+      const r = await searchLiveProducts({ q: form.q, sort_on: form.sortOn, max: form.max, ...(form.minPrice ? { min_price: form.minPrice } : {}), ...(form.maxPrice ? { max_price: form.maxPrice } : {}) })
+      setResult(r)
+      if (r.quota) onQuota?.(r.quota)
     } catch (err) {
+      if (err.quota) onQuota?.(err.quota)
       setError(err.retryAfter ? `${err.message} Réessaie dans ${Math.ceil(err.retryAfter)} s.` : err.message)
     } finally {
       setBusy(false)

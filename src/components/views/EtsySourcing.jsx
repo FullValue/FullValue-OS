@@ -18,6 +18,7 @@ import ComparePanel from '@/components/etsy/ComparePanel'
 import CollectionsPanel from '@/components/etsy/CollectionsPanel'
 import FeasibilityPanel from '@/components/etsy/FeasibilityPanel'
 import ProductSearch from '@/components/etsy/ProductSearch'
+import QuotaGauge from '@/components/etsy/QuotaGauge'
 
 const TABS = [['search', 'Recherche produit'], ['products', 'Produits des boutiques'], ['shops', 'Boutiques'], ['compare', 'Comparer'], ['collections', 'Collections'], ['feasibility', 'Faisabilité']]
 const DEFAULT_WS = { mode: 'demo', shops: [], collections: [], favorites: [], notes: {}, columns: null, observations: [] }
@@ -38,7 +39,8 @@ export default function EtsySourcing() {
   const [live, setLive] = useState({ shops: [], listings: [], taxonomy: {} })
 
   const [history, setHistory] = useState(null)
-  useEffect(() => { connectorStatus().then(setStatus) }, [])
+  const [quota, setQuota] = useState(null)
+  useEffect(() => { connectorStatus().then(st => { setStatus(st); if (st?.quota) setQuota(st.quota) }) }, [])
   const liveAvailable = !!status?.live && !!status?.configured
   const tracking = liveAvailable && !!status?.trackingAllowed
   const refreshHistory = () => loadHistory().then(r => setHistory(r.rows || [])).catch(() => setHistory([]))
@@ -82,6 +84,7 @@ export default function EtsySourcing() {
     setBusy(true)
     try {
       const data = await loadLiveShop(query)
+      if (data.quota) setQuota(data.quota)
       setLive(prev => ({ ...prev, shops: [...prev.shops.filter(s => s.id !== data.shop.id), data.shop], listings: [...prev.listings.filter(l => l.shopId !== data.shop.id), ...data.listings] }))
       const patch = {}
       if (!ws.shops.some(s => s.id === data.shop.id && s.source === 'etsy')) patch.shops = [...ws.shops, { id: data.shop.id, name: data.shop.name, source: 'etsy', addedAt: new Date().toISOString() }]
@@ -90,6 +93,7 @@ export default function EtsySourcing() {
       setQuery('')
       setMessage({ text: `${data.shop.name} chargée : ${data.catalog.fetched} fiche(s)${data.catalog.complete ? '' : ' (catalogue partiel)'}.${data.quota?.remainingToday != null ? ` Quota restant aujourd’hui : ${data.quota.remainingToday}.` : ''}` })
     } catch (err) {
+      if (err.quota) setQuota(err.quota)
       setMessage({ error: true, text: err.retryAfter ? `${err.message} Réessaie dans ${Math.ceil(err.retryAfter / 60)} min.` : err.message })
     } finally {
       setBusy(false)
@@ -119,6 +123,7 @@ export default function EtsySourcing() {
           {mode === 'demo'
             ? <Pill bg="#FFF3D1" color="#9A6B00">Mode démonstration · données synthétiques</Pill>
             : <Pill bg="var(--green-bg)" color="var(--green-deep)">Données Etsy réelles</Pill>}
+          {mode === 'live' && <QuotaGauge quota={quota} />}
           {tracking && <span className="text-[11px] text-[var(--text-tertiary)]">Suivi quotidien actif · {lastSnapshot ? `dernier relevé ${new Date(lastSnapshot).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : 'premier relevé à l’ajout d’une boutique'}</span>}
           <span className="text-[11px] text-[var(--text-tertiary)]">Connecteur Etsy : {status === null ? 'vérification…' : liveAvailable ? 'actif' : 'désactivé (autorisations en attente)'}</span>
           {liveAvailable && (
@@ -160,7 +165,7 @@ export default function EtsySourcing() {
         </div>
       </div>
 
-      {tab === 'search' && <ProductSearch mode={mode} demo={demo} workspace={ws} onUpdate={update} ctx={ctx} trends={trends} />}
+      {tab === 'search' && <ProductSearch mode={mode} demo={demo} workspace={ws} onUpdate={update} ctx={ctx} trends={trends} onQuota={setQuota} />}
       {tab === 'products' && (shops.length === 0
         ? <p className="rounded-[22px] bg-[var(--bg-card)] py-12 text-center text-[14px] text-[var(--text-tertiary)] shadow-[var(--shadow-card)]">Ajoute une boutique (ou charge les boutiques de démonstration) pour voir ses fiches.</p>
         : <ProductsTable listings={listings} shopsById={shopsById} taxonomy={pool.taxonomy} favorites={ws.favorites} onOpen={l => setOpenId(l.id)}

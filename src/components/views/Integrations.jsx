@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mail, Bot, CalendarDays, MessageSquare, Check, ExternalLink, Copy, Trash2, RefreshCw, MessageCircle } from 'lucide-react'
 import { useStore, nanoid } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -7,6 +7,7 @@ import { useWhatsApp } from '@/contexts/WhatsAppContext'
 import { Input } from '@/components/ui/input'
 import { useGmail } from '@/contexts/GmailContext'
 import { toast } from '@/lib/toast'
+import { supabase } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -45,6 +46,98 @@ function CopyLine({ text }) {
         <Copy size={12} />
       </button>
     </div>
+  )
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+// Serveur MCP : un jeton par IA (Claude, ChatGPT, Codex…). Le jeton n'est affiché qu'une fois, seul son empreinte est stockée.
+function McpCard({ origin }) {
+  const { user } = useAuth()
+  const [server, setServer] = useState(null)
+  const [tokens, setTokens] = useState([])
+  const [label, setLabel] = useState('Claude')
+  const [fresh, setFresh] = useState(null)
+  const [error, setError] = useState(null)
+  const endpoint = `${origin}/api/mcp`
+  const cloud = user && !user.local
+
+  function load() {
+    return supabase.from('mcp_tokens').select('id, label, created_at, last_used_at').is('revoked_at', null).order('created_at', { ascending: false })
+      .then(({ data, error: err }) => (err ? setError(err.message) : setTokens(data || [])))
+  }
+  useEffect(() => {
+    // 401 = serveur prêt (jeton manquant), 500 = clé serveur Supabase absente sur Vercel.
+    fetch('/api/mcp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then(r => setServer(r.status === 401 ? 'ok' : r.status === 500 ? 'nokey' : 'off')).catch(() => setServer('off'))
+    if (cloud) load()
+  }, [cloud])
+
+  async function create(e) {
+    e.preventDefault()
+    setError(null)
+    const name = label.trim() || 'Agent'
+    const token = `ckpt_${randomToken()}${randomToken()}`
+    const { error: err } = await supabase.from('mcp_tokens').insert({ user_id: user.id, label: name, token_hash: await sha256Hex(token) })
+    if (err) return setError(err.message)
+    setFresh({ label: name, token })
+    load()
+  }
+  async function revoke(id) {
+    const { error: err } = await supabase.from('mcp_tokens').update({ revoked_at: new Date().toISOString() }).eq('id', id)
+    if (err) return toast.error(err.message)
+    load()
+  }
+
+  const status = server === 'ok' ? <StatusPill tone="ok">Serveur prêt</StatusPill>
+    : server === 'nokey' ? <StatusPill tone="warn">Clé serveur manquante</StatusPill>
+    : <StatusPill tone="off">{server === null ? '…' : 'Indisponible'}</StatusPill>
+
+  return (
+    <IntegrationCard Icon={Bot} color="#1f4fd1" name="Claude, ChatGPT & Codex (MCP)"
+      description="Tes IA lisent et modifient tâches, projets, Studio Créatif (analyse des créas, assets, montages) et Sourcing Etsy."
+      status={status}>
+      {server === 'nokey' && (
+        <p className="rounded-xl px-3 py-2 text-xs" style={{ background: 'var(--yellow-bg)', color: 'var(--yellow-deep)' }}>
+          Ajoute <code>SUPABASE_SERVICE_ROLE_KEY</code> dans les variables Vercel (Supabase → Project Settings → API keys → service_role), puis redéploie.
+        </p>
+      )}
+      {!cloud ? (
+        <p className="text-xs text-[var(--text-tertiary)]">Connecte-toi à ton compte (pas le mode local) pour créer des jetons.</p>
+      ) : (
+        <>
+          <form onSubmit={create} className="flex gap-2">
+            <Input value={label} onChange={e => setLabel(e.target.value)} placeholder="Nom de l'IA (Claude, ChatGPT…)" className="h-9 text-xs" />
+            <Button type="submit" size="sm">Créer un jeton</Button>
+          </form>
+          {error && <p className="text-xs text-[var(--red-deep)]">{error}</p>}
+          {fresh && (
+            <div className="space-y-2 rounded-xl p-3" style={{ background: 'var(--brand-100)' }}>
+              <p className="text-xs font-semibold text-[var(--text-primary)]">Jeton « {fresh.label} » : copie-le maintenant, il ne sera plus affiché.</p>
+              <p className="text-[11px] text-[var(--text-secondary)]">Claude.ai et ChatGPT (connecteur personnalisé, sans authentification) : colle cette URL.</p>
+              <CopyLine text={`${endpoint}?key=${fresh.token}`} />
+              <p className="text-[11px] text-[var(--text-secondary)]">Claude Code :</p>
+              <CopyLine text={`claude mcp add --transport http cockpit ${endpoint} --header "Authorization: Bearer ${fresh.token}"`} />
+            </div>
+          )}
+          {tokens.length > 0 && (
+            <ul className="space-y-1.5">
+              {tokens.map(t => (
+                <li key={t.id} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                  <span className="font-semibold text-[var(--text-primary)]">{t.label}</span>
+                  <span className="text-[var(--text-tertiary)]">{t.last_used_at ? `utilisé le ${new Date(t.last_used_at).toLocaleDateString('fr-FR')}` : 'jamais utilisé'}</span>
+                  <button type="button" onClick={() => revoke(t.id)} className="ml-auto text-[var(--text-tertiary)] hover:text-[var(--red-deep)]" aria-label="Révoquer"><Trash2 size={13} /></button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+      <p className="text-[11px] text-[var(--text-tertiary)]">L'URL avec <code>?key=</code> donne accès à ton Cockpit : ne la partage pas. Révoque un jeton ici à tout moment.</p>
+    </IntegrationCard>
   )
 }
 
@@ -192,19 +285,7 @@ export default function Integrations() {
           {gmail.error && <p className="text-xs text-[var(--red-deep)]">{gmail.error}</p>}
         </IntegrationCard>
 
-        <IntegrationCard
-          Icon={Bot} color="#1f4fd1" name="Claude & Codex (MCP)"
-          description="Tes agents lisent et modifient pôles, projets clients, tâches et demandes via le serveur MCP du Cockpit."
-          status={<StatusPill tone="warn">Attend Supabase</StatusPill>}
-        >
-          <p className="text-xs text-[var(--text-secondary)]">
-            Le serveur <code>/api/mcp</code> est déployé. Il s'activera dès que la base Supabase sera branchée : tu génèreras alors un jeton par agent, puis :
-          </p>
-          <CopyLine text={`claude mcp add --transport http cockpit ${origin}/api/mcp --header "Authorization: Bearer <jeton>"`} />
-          <p className="text-xs text-[var(--text-tertiary)]">
-            Pour que Claude trie tes mails, branche aussi son connecteur Gmail : il pourra lire tes mails et créer les tâches dans le Cockpit.
-          </p>
-        </IntegrationCard>
+        <McpCard origin={origin} />
 
         <AppleCalendarCard />
         <WhatsAppCard origin={origin} />

@@ -4,6 +4,7 @@
 
 import { sendText, normalizePhone } from '../whatsapp/core.js'
 import { summarizeConversations } from '../../src/lib/whatsapp.js'
+import { COCKPIT_TOOLS } from './cockpit.js'
 
 const DATE = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Date AAAA-MM-JJ' }
 const UUID = { type: 'string', description: 'Identifiant (UUID)' }
@@ -38,7 +39,7 @@ function pick(obj, keys) {
   return Object.fromEntries(keys.filter(k => obj[k] !== undefined).map(k => [k, obj[k]]))
 }
 
-export const TOOLS = [
+const SQL_TOOLS = [
   {
     name: 'tableau_de_bord',
     description: "Vue d'ensemble de l'open space : pôles, projets clients actifs, tâches en retard, demandes ouvertes.",
@@ -342,3 +343,7 @@ export const TOOLS = [
     },
   },
 ]
+
+// Les outils branchés sur le store de l'app (cockpit.js) remplacent leurs anciens équivalents SQL.
+const cockpitNames = new Set(COCKPIT_TOOLS.map(t => t.name))
+export const TOOLS = [...COCKPIT_TOOLS, ...SQL_TOOLS.filter(t => !cockpitNames.has(t.name))]

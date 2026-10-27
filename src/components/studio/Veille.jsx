@@ -210,9 +210,11 @@ function CreativeDetail({ creative: c, onClose }) {
 
       <section className="space-y-2">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold text-[var(--text-primary)]"><Sparkles size={14} /> Analyses IA ({analyses.length})</h3>
+        <input className={`${FIELD_BASE} w-full py-1.5 text-[12px]`} value={state.settings?.studioBrand || ''} placeholder="Ta marque / ton offre (contexte donné aux IA)"
+          onChange={e => dispatch({ type: 'UPDATE_SETTINGS', payload: { studioBrand: e.target.value } })} />
         {analyses.length === 0 && (
           <p className="text-[13px] text-[var(--text-tertiary)]">
-            Bientôt : Gemini analysera la créa automatiquement, et Claude pourra déposer son analyse via le MCP (« analyse cette créa et enregistre ton verdict »).
+            Demande à Claude ou ChatGPT (connectés au Cockpit par le MCP) : « analyse les créas à analyser du Studio ». Leurs analyses s’affichent ici, côte à côte.
           </p>
         )}
         {analyses.map(a => (

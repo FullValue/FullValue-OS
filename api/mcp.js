@@ -10,7 +10,9 @@ export default async function handler(req, res) {
 
   let ctx
   try {
-    ctx = await resolveContext(req.headers.authorization, serviceClient())
+    // Jeton en en-tête (Claude Code, Codex) ou dans l'URL ?key= (connecteurs Claude.ai et ChatGPT, sans en-tête possible).
+    const key = typeof req.query?.key === 'string' ? req.query.key : null
+    ctx = await resolveContext(req.headers.authorization || (key ? `Bearer ${key}` : ''), serviceClient())
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }

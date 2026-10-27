@@ -4,10 +4,11 @@ import { TOOLS } from './tools.js'
 
 const SUPPORTED_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05']
 
-const INSTRUCTIONS = `Tu es connecté au Cockpit, l'OS personnel de Marwann (open space de pilotage).
-Les pôles (Ulycom, Yoovi, E-commerce…) contiennent des clients, qui ont des projets clients avec des tâches.
-Les demandes servent à solliciter des prestataires. Réponds en français.
-Commence par « tableau_de_bord » si tu as besoin de contexte. Chaque modification est tracée dans le journal d'activité à ton nom.`
+const INSTRUCTIONS = `Tu es connecté au Cockpit, l'OS personnel de Marwann.
+Tu peux lire et modifier ses projets et tâches, son Studio Créatif (veille des créas concurrentes, assets, montages) et son Sourcing Etsy.
+Pour analyser une créa : « voir_crea » (regarde le média si tu peux), puis « enregistrer_analyse_crea » ; d'autres IA ont pu déposer leur analyse, compare-la à la tienne.
+Etsy : ne présente jamais des données de démonstration comme réelles et n'invente aucune vente ni CA.
+Réponds en français. Commence par « tableau_de_bord » si tu as besoin de contexte.`
 
 const toolsById = new Map(TOOLS.map(t => [t.name, t]))
 

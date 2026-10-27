@@ -3,6 +3,8 @@
 //   GET /api/etsy?action=status                → état du connecteur (sans aucun secret)
 //   GET /api/etsy?action=shop&q=<nom|id|url>   → boutique + catalogue actif + avis récents (normalisés)
 //   GET /api/etsy?action=search&q=<nom>        → boutiques correspondant au nom
+//   GET /api/etsy?action=history               → relevés quotidiens (90 j) des boutiques et fiches suivies
+//   GET /api/etsy?action=snapshot              → relevé immédiat de tout ce qui est suivi
 //   GET /api/etsy?action=products&q=<mots-clés>[&min_price&max_price&sort_on&taxonomy_id] → recherche produit
 // Accès : session Supabase valide + email présent dans ETSY_ALLOWED_EMAILS.
 // Aucune donnée Etsy n'est stockée côté serveur (seul un cache mémoire de courte durée).
@@ -10,6 +12,8 @@ import { createClient } from '@supabase/supabase-js'
 import { EtsyApiError } from '../server/etsy/client.js'
 import { EtsyValidationError } from '../src/lib/etsy/normalize.js'
 import { etsyStatus, liveClient, loadShop, searchProducts } from '../server/etsy/service.js'
+import { serviceClient } from '../server/mcp/auth.js'
+import { saveRows, shopRow, listingRow, snapshotUser } from '../server/etsy/tracking.js'
 
 const status = etsyStatus
 
@@ -50,8 +54,30 @@ export default async function handler(req, res) {
       })
       return res.status(200).json({ ...data, quota: client.quota() })
     }
+    if (action === 'history') {
+      const since = new Date(Date.now() - 90 * 86400e3).toISOString().slice(0, 10)
+      const { data, error } = await serviceClient().from('etsy_snapshots').select('kind, entity_id, shop_id, day, at, vals')
+        .eq('user_id', auth.user.id).gte('day', since).order('day').limit(50000)
+      if (error) return res.status(500).json({ error: `Historique indisponible (migration 009 appliquée ?) : ${error.message}` })
+      return res.status(200).json({ rows: data, trackingAllowed: st.trackingAllowed })
+    }
+    if (action === 'snapshot') {
+      if (!st.trackingAllowed) return res.status(403).json({ error: 'Suivi non autorisé.' })
+      const db = serviceClient()
+      const { data: row } = await db.from('user_state').select('state').eq('user_id', auth.user.id).maybeSingle()
+      return res.status(200).json({ ...(await snapshotUser(db, client, auth.user.id, row?.state)), quota: client.quota() })
+    }
     if (action === 'shop') {
       const data = await loadShop(client, String(req.query.q || '').slice(0, 300))
+      // Premier relevé immédiat de la boutique ajoutée (aucun appel Etsy en plus).
+      if (st.trackingAllowed) {
+        const at = data.shop.fetchedAt
+        await saveRows(serviceClient(), [
+          shopRow(auth.user.id, data.raw.shop, at),
+          ...data.raw.listings.map(l => listingRow(auth.user.id, l, at)),
+        ]).catch(() => {})
+      }
+      delete data.raw
       return res.status(200).json({ ...data, quota: client.quota(), trackingAllowed: st.trackingAllowed })
     }
     return res.status(400).json({ error: 'Action inconnue.' })

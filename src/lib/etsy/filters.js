@@ -55,6 +55,8 @@ export const SORT_KEYS = {
   favoritesPerDay: l => numeric(l.metrics.favoritesPerDay),
   favRate: l => numeric(l.metrics.favRate),
   shopSold: l => numeric(l.metrics.shopSold),
+  viewsTrend: l => numeric(l.metrics.viewsTrend),
+  favoritesTrend: l => numeric(l.metrics.favoritesTrend),
   estSales: l => numeric(l.metrics.estSales),
   estRevenue: l => numeric(l.metrics.estRevenue),
 }

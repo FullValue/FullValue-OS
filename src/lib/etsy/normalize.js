@@ -176,3 +176,14 @@ export function parseShopQuery(input) {
   if (/^[A-Za-z0-9]{2,40}$/.test(q)) return { kind: 'shopName', value: q }
   return { kind: 'search', value: q }
 }
+
+// Ajoute aux fiches les variations mesurées entre relevés quotidiens (listingTrends).
+export function attachTrends(listings, trends) {
+  if (!trends) return listings
+  return listings.map(l => {
+    const t = trends.get(l.id)
+    const meta = t?.span ? { source: 'Relevés quotidiens Cockpit', observedAt: t.to, period: `Sur ${t.span} j (du ${t.from.slice(0, 10)} au ${t.to.slice(0, 10)})`, note: 'Variation du compteur entre deux relevés' } : null
+    const metric = k => (meta && t[k] != null ? computed(t[k], meta) : unavailable(t ? (t.span ? 'Compteur corrigé entre deux relevés' : 'Un seul relevé pour l’instant : tendance demain') : 'Fiche non suivie (ajoute la boutique ou mets-la en favori)'))
+    return { ...l, metrics: { ...l.metrics, viewsTrend: metric('views'), favoritesTrend: metric('favorites') } }
+  })
+}

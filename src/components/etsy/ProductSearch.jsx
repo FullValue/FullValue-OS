@@ -6,10 +6,11 @@ import { searchLiveProducts } from '@/lib/etsy/api'
 import { FIELD_BASE } from '@/lib/studio'
 import ProductsTable from './ProductsTable'
 import ProductDrawer from './ProductDrawer'
+import { attachTrends } from '@/lib/etsy/normalize'
 
 const SORTS = [['score', 'Pertinence Etsy'], ['created', 'Plus récentes'], ['price', 'Prix']]
 
-export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx }) {
+export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx, trends }) {
   const [form, setForm] = useState({ q: '', minPrice: '', maxPrice: '', sortOn: 'score', max: '200' })
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -38,7 +39,8 @@ export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx }) 
   }
 
   const shopsById = Object.fromEntries((result?.shops || []).map(s => [s.id, s]))
-  const opened = result?.listings.find(l => l.id === openId)
+  const shown = result ? attachTrends(result.listings, trends) : []
+  const opened = shown.find(l => l.id === openId)
   const toggle = id => setSelected(prev => {
     const n = new Set(prev)
     if (n.has(id)) n.delete(id)
@@ -79,7 +81,7 @@ export default function ProductSearch({ mode, demo, workspace, onUpdate, ctx }) 
       </form>
 
       {result && (result.listings.length
-        ? <ProductsTable listings={result.listings} shopsById={shopsById} taxonomy={{}} favorites={workspace.favorites} onOpen={l => setOpenId(l.id)}
+        ? <ProductsTable listings={shown} shopsById={shopsById} taxonomy={{}} favorites={workspace.favorites} onOpen={l => setOpenId(l.id)}
             selected={selected} onToggleSelect={toggle} columns={workspace.columns} onColumnsChange={columns => onUpdate({ columns })}
             onToggleFavorite={id => onUpdate({ favorites: workspace.favorites.includes(id) ? workspace.favorites.filter(x => x !== id) : [...workspace.favorites, id] })} />
         : <p className="rounded-[22px] bg-[var(--bg-card)] py-12 text-center text-[14px] text-[var(--text-tertiary)] shadow-[var(--shadow-card)]">Aucune fiche pour ces mots-clés.</p>)}

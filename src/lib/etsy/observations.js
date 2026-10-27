@@ -89,3 +89,37 @@ export function comparableVariations(a, b, { tolerance = 0.15 } = {}) {
   if (ratio > tolerance) return { ok: false, reason: `Périodes de durées différentes (${a.days.toFixed(1)} j contre ${b.days.toFixed(1)} j).` }
   return { ok: true }
 }
+
+// ── Relevés serveur quotidiens (table etsy_snapshots) ─────────────────────────
+
+// Relevés de boutiques → format d'observation ci-dessus (pour counterVariations).
+export function shopObservationsFromRows(rows = []) {
+  return rows.filter(r => r.kind === 'shop').map(r => ({
+    shopId: Number(r.entity_id), at: r.at, source: 'etsy',
+    values: { soldCount: r.vals?.soldCount ?? null, favorites: r.vals?.favorites ?? null, reviewCount: r.vals?.reviewCount ?? null },
+  }))
+}
+
+// Variation des vues et favoris d'une fiche entre le dernier relevé et celui d'il y a ~`days` jours
+// (le plus ancien disponible si l'historique est plus court, au moins 1 jour d'écart).
+// Une baisse du compteur = correction : la variation n'est pas calculée.
+export function listingTrends(rows = [], { days = 7 } = {}) {
+  const byId = new Map()
+  for (const r of rows) if (r.kind === 'listing') byId.set(Number(r.entity_id), [...(byId.get(Number(r.entity_id)) || []), r])
+  const out = new Map()
+  for (const [id, list] of byId) {
+    list.sort((a, b) => a.at.localeCompare(b.at))
+    const last = list.at(-1)
+    const target = Date.parse(last.at) - days * DAY
+    const base = [...list].reverse().find(r => Date.parse(r.at) <= target) || list[0]
+    const span = (Date.parse(last.at) - Date.parse(base.at)) / DAY
+    if (base === last || span < 0.9) { out.set(id, { span: 0, snapshots: list.length }); continue }
+    const delta = k => {
+      const a = base.vals?.[k]
+      const b = last.vals?.[k]
+      return typeof a === 'number' && typeof b === 'number' && b >= a ? b - a : null
+    }
+    out.set(id, { span: Math.round(span * 10) / 10, from: base.at, to: last.at, views: delta('views'), favorites: delta('favorites'), snapshots: list.length })
+  }
+  return out
+}

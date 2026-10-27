@@ -15,6 +15,8 @@ const COLUMNS = [
   { id: 'category', label: 'Catégorie', sort: 'category' },
   { id: 'favorites', label: 'Favoris', sort: 'favorites', metric: 'favorites' },
   { id: 'views', label: 'Vues', sort: 'views', metric: 'views' },
+  { id: 'viewsTrend', label: 'Vues 7 j', sort: 'viewsTrend', metric: 'viewsTrend' },
+  { id: 'favoritesTrend', label: 'Favoris 7 j', sort: 'favoritesTrend', metric: 'favoritesTrend' },
   { id: 'viewsPerDay', label: 'Vues / jour', sort: 'viewsPerDay', metric: 'viewsPerDay' },
   { id: 'favoritesPerDay', label: 'Favoris / jour', sort: 'favoritesPerDay', metric: 'favoritesPerDay' },
   { id: 'favRate', label: 'Favoris / vues', sort: 'favRate', metric: 'favRate', suffix: ' %' },
@@ -25,7 +27,7 @@ const COLUMNS = [
   { id: 'estSales', label: 'Ventes est.', sort: 'estSales', metric: 'estSales' },
   { id: 'estRevenue', label: 'CA est.', sort: 'estRevenue', metric: 'estRevenue' },
 ]
-const DEFAULT_COLUMNS = ['image', 'title', 'shop', 'price', 'currency', 'favorites', 'views', 'viewsPerDay', 'favoritesPerDay', 'favRate', 'shopSold', 'reviews', 'ageDays']
+const DEFAULT_COLUMNS = ['image', 'title', 'shop', 'price', 'currency', 'favorites', 'views', 'viewsTrend', 'favoritesTrend', 'viewsPerDay', 'favoritesPerDay', 'favRate', 'shopSold', 'reviews', 'ageDays']
 const TYPE_LABEL = { physical: 'Physique', download: 'Numérique', both: 'Les deux' }
 
 function NumRange({ label, min, max, onMin, onMax, unit }) {

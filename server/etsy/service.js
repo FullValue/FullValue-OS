@@ -49,7 +49,7 @@ export async function loadShop(client, query) {
   const rv = await client.getShopReviews(shop.id, { minCreated, maxItems: 500 })
   const reviews = rv.results.map(normalizeReview)
   listings = attachReviews(listings, reviews, { complete: rv.complete, from: new Date(minCreated * 1000).toISOString(), to: fetchedAt, fetched: reviews.length, total: rv.total }, fetchedAt)
-  return { shop, listings, catalog: { fetched: listings.length, total: active.total, complete: active.complete } }
+  return { shop, listings, catalog: { fetched: listings.length, total: active.total, complete: active.complete }, raw: { shop: shopRaw, listings: active.results } }
 }
 
 // Recherche produit : fiches actives de tout Etsy par mots-clés, enrichies (images + boutique) par lots de 100.

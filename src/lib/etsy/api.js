@@ -23,3 +23,5 @@ export async function connectorStatus() {
 export const loadLiveShop = q => call({ action: 'shop', q })
 export const searchLiveShops = q => call({ action: 'search', q })
 export const searchLiveProducts = params => call({ action: 'products', ...params })
+export const loadHistory = () => call({ action: 'history' })
+export const snapshotNow = () => call({ action: 'snapshot' })

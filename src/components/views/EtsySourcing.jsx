@@ -7,9 +7,10 @@ import { useStore } from '@/store/useStore'
 import { Pill } from '@/components/studio/StudioUI'
 import { parseShopQuery } from '@/lib/etsy/normalize'
 import { demoDataset, demoObservations, DEMO_TAXONOMY } from '@/lib/etsy/demo'
-import { recordObservation } from '@/lib/etsy/observations'
+import { shopObservationsFromRows, listingTrends } from '@/lib/etsy/observations'
+import { attachTrends } from '@/lib/etsy/normalize'
 import { estimateListingSales, revenueScenario } from '@/lib/etsy/estimation'
-import { connectorStatus, loadLiveShop } from '@/lib/etsy/api'
+import { connectorStatus, loadLiveShop, loadHistory } from '@/lib/etsy/api'
 import ProductsTable from '@/components/etsy/ProductsTable'
 import ProductDrawer from '@/components/etsy/ProductDrawer'
 import ShopsPanel from '@/components/etsy/ShopsPanel'
@@ -36,8 +37,12 @@ export default function EtsySourcing() {
   const [compareMode, setCompareMode] = useState('listings')
   const [live, setLive] = useState({ shops: [], listings: [], taxonomy: {} })
 
+  const [history, setHistory] = useState(null)
   useEffect(() => { connectorStatus().then(setStatus) }, [])
   const liveAvailable = !!status?.live && !!status?.configured
+  const tracking = liveAvailable && !!status?.trackingAllowed
+  const refreshHistory = () => loadHistory().then(r => setHistory(r.rows || [])).catch(() => setHistory([]))
+  useEffect(() => { if (tracking) refreshHistory() }, [tracking])
   // Données réelles par défaut dès que le connecteur est actif, sauf si la démonstration a été choisie.
   const mode = liveAvailable && !(ws.mode === 'demo' && ws.modeChosen) ? 'live' : 'demo'
 
@@ -46,11 +51,13 @@ export default function EtsySourcing() {
   const pool = mode === 'live' ? live : { shops: demo.shops, listings: demo.listings, taxonomy: DEMO_TAXONOMY }
   const shops = tracked.map(t => pool.shops.find(s => s.id === t.id)).filter(Boolean)
   const shopsById = Object.fromEntries(shops.map(s => [s.id, s]))
-  const observations = mode === 'live' ? (status?.trackingAllowed ? ws.observations : []) : demoObservations(demo.shops)
+  const observations = mode === 'live' ? (tracking ? shopObservationsFromRows(history || []) : []) : demoObservations(demo.shops)
+  const trends = mode === 'live' && tracking && history ? listingTrends(history) : null
+  const lastSnapshot = history?.length ? history.at(-1).at : null
   const ctx = { trackingAllowed: mode === 'live' ? !!status?.trackingAllowed : false, observationCount: 0 }
 
   // Le moteur d'estimation est branché : sans modèle validé, il renvoie « non disponible ».
-  const listings = pool.listings.filter(l => shopsById[l.shopId]).map(l => {
+  const listings = attachTrends(pool.listings.filter(l => shopsById[l.shopId]), trends).map(l => {
     const estSales = estimateListingSales(l, ctx)
     return { ...l, metrics: { ...l.metrics, estSales, estRevenue: revenueScenario(estSales, l.metrics.price) } }
   })
@@ -78,8 +85,8 @@ export default function EtsySourcing() {
       setLive(prev => ({ ...prev, shops: [...prev.shops.filter(s => s.id !== data.shop.id), data.shop], listings: [...prev.listings.filter(l => l.shopId !== data.shop.id), ...data.listings] }))
       const patch = {}
       if (!ws.shops.some(s => s.id === data.shop.id && s.source === 'etsy')) patch.shops = [...ws.shops, { id: data.shop.id, name: data.shop.name, source: 'etsy', addedAt: new Date().toISOString() }]
-      if (data.trackingAllowed) patch.observations = recordObservation(ws.observations, data.shop)
       update(patch)
+      if (data.trackingAllowed) refreshHistory()
       setQuery('')
       setMessage({ text: `${data.shop.name} chargée : ${data.catalog.fetched} fiche(s)${data.catalog.complete ? '' : ' (catalogue partiel)'}.${data.quota?.remainingToday != null ? ` Quota restant aujourd’hui : ${data.quota.remainingToday}.` : ''}` })
     } catch (err) {
@@ -112,6 +119,7 @@ export default function EtsySourcing() {
           {mode === 'demo'
             ? <Pill bg="#FFF3D1" color="#9A6B00">Mode démonstration · données synthétiques</Pill>
             : <Pill bg="var(--green-bg)" color="var(--green-deep)">Données Etsy réelles</Pill>}
+          {tracking && <span className="text-[11px] text-[var(--text-tertiary)]">Suivi quotidien actif · {lastSnapshot ? `dernier relevé ${new Date(lastSnapshot).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : 'premier relevé à l’ajout d’une boutique'}</span>}
           <span className="text-[11px] text-[var(--text-tertiary)]">Connecteur Etsy : {status === null ? 'vérification…' : liveAvailable ? 'actif' : 'désactivé (autorisations en attente)'}</span>
           {liveAvailable && (
             <button type="button" onClick={() => update({ mode: mode === 'live' ? 'demo' : 'live', modeChosen: true })} className="text-[11px] font-semibold text-[var(--accent)]">
@@ -152,14 +160,14 @@ export default function EtsySourcing() {
         </div>
       </div>
 
-      {tab === 'search' && <ProductSearch mode={mode} demo={demo} workspace={ws} onUpdate={update} ctx={ctx} />}
+      {tab === 'search' && <ProductSearch mode={mode} demo={demo} workspace={ws} onUpdate={update} ctx={ctx} trends={trends} />}
       {tab === 'products' && (shops.length === 0
         ? <p className="rounded-[22px] bg-[var(--bg-card)] py-12 text-center text-[14px] text-[var(--text-tertiary)] shadow-[var(--shadow-card)]">Ajoute une boutique (ou charge les boutiques de démonstration) pour voir ses fiches.</p>
         : <ProductsTable listings={listings} shopsById={shopsById} taxonomy={pool.taxonomy} favorites={ws.favorites} onOpen={l => setOpenId(l.id)}
             selected={selListings} onToggleSelect={toggle(setSelListings)} columns={ws.columns} onColumnsChange={columns => update({ columns })}
             onToggleFavorite={id => update({ favorites: ws.favorites.includes(id) ? ws.favorites.filter(x => x !== id) : [...ws.favorites, id] })} />)}
       {tab === 'shops' && <ShopsPanel shops={shops} listings={listings} observations={observations} onRemove={removeShop} selected={selShops} onToggleSelect={toggle(setSelShops)}
-        trackingNote={mode === 'demo' ? 'Observations synthétiques' : status?.trackingAllowed ? null : 'Suivi non autorisé : aucune observation conservée'} />}
+        trackingNote={mode === 'demo' ? 'Observations synthétiques' : tracking ? null : 'Suivi non autorisé : aucune observation conservée'} />}
       {tab === 'compare' && <ComparePanel mode={compareMode} setMode={setCompareMode} shopsById={shopsById}
         shops={shops.filter(s => selShops.has(s.id))} listings={listings.filter(l => selListings.has(l.id))} />}
       {tab === 'collections' && <CollectionsPanel workspace={ws} listings={listings} shopsById={shopsById} onUpdate={update} onOpen={l => setOpenId(l.id)} />}

@@ -1,3 +1,4 @@
+import { localDateStr } from '@/lib/backup'
 import { useState } from 'react'
 import { Play, Pause, Square, Timer as TimerIcon, AlertTriangle } from 'lucide-react'
 import { useStore } from '../../store/useStore'
@@ -27,7 +28,7 @@ function getLast7Days() {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
     d.setDate(d.getDate() - i)
-    days.push(d.toISOString().slice(0, 10))
+    days.push(localDateStr(d))
   }
   return days
 }

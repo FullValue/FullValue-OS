@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { keepCorruptCopy, snapshotDaily } from '@/lib/backup'
 import { toast } from '@/lib/toast'
+import { trackChanges } from '@/lib/cloudSync'
 
 const STATE_VERSION = 8
 const nanoid = () => Math.random().toString(36).slice(2, 10)
@@ -77,6 +78,8 @@ const INITIAL_STATE = {
   montages: [],
   // v8 : Sourcing & comparatif Etsy — sélections propres à chaque compte (aucune donnée Etsy réelle stockée ici).
   etsy: { mode: 'demo', shops: [], collections: [], favorites: [], notes: {}, columns: null, observations: [] },
+  // Traces des suppressions ({ id: date }) : la synchro s'en sert pour ne pas ressusciter un élément supprimé.
+  _deleted: {},
 }
 
 // Champs par défaut d'une tâche, partagés par toutes les actions qui en créent une.
@@ -298,6 +301,13 @@ function reducer(state, action) {
   }
 }
 
+// Toute action passe ici : les éléments modifiés sont datés et les suppressions mémorisées (voir trackChanges).
+function trackedReducer(state, action) {
+  const next = reducer(state, action)
+  if (next === state || action.type === 'HYDRATE_STATE') return next
+  return trackChanges(state, next)
+}
+
 function loadState() {
   let raw = null
   try {
@@ -346,7 +356,7 @@ function loadState() {
 const StoreContext = createContext(null)
 
 export function StoreProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, undefined, loadState)
+  const [state, dispatch] = useReducer(trackedReducer, undefined, loadState)
   const warnedRef = useRef(false)
   useEffect(() => {
     try {

@@ -1,3 +1,4 @@
+import { localDateStr } from '@/lib/backup'
 import { accentText } from '@/lib/colors'
 import { useState, useRef, useEffect } from 'react'
 import { ArrowLeft, Clock, CheckSquare, BarChart2, Kanban, FileText, Calendar, Flag, Edit2, Check, Plus, Trash2, FileJson, Play, CalendarDays, Link2, ExternalLink } from 'lucide-react'
@@ -674,7 +675,7 @@ export default function ProjetPage({ projectId, onNavigate, onStartTask }) {
     if (snapshot) toastUndo('Tâche supprimée', () => dispatch({ type: 'RESTORE_ITEMS', payload: { tasks: [snapshot] } }))
   }
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localDateStr()
   const weekAgo = openedAt - 7 * 86400000
   const openTasks = projectTasks.filter(t => t.status !== 'done')
   const stats = [

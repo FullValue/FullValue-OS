@@ -1,3 +1,4 @@
+import { localDateStr } from '@/lib/backup'
 import { useState, useEffect } from 'react'
 import { CheckCircle, AlertCircle, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
 import { BulkImportSchema, formatZodError } from '@/lib/import/schema'
@@ -157,7 +158,7 @@ function SchemaModal({ onClose }) {
   const [copied, setCopied] = useState(false)
 
   function copyPrompt() {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDateStr()
     navigator.clipboard.writeText(AI_PROMPT.replace('{{DATE}}', today))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -193,7 +194,7 @@ function SchemaModal({ onClose }) {
               </p>
               <pre className="text-xs leading-relaxed p-4 rounded-xl overflow-x-auto whitespace-pre-wrap"
                 style={{ background: 'var(--bg-input, rgba(0,0,0,0.15))', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace', border: '1px solid var(--border-soft)' }}>
-                {AI_PROMPT.replace('{{DATE}}', new Date().toISOString().slice(0, 10))}
+                {AI_PROMPT.replace('{{DATE}}', localDateStr())}
               </pre>
               <Button variant="subtle" size="sm" className="mt-3" onClick={copyPrompt}>
                 {copied ? <Check size={14} /> : <Copy size={14} />}

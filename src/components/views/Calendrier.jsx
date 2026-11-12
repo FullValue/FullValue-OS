@@ -1,3 +1,4 @@
+import { localDateStr } from '@/lib/backup'
 import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, X, Trash2, PanelRight, PanelRightClose } from 'lucide-react'
 import { useStore } from '@/store/useStore'
@@ -25,7 +26,7 @@ export const EVENT_TYPES = {
 const TYPE_ORDER = ['meeting', 'focus', 'admin', 'personnel', 'client_meeting']
 
 function WeekRecapSidebar({ weekDays, state, getProject }) {
-  const weekIsoSet = new Set(weekDays.map(d => d.toISOString().slice(0, 10)))
+  const weekIsoSet = new Set(weekDays.map(d => localDateStr(d)))
 
   // Aggregate hours by project across all sources
   const byProject = new Map()
@@ -249,7 +250,7 @@ function EventForm({ initial, date, projects, clients, onSubmit, onClose, onDele
   function handleSubmit(e) {
     e.preventDefault()
     if (!title.trim()) return
-    const dateStr = (initial?.date) || date.toISOString().slice(0, 10)
+    const dateStr = (initial?.date) || localDateStr(date)
     onSubmit({
       title: title.trim(),
       date: dateStr,
@@ -461,7 +462,7 @@ export default function Calendrier() {
           const newStartHour = snap15(Math.max(0, Math.min(24 - ds.origDurationH, ds.origStartHour + ds.deltaY / HOUR_PX)))
           const newDayIdx = getDayIdxAtX(e.clientX)
           const targetDay = (newDayIdx != null) ? weekDays[newDayIdx] : weekDays[ds.origDayIdx]
-          const newDate = targetDay.toISOString().slice(0, 10)
+          const newDate = localDateStr(targetDay)
           const endHour = newStartHour + ds.origDurationH
           commitMove(ds, newDate, newStartHour, endHour)
         } else if (ds.type === 'resize') {
@@ -568,7 +569,7 @@ export default function Calendrier() {
 
   // Compute daily occupancy in hours (for heatmap in month view)
   function getDayOccupancy(date) {
-    const iso = date.toISOString().slice(0, 10)
+    const iso = localDateStr(date)
     let h = 0, count = 0
     state.calendarEvents.filter(e => e.date === iso).forEach(e => {
       const [sh, sm] = e.startTime.split(':').map(Number)
@@ -597,7 +598,7 @@ export default function Calendrier() {
 
   // Build events for the week
   function getEventsForDay(date) {
-    const iso = date.toISOString().slice(0, 10)
+    const iso = localDateStr(date)
     const events = []
 
     // Tasks with due date — all-day style, top of column

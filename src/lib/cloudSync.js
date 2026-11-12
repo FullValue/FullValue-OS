@@ -33,7 +33,66 @@ function mergeList(local, remote) {
   return [...byId.values()]
 }
 
+const TOMBSTONE_DAYS = 90
+const NO_DELETIONS = {}
+
+// Appelé après chaque action du store : date les éléments modifiés (updatedAt) et garde une trace
+// des suppressions (_deleted : { id: date }), pour qu'une fusion ne ressuscite pas un élément supprimé
+// et qu'en cas de conflit la version la plus récente gagne.
+export function trackChanges(prev, next, now = new Date().toISOString()) {
+  let out = next
+  const base = next._deleted || NO_DELETIONS
+  let deleted = base
+  for (const key of Object.keys(next)) {
+    const before = prev[key]
+    const after = next[key]
+    if (before === after || !isEntityList(before) || !isEntityList(after)) continue
+    const beforeById = new Map(before.map(x => [x.id, x]))
+    const afterIds = new Set(after.map(x => x.id))
+    let touched = false
+    const list = after.map(item => {
+      const old = beforeById.get(item.id)
+      const restored = !old && deleted[item.id]
+      if (restored) {
+        if (deleted === base) deleted = { ...deleted }
+        delete deleted[item.id]
+      }
+      if ((old && old !== item) || restored) { touched = true; return { ...item, updatedAt: now } }
+      return item
+    })
+    for (const old of before) {
+      if (afterIds.has(old.id)) continue
+      if (deleted === base) deleted = { ...deleted }
+      deleted[old.id] = now
+    }
+    if (touched) out = { ...out, [key]: list }
+  }
+  if (deleted !== base) out = { ...out, _deleted: deleted }
+  return out
+}
+
+// Retire des listes les éléments supprimés depuis leur dernière modification, et oublie les vieilles traces.
+function applyDeletions(state, now = new Date()) {
+  const limit = new Date(now.getTime() - TOMBSTONE_DAYS * 86400000).toISOString()
+  const deleted = Object.fromEntries(Object.entries(state._deleted || {}).filter(([, at]) => at >= limit))
+  const out = { ...state, _deleted: deleted }
+  for (const [key, value] of Object.entries(state)) {
+    if (!isEntityList(value)) continue
+    const kept = value.filter(x => !(deleted[x.id] && deleted[x.id] >= stamp(x)))
+    if (kept.length !== value.length) out[key] = kept
+  }
+  // Un élément plus récent que sa trace de suppression a été recréé : la trace n'a plus lieu d'être.
+  for (const value of Object.values(out)) {
+    if (isEntityList(value)) for (const x of value) delete deleted[x.id]
+  }
+  return out
+}
+
 export function mergeStates(local, remote) {
+  return applyDeletions(mergeRaw(local, remote))
+}
+
+function mergeRaw(local, remote) {
   const out = { ...remote }
   for (const key of new Set([...Object.keys(local), ...Object.keys(remote)])) {
     const l = local[key]

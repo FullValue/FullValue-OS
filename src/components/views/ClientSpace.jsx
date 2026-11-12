@@ -1,3 +1,4 @@
+import { localDateStr } from '@/lib/backup'
 import { accentText, tint } from '@/lib/colors'
 import { useState, useRef, useEffect } from 'react'
 import {
@@ -840,7 +841,7 @@ function FacturationTab({ client, accent }) {
   function addInvoice() {
     const ht = parseFloat(amtHt) || 0; const vatRate = parseFloat(vat) || 0
     const ttc = ht * (1 + vatRate / 100)
-    dispatch({ type: 'ADD_CLIENT_INVOICE', payload: { clientId: client.id, invoiceNumber: num.trim(), date: date || new Date().toISOString().slice(0, 10), amountHt: ht, vatRate, amountTtc: ttc, description: desc.trim(), status } })
+    dispatch({ type: 'ADD_CLIENT_INVOICE', payload: { clientId: client.id, invoiceNumber: num.trim(), date: date || localDateStr(), amountHt: ht, vatRate, amountTtc: ttc, description: desc.trim(), status } })
     setNum(''); setDate(''); setAmtHt(''); setDesc(''); setStatus('to_emit'); setShowForm(false)
     toast.success('Facture créée')
   }
@@ -942,7 +943,7 @@ function ClientForm({ initial = {}, onSubmit, onClose }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (!name.trim()) return
-    onSubmit({ name: name.trim(), shortName: shortName.trim(), city: city.trim(), activityType, status, startDate: startDate || new Date().toISOString().slice(0, 10), accentColor })
+    onSubmit({ name: name.trim(), shortName: shortName.trim(), city: city.trim(), activityType, status, startDate: startDate || localDateStr(), accentColor })
   }
 
   return (

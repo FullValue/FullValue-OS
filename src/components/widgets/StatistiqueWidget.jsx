@@ -1,3 +1,4 @@
+import { localDateStr } from '@/lib/backup'
 import { useMemo } from 'react'
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { useStore } from '@/store/useStore'
@@ -9,7 +10,7 @@ function build30DayData(tasks) {
   for (let i = 29; i >= 0; i--) {
     const day = new Date(now)
     day.setDate(day.getDate() - i)
-    const iso = day.toISOString().slice(0, 10)
+    const iso = localDateStr(day)
 
     const completed = tasks.filter(t =>
       t.completedAt && t.completedAt.slice(0, 10) === iso

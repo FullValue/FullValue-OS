@@ -23,6 +23,7 @@ import VoiceCapture from '@/components/VoiceCapture'
 import CheckinOverlay from '@/components/CheckinOverlay'
 import WeeklyWrapped from '@/components/WeeklyWrapped'
 import WinterArcLayer from '@/components/WinterArcLayer'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { arcInfo } from '@/lib/winterArc'
 import AccessCodePage from '@/components/auth/AccessCodePage'
 import LoginPage from '@/components/auth/LoginPage'
@@ -423,7 +424,7 @@ function AppInner() {
       {isImmersive && !isMobile ? (
         // Open space en plein écran : rail d'icônes à gauche, la scène occupe tout le reste.
         <main className="fixed inset-y-0 right-0 animate-fadeIn" style={{ left: RAIL_WIDTH - 12 }}>
-          {renderPage()}
+          <ErrorBoundary resetKey={activePage}>{renderPage()}</ErrorBoundary>
         </main>
       ) : (
         <main
@@ -436,7 +437,7 @@ function AppInner() {
           <TopBar onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} timer={timer} />
           <PriorityStrip onStartTask={quickStart} onOpenPalette={() => setCmdOpen(true)} onNavigate={setActivePage} />
           <div className="mx-auto animate-fadeIn px-0 sm:px-2" style={{ maxWidth: isMobile || isImmersive ? '100%' : (isJournee ? 1440 : 1100) }}>
-            {renderPage()}
+            <ErrorBoundary resetKey={activePage}>{renderPage()}</ErrorBoundary>
           </div>
         </main>
       )}

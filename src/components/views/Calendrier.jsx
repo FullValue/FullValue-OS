@@ -661,11 +661,11 @@ export default function Calendrier() {
       const durationH = a.duration ? (a.duration / 3600) : 1
       events.push({
         id: `apt_${a.id}`, source: 'appointment', raw: a,
-        title: a.title, emoji: '👤',
+        title: a.title, emoji: client ? '👤' : '📅',
         color: client?.accentColor || '#FFC1E0',
         startHour: sh + sm / 60, durationH,
         label: client?.shortName || client?.name,
-        kindLabel: 'RDV client',
+        kindLabel: client ? 'RDV client' : 'Rendez-vous',
       })
     })
 

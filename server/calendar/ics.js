@@ -60,8 +60,10 @@ export function buildIcs(state, now = new Date()) {
     events.push([
       `UID:appointment-${a.id}@cockpit`, `DTSTAMP:${stamp}`,
       `DTSTART:${ymd(a.date)}T${hm(a.time)}`, `DTEND:${addMinutes(a.date, a.time, Math.round((a.duration || 3600) / 60))}`,
-      `SUMMARY:${esc(`👤 ${a.title}`)}`,
-      ...(client ? [`DESCRIPTION:${esc(`RDV client · ${client.name}`)}`] : []),
+      `SUMMARY:${esc(`${client ? '👤' : '📅'} ${a.title}`)}`,
+      ...(a.location ? [`LOCATION:${esc(a.location)}`] : []),
+      ...(a.link ? [`URL:${String(a.link).replace(/[\r\n]/g, '')}`] : []),
+      ...(client || a.note || a.link ? [`DESCRIPTION:${esc([client && `RDV client · ${client.name}`, a.note, a.link].filter(Boolean).join('\n'))}`] : []),
     ])
   }
 

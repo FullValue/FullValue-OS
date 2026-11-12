@@ -40,6 +40,8 @@ import Taches from '@/components/views/Taches'
 import Sessions from '@/components/views/Sessions'
 import Inbox from '@/components/views/Inbox'
 import Calendrier from '@/components/views/Calendrier'
+import RendezVous from '@/components/views/RendezVous'
+import AppointmentReminders from '@/components/AppointmentReminders'
 import HubRessources from '@/components/views/HubRessources'
 import Formation from '@/components/views/Formation'
 import ClientSpace from '@/components/views/ClientSpace'
@@ -358,6 +360,7 @@ function AppInner() {
       case 'journee':    return <Journee onStartTask={quickStart} onNavigate={setActivePage} onOpenPalette={() => setCmdOpen(true)} timer={timer} />
       case 'inbox':      return <Inbox onNavigate={setActivePage} />
       case 'calendrier': return <Calendrier />
+      case 'rendez-vous': return <RendezVous />
       case 'taches':     return <Taches />
       case 'sessions':   return (
         <Sessions
@@ -473,6 +476,7 @@ function AppInner() {
 
       <VoiceCapture />
       <CheckinOverlay />
+      <AppointmentReminders onNavigate={setActivePage} />
       <WeeklyWrapped />
       <WinterArcLayer />
 

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import {
-  Home, Inbox, Calendar, CheckSquare, Timer, BookOpen, GraduationCap,
+  Home, Inbox, Calendar, CalendarClock, CheckSquare, Timer, BookOpen, GraduationCap,
   Users, FileJson, Sun, Moon, Plus, Zap, Focus, ClipboardCheck,
   Keyboard, Folder, LayoutGrid, Play, Database, Building2, HardDrive, MessageCircle, Repeat, Target, KanbanSquare, Receipt, Trophy, Mountain, Clapperboard, ShoppingBag,
 } from 'lucide-react'
@@ -28,6 +28,7 @@ const PAGES = [
   { id: 'facturation', label: 'Facturation (devis, factures)', Icon: Receipt },
   { id: 'trophees', label: 'Trophées et succès', Icon: Trophy },
   { id: 'calendrier', label: 'Calendrier', Icon: Calendar, kbd: 'G C' },
+  { id: 'rendez-vous', label: 'Rendez-vous', Icon: CalendarClock },
   { id: 'taches', label: 'Tâches', Icon: CheckSquare, kbd: 'G T' },
   { id: 'sessions', label: 'Sessions', Icon: Timer, kbd: 'G S' },
   { id: 'projets', label: 'Projets', Icon: LayoutGrid, kbd: 'G P' },
@@ -176,6 +177,10 @@ export default function CommandPalette({
         <CommandSeparator />
 
         <CommandGroup heading="Actions">
+          <CommandItem value="action nouveau rendez-vous rdv ajouter" onSelect={() => { go('rendez-vous'); setTimeout(() => window.dispatchEvent(new Event('cockpit:new-rdv')), 80) }}>
+            <CalendarClock size={15} className="text-[var(--text-tertiary)]" />
+            Nouveau rendez-vous
+          </CommandItem>
           <CommandItem value="action session demarrer timer" onSelect={() => go('sessions')}>
             <Play size={15} className="text-[var(--green-deep)]" />
             Démarrer une session
@@ -270,6 +275,18 @@ export default function CommandPalette({
                 {c.city && (
                   <span className="ml-auto text-[10px] text-[var(--text-tertiary)]">{c.city}</span>
                 )}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {query.trim().length > 1 && state.appointments.length > 0 && (
+          <CommandGroup heading="Rendez-vous">
+            {[...state.appointments].sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || ''))).slice(0, 30).map(a => (
+              <CommandItem key={a.id} value={`rendez-vous rdv ${a.title} ${a.location || ''} ${a.date}`} onSelect={() => go('rendez-vous')}>
+                <CalendarClock size={15} className="text-[var(--text-tertiary)]" />
+                <span className="truncate">{a.title}</span>
+                <span className="ml-auto text-[10px] text-[var(--text-tertiary)]">{(a.date || '').split('-').reverse().join('/')} · {a.time}</span>
               </CommandItem>
             ))}
           </CommandGroup>

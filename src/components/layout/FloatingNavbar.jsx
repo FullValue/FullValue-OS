@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  Home, Inbox, Calendar, CheckSquare, Timer,
+  Home, Inbox, Calendar, CalendarClock, CheckSquare, Timer,
   BookOpen, GraduationCap,
   Users, LayoutDashboard, ChevronDown, LogOut, HardDrive, Plug, Flame,
   Pencil, Trash2, Check, X, Plus, Menu, Building2, ClipboardCheck, MessageCircle, Repeat, Target, KanbanSquare, Receipt, Trophy, Mountain, Clapperboard, ShoppingBag,
@@ -31,6 +31,7 @@ const NAV_GROUPS = [
       { id: 'inbox',      label: 'Inbox',       Icon: Inbox,       badge: true },
       { id: 'messages',   label: 'Messages',    Icon: MessageCircle, waBadge: true },
       { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
+      { id: 'rendez-vous', label: 'Rendez-vous', Icon: CalendarClock },
       { id: 'sessions',   label: 'Sessions',    Icon: Timer,       timer: true },
       { id: 'habitudes',  label: 'Habitudes',   Icon: Repeat },
     ],
@@ -225,6 +226,7 @@ function MobileMenuDrawer({ isOpen, onClose, activePage, setActivePage, projects
         { id: 'studio',     label: 'Studio Créatif', Icon: Clapperboard },
         { id: 'etsy',       label: 'Sourcing Etsy', Icon: ShoppingBag },
         { id: 'calendrier', label: 'Calendrier',  Icon: Calendar },
+        { id: 'rendez-vous', label: 'Rendez-vous', Icon: CalendarClock },
         { id: 'revue',      label: 'Revue hebdo', Icon: ClipboardCheck },
         { id: 'habitudes',  label: 'Habitudes',   Icon: Repeat },
         { id: 'objectifs',  label: 'Objectifs',   Icon: Target },

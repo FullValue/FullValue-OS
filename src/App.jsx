@@ -14,6 +14,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useShortcuts } from '@/hooks/useShortcuts'
 import { useGameNotifications } from '@/hooks/useGame'
+import { usePrayerTimesSync } from '@/hooks/usePrayerTimesSync'
 import { useStore } from '@/store/useStore'
 import { localDateStr } from '@/lib/backup'
 import { pickNextAction } from '@/lib/priorities'
@@ -135,6 +136,7 @@ function AppInner() {
 
   const { theme, setThemePreference } = useTheme()
   useGameNotifications()
+  usePrayerTimesSync()
 
   // Timer
   // Le chrono survit à un rechargement : son état est rejoué depuis localStorage.

@@ -2,8 +2,10 @@ import { useDropzone } from 'react-dropzone'
 import { Upload } from 'lucide-react'
 import { useFileUpload } from '@/hooks/useFileUpload'
 import { useAuth } from '@/contexts/AuthContext'
+import { VIDEO_MIME } from '@/lib/video'
 
 const MAX_MB = 50
+const MAX_MB_MEDIA = 200
 const ACCEPTED_MIME = [
   'image/png','image/jpeg','image/webp','image/gif',
   'application/pdf',
@@ -14,6 +16,7 @@ const ACCEPTED_MIME = [
   'application/vnd.ms-powerpoint',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'text/plain','text/csv','application/zip',
+  ...VIDEO_MIME,
 ]
 
 export default function FileUploader({ bucket, subPath = '', onSuccess, onError }) {
@@ -22,7 +25,9 @@ export default function FileUploader({ bucket, subPath = '', onSuccess, onError 
 
   async function handleFile(file) {
     if (!file) return
-    if (file.size > MAX_MB * 1024 * 1024) { onError?.(`Fichier trop volumineux (max ${MAX_MB} MB)`); return }
+    const isMedia = VIDEO_MIME.includes(file.type)
+    const limit = isMedia ? MAX_MB_MEDIA : MAX_MB
+    if (file.size > limit * 1024 * 1024) { onError?.(`Fichier trop volumineux (max ${limit} MB)`); return }
     if (!ACCEPTED_MIME.includes(file.type)) { onError?.('Type de fichier non autorisé'); return }
 
     try {
@@ -70,7 +75,7 @@ export default function FileUploader({ bucket, subPath = '', onSuccess, onError 
             {isDragActive ? 'Lâche le fichier ici' : 'Glisse un fichier ici ou clique pour parcourir'}
           </p>
           <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-            PDF, images, documents Office · max {MAX_MB} MB
+            PDF, images, documents Office · max {MAX_MB} MB · vidéo / audio (mp4, webm, mp3…) · max {MAX_MB_MEDIA} MB
           </p>
         </>
       )}

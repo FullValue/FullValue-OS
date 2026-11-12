@@ -69,7 +69,9 @@ Fichiers des ressources Formation (PDFs, vidéos, etc.).
 |---|---|
 | Public | Non |
 | File size limit | 200 MB |
-| MIME types autorisés | `image/*`, `application/pdf`, `video/mp4`, `video/webm`, `audio/mpeg`, `text/plain` |
+| MIME types autorisés | `image/*`, `application/pdf`, `video/mp4`, `video/webm`, `video/quicktime`, `audio/mpeg`, `audio/mp4`, `audio/x-m4a`, `audio/wav`, `audio/ogg`, `text/plain` |
+
+Les vidéos et audios importés dans Formation se lisent directement dans l'outil (reprise de lecture, notes horodatées). L'app accepte jusqu'à 200 MB pour ces fichiers ; si ton plan Supabase plafonne plus bas (50 MB en gratuit), l'envoi est refusé avec un message du serveur.
 
 **Path pattern** : `{user_id}/{uuid}.{ext}`
 

@@ -1,6 +1,6 @@
 import { accentText } from '@/lib/colors'
-import { useState } from 'react'
-import { Plus, ExternalLink, Play, FileText, BookOpen, Puzzle, Mic, X, Trash2, Plus as PlusIcon, Paperclip, ArrowLeft, GraduationCap } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Plus, ExternalLink, Play, Clock, FileText, BookOpen, Puzzle, Mic, X, Trash2, Plus as PlusIcon, Paperclip, ArrowLeft, GraduationCap } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,9 +14,13 @@ import Drawer from '@/components/ui/Drawer'
 import FileUploader from '@/components/files/FileUploader'
 import GlowSearchBar from '@/components/ui/GlowSearchBar'
 import FilePreview from '@/components/files/FilePreview'
-import YouTubeEmbed from '@/components/youtube/YouTubeEmbed'
 import YouTubeThumbnail from '@/components/youtube/YouTubeThumbnail'
 import AddYouTubeForm from '@/components/youtube/AddYouTubeForm'
+import VideoPlayer from '@/components/video/VideoPlayer'
+import { useFileUpload } from '@/hooks/useFileUpload'
+import { extractYouTubeId, fetchYouTubeMetadata } from '@/lib/youtube'
+import { SPEEDS, addTimeNote, fetchVimeoMetadata, formatTime, progressPatch, resumePoint, thumbnailOf, videoSource, watchPercent } from '@/lib/video'
+import { nanoid } from '@/store/useStore'
 
 const TYPE_CONFIG = {
   video:     { label: 'Vidéo',     Icon: Play,      color: '#F87171' },
@@ -38,21 +42,39 @@ const CATEGORIES = ['Business', 'Tech', 'Mindset', 'Productivité', 'Marketing',
 
 // ── Cards ───────────────────────────────────────────────────────────────────────
 
-function YouTubeCard({ resource, onClick, onDelete }) {
+function VideoCard({ resource, onClick, onDelete }) {
   const status = STATUS_CONFIG[resource.status] || STATUS_CONFIG.a_voir
+  const source = videoSource(resource)
+  const thumb = thumbnailOf(resource)
+  const pct = watchPercent(resource)
+  const audio = source?.media === 'audio'
   return (
     <Card className="overflow-hidden group relative">
-      <YouTubeThumbnail youtubeId={resource.youtubeId} title={resource.title} onClick={() => onClick(resource)} />
+      {thumb ? (
+        <YouTubeThumbnail youtubeId={resource.youtubeId || source?.youtubeId} src={thumb} title={resource.title} onClick={() => onClick(resource)} />
+      ) : (
+        <Button type="button" variant="ghost" onClick={() => onClick(resource)} aria-label={`Lire ${resource.title}`}
+          className="relative flex h-auto w-full items-center justify-center rounded-xl bg-[#101322] p-0 hover:bg-[#101322]" style={{ aspectRatio: '16/9' }}>
+          <span className="rounded-full bg-white/90 p-2.5 shadow-lg"><Play size={16} className="ml-0.5 fill-[#1d2440] text-[#1d2440]" /></span>
+          <span className="absolute bottom-2 left-3 text-[10px] font-medium uppercase tracking-wider text-white/60">{audio ? 'Audio' : source?.kind === 'vimeo' ? 'Vimeo' : 'Vidéo'}</span>
+        </Button>
+      )}
+      {pct > 0 && (
+        <div className="h-1 w-full" style={{ background: 'rgba(var(--ink),0.08)' }} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progression de lecture">
+          <div className="h-full" style={{ width: `${pct}%`, background: 'var(--accent)' }} />
+        </div>
+      )}
       <div className="p-3">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span className="text-[9px] font-medium" style={{ color: accentText(status.color) }}>{status.label}</span>
-          <span className="text-[10px] bg-red-500/15 text-red-400 px-2 py-0.5 rounded-full font-medium">▶ YouTube</span>
+          {source?.kind === 'youtube' && <span className="text-[10px] bg-red-500/15 text-red-400 px-2 py-0.5 rounded-full font-medium">▶ YouTube</span>}
           {resource.category && <span className="text-[10px] text-[var(--text-tertiary)] bg-[rgba(var(--ink),0.05)] px-2 py-0.5 rounded-full">{resource.category}</span>}
+          {pct > 0 && pct < 92 && <span className="text-[10px] text-[var(--text-tertiary)]">{formatTime(resource.watchTime)} / {formatTime(resource.watchDuration)}</span>}
         </div>
         <h3 className="text-[var(--text-primary)] text-sm font-medium leading-tight line-clamp-2">{resource.title}</h3>
-        {resource.youtubeChannel && <p className="text-[var(--text-tertiary)] text-xs mt-0.5">{resource.youtubeChannel}</p>}
+        {(resource.youtubeChannel || resource.author) && <p className="text-[var(--text-tertiary)] text-xs mt-0.5">{resource.youtubeChannel || resource.author}</p>}
       </div>
-      <Button variant="ghost" size="icon-sm" onClick={() => onDelete(resource.id)} className="absolute top-2 right-2 bg-black/60 text-white hover:text-[var(--red-deep)] opacity-0 group-hover:opacity-100">
+      <Button variant="ghost" size="icon-sm" onClick={() => onDelete(resource.id)} aria-label="Supprimer" className="absolute top-2 right-2 bg-black/60 text-white hover:text-[var(--red-deep)] opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
         <Trash2 size={12} />
       </Button>
     </Card>
@@ -90,13 +112,57 @@ function LearningCard({ resource, onClick, onDelete }) {
 
 function VideoDetailPage({ resource, onBack }) {
   const { dispatch } = useStore()
+  const source = videoSource(resource)
   const [notes, setNotes] = useState(resource.notes || '')
   const [takeaways, setTakeaways] = useState(resource.takeaways || [])
   const [citations, setCitations] = useState(resource.citations || [])
   const [newTakeaway, setNewTakeaway] = useState('')
   const [newCitation, setNewCitation] = useState('')
+  const [title, setTitle] = useState(resource.title)
+  const [mediaUrl, setMediaUrl] = useState(source?.kind === 'direct' ? source.url : null)
+  const [mediaError, setMediaError] = useState('')
+  const [speed, setSpeed] = useState(1)
+  const [noteText, setNoteText] = useState('')
+  const [noteTime, setNoteTime] = useState(null)
+  const [startAt] = useState(() => resumePoint(resource))
+  const playerRef = useRef(null)
+  const resourceRef = useRef(resource)
+  const lastSaved = useRef(0)
+  const { getSignedUrl } = useFileUpload('training-files')
+  useEffect(() => { resourceRef.current = resource })
 
   function save(updates) { dispatch({ type: 'UPDATE_LEARNING', payload: { id: resource.id, ...updates } }) }
+
+  // Fichier importé : lien signé valable 6 h, le temps de regarder une longue formation.
+  useEffect(() => {
+    if (source?.kind !== 'file') return
+    let cancelled = false
+    getSignedUrl(source.filePath, 21600)
+      .then(url => { if (!cancelled) setMediaUrl(url) })
+      .catch(() => { if (!cancelled) setMediaError("Impossible de charger le fichier : vérifie ta connexion au compte.") })
+    return () => { cancelled = true }
+  }, [source?.kind, source?.filePath]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // La progression est enregistrée au plus toutes les 15 s, et à chaque pause ou fermeture.
+  const onProgress = useCallback((time, duration, final) => {
+    const r = resourceRef.current
+    if (!duration || time < 1) return
+    if (!final && Math.abs(time - lastSaved.current) < 14) return
+    const patch = progressPatch(r, time, duration)
+    if (patch.watchTime === r.watchTime) return
+    lastSaved.current = time
+    dispatch({ type: 'UPDATE_LEARNING', payload: { id: r.id, ...patch } })
+  }, [dispatch])
+
+  function changeSpeed(v) { setSpeed(v); playerRef.current?.setSpeed(v) }
+
+  function startNote() { if (noteTime === null) setNoteTime(playerRef.current?.getTime() ?? 0) }
+  function addNote() {
+    const next = addTimeNote(resource.timeNotes, noteTime ?? playerRef.current?.getTime() ?? 0, noteText, nanoid())
+    if (next === (resource.timeNotes || [])) return
+    save({ timeNotes: next })
+    setNoteText(''); setNoteTime(null)
+  }
 
   function addTakeaway() {
     if (!newTakeaway.trim()) return
@@ -108,7 +174,16 @@ function VideoDetailPage({ resource, onBack }) {
     const u = [...citations, newCitation.trim()]; setCitations(u); save({ citations: u }); setNewCitation('')
   }
 
+  function commitTitle() {
+    const t = title.trim()
+    if (!t) { setTitle(resource.title); return }
+    if (t !== resource.title) save({ title: t })
+  }
+
   const statusOrder = ['a_voir', 'en_cours', 'done']
+  const canTimestamp = source?.kind !== 'vimeo'
+  const timeNotes = resource.timeNotes || []
+  const pct = watchPercent(resource)
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-4">
@@ -135,23 +210,81 @@ function VideoDetailPage({ resource, onBack }) {
 
       {/* Split layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
-        {/* Left: video + meta */}
+        {/* Left: lecteur + infos modifiables */}
         <div>
-          <YouTubeEmbed youtubeId={resource.youtubeId} title={resource.title} />
-          <div className="mt-4">
-            <h1 className="text-lg font-semibold text-[var(--text-primary)]">{resource.title}</h1>
-            {resource.youtubeChannel && <p className="text-[var(--text-tertiary)] text-sm mt-0.5">par {resource.youtubeChannel}</p>}
-            <div className="flex gap-2 mt-2">
-              {resource.category && <span className="text-[11px] bg-[rgba(var(--ink),0.08)] text-[var(--text-tertiary)] px-2.5 py-1 rounded-full">{resource.category}</span>}
-              <a href={resource.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] px-2.5 py-1 rounded-full bg-[rgba(var(--ink),0.05)] transition-colors">
-                <ExternalLink size={10} /> Ouvrir sur YouTube
-              </a>
+          <VideoPlayer ref={playerRef} source={source} title={resource.title} url={mediaUrl} error={mediaError} startAt={startAt} onProgress={onProgress} />
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] text-[var(--text-tertiary)]">Vitesse</span>
+            {SPEEDS.map(v => (
+              <Button key={v} type="button" variant="ghost" onClick={() => changeSpeed(v)} aria-pressed={speed === v}
+                className="h-auto rounded-lg px-2.5 py-1 font-mono text-[11px]"
+                style={speed === v ? { background: 'var(--violet-bg)', color: 'var(--violet-deep)' } : { background: 'rgba(var(--ink),0.04)', color: 'var(--text-tertiary)' }}>
+                {v}×
+              </Button>
+            ))}
+            {pct > 0 && <span className="ml-auto text-[11px] text-[var(--text-tertiary)]">{pct}% vu · {formatTime(resource.watchTime)} / {formatTime(resource.watchDuration)}</span>}
+          </div>
+          {startAt > 0 && <p className="mt-2 text-[11px] text-[var(--text-tertiary)]">Reprise à {formatTime(startAt)} là où tu t'étais arrêté.</p>}
+
+          <div className="mt-4 flex flex-col gap-3">
+            <Input value={title} onChange={e => setTitle(e.target.value)} onBlur={commitTitle} onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
+              aria-label="Titre" className="h-auto border-transparent bg-transparent px-0 text-lg font-semibold text-[var(--text-primary)] hover:border-[var(--border-soft)] focus:px-3" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="video-author">{resource.youtubeChannel !== undefined ? 'Chaîne' : 'Auteur / Source'}</Label>
+                <Input id="video-author" defaultValue={resource.youtubeChannel ?? resource.author ?? ''} key={resource.id}
+                  onBlur={e => save(resource.youtubeChannel !== undefined ? { youtubeChannel: e.target.value.trim() } : { author: e.target.value.trim() })}
+                  placeholder="Auteur…" className="text-sm" />
+              </div>
+              <div>
+                <Label>Catégorie</Label>
+                <NativeSelect value={resource.category || 'Autre'} onChange={e => save({ category: e.target.value })}>
+                  {[...new Set([...CATEGORIES, resource.category].filter(Boolean))].map(c => <option key={c} value={c}>{c}</option>)}
+                </NativeSelect>
+              </div>
             </div>
+            {resource.url && (
+              <a href={resource.url} target="_blank" rel="noopener noreferrer" className="flex w-fit items-center gap-1 text-[11px] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] px-2.5 py-1 rounded-full bg-[rgba(var(--ink),0.05)] transition-colors">
+                <ExternalLink size={10} /> Ouvrir la source
+              </a>
+            )}
           </div>
         </div>
 
         {/* Right: notes panel */}
         <div className="flex flex-col gap-4">
+          {/* Notes horodatées */}
+          <div className="rounded-2xl p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+            <p className="text-[var(--text-tertiary)] text-[10px] uppercase tracking-wider mb-3">Notes horodatées</p>
+            {timeNotes.length > 0 && (
+              <ul className="flex flex-col gap-1.5 mb-3">
+                {timeNotes.map(n => (
+                  <li key={n.id} className="flex items-start gap-2 group">
+                    <Button type="button" variant="ghost" onClick={() => playerRef.current?.seek(n.t)} disabled={!canTimestamp}
+                      title="Aller à ce moment" className="h-auto shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] text-[var(--violet-deep)] bg-[var(--violet-bg)] hover:bg-[var(--violet-solid)]">
+                      {formatTime(n.t)}
+                    </Button>
+                    <span className="flex-1 text-sm leading-relaxed text-[var(--text-secondary)]">{n.text}</span>
+                    <Button type="button" variant="ghost" size="icon-sm" aria-label="Supprimer la note" onClick={() => save({ timeNotes: timeNotes.filter(x => x.id !== n.id) })}
+                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 shrink-0 text-[var(--text-tertiary)] hover:text-[var(--red-deep)]">
+                      <X size={11} />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canTimestamp ? (
+              <div className="flex gap-2">
+                <Input value={noteText} onFocus={startNote} onChange={e => setNoteText(e.target.value)} onKeyDown={e => e.key === 'Enter' && addNote()}
+                  placeholder={noteTime !== null ? `Note à ${formatTime(noteTime)}…` : 'Écris une note : le moment est repris tout seul…'} className="flex-1 text-xs" />
+                <Button type="button" size="icon" onClick={addNote} disabled={!noteText.trim()} aria-label="Ajouter la note" className="bg-[var(--violet-bg)] text-[var(--violet-deep)] hover:bg-[var(--violet-solid)] shrink-0"><Clock size={13} /></Button>
+              </div>
+            ) : (
+              <p className="text-xs text-[var(--text-tertiary)]">Les notes horodatées ne sont pas disponibles pour Vimeo. Utilise les notes personnelles ci-dessous.</p>
+            )}
+          </div>
+
           {/* Notes */}
           <div className="rounded-2xl p-4" style={{ background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
             <p className="text-[var(--text-tertiary)] text-[10px] uppercase tracking-wider mb-2">Notes personnelles</p>
@@ -323,11 +456,38 @@ function AddForm({ onSubmit, onClose }) {
   const [status, setStatus] = useState('a_voir')
   const [uploadedFile, setUploadedFile] = useState(null)
   const [uploadError, setUploadError] = useState('')
+  const [meta, setMeta] = useState(null) // { url, data } : infos reçues pour le lien saisi
+  const [titleEdited, setTitleEdited] = useState(false)
+
+  // Un lien YouTube ou Vimeo est reconnu tout seul : titre, auteur et miniature pré-remplis.
+  const link = url.trim()
+  const linkKind = mode !== 'link' ? null : extractYouTubeId(link) ? 'youtube' : videoSource({ url: link })?.kind === 'vimeo' ? 'vimeo' : null
+  const detected = linkKind && meta?.url === link ? { kind: linkKind, ...(meta.data || {}) } : null
+  const detecting = !!linkKind && !detected
+
+  useEffect(() => {
+    if (!linkKind) return
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      const data = linkKind === 'youtube' ? await fetchYouTubeMetadata(link) : await fetchVimeoMetadata(link)
+      if (cancelled) return
+      setMeta({ url: link, data })
+      if (data?.title && !titleEdited) setTitle(data.title)
+      if (data?.channel && !author) setAuthor(data.channel)
+    }, 500)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [link, linkKind]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleLinkSubmit(e) {
     e.preventDefault()
     if (!title.trim()) return
-    const payload = { type: mode === 'file' ? 'fichier' : type, title: title.trim(), author: author.trim(), url: mode === 'file' ? '' : url.trim(), category, status, notes: '', takeaways: [], citations: [] }
+    const payload = { type: mode === 'file' ? 'fichier' : type, title: title.trim(), author: author.trim(), url: mode === 'file' ? '' : link, category, status, notes: '', takeaways: [], citations: [] }
+    const youtubeId = linkKind === 'youtube' ? extractYouTubeId(link) : null
+    if (youtubeId) {
+      Object.assign(payload, { type: 'youtube', youtubeId, youtubeChannel: author.trim() || detected?.channel || '', youtubeThumbnailUrl: detected?.thumbnail || `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` })
+    } else if (detected?.kind === 'vimeo' && detected.thumbnail) {
+      payload.thumbnailUrl = detected.thumbnail
+    }
     if (uploadedFile) Object.assign(payload, uploadedFile)
     onSubmit(payload)
   }
@@ -408,7 +568,7 @@ function AddForm({ onSubmit, onClose }) {
 
           <div>
             <Label>Titre *</Label>
-            <Input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Titre" />
+            <Input autoFocus value={title} onChange={e => { setTitle(e.target.value); setTitleEdited(true) }} placeholder="Titre" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -428,6 +588,11 @@ function AddForm({ onSubmit, onClose }) {
             <div>
               <Label>URL</Label>
               <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" className="font-mono" />
+              {(detecting || detected || videoSource({ url: link })) && (
+                <p className="mt-1.5 text-[11px] text-[var(--text-tertiary)]">
+                  {detecting ? 'Reconnaissance du lien…' : '▶ Vidéo reconnue : tu pourras la regarder directement dans le Cockpit.'}
+                </p>
+              )}
             </div>
           )}
 
@@ -468,7 +633,8 @@ export default function Formation() {
   const [videoDetail, setVideoDetail] = useState(null)
 
   let resources = state.learningResources
-  if (typeFilter !== 'all') resources = resources.filter(r => r.type === typeFilter)
+  if (typeFilter === 'youtube') resources = resources.filter(r => videoSource(r)?.kind === 'youtube')
+  else if (typeFilter !== 'all') resources = resources.filter(r => r.type === typeFilter)
   if (statusFilter !== 'all') resources = resources.filter(r => r.status === statusFilter)
   if (search) resources = resources.filter(r => r.title.toLowerCase().includes(search.toLowerCase()) || r.author?.toLowerCase().includes(search.toLowerCase()) || r.youtubeChannel?.toLowerCase().includes(search.toLowerCase()))
 
@@ -532,8 +698,8 @@ export default function Formation() {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {resources.map(r => r.type === 'youtube'
-            ? <YouTubeCard key={r.id} resource={r} onClick={() => setVideoDetail(r.id)} onDelete={handleDelete} />
+          {resources.map(r => videoSource(r)
+            ? <VideoCard key={r.id} resource={r} onClick={() => setVideoDetail(r.id)} onDelete={handleDelete} />
             : <LearningCard key={r.id} resource={r} onClick={res => setSelectedResource(res)} onDelete={handleDelete} />
           )}
         </div>

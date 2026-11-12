@@ -2,7 +2,7 @@ import { Play } from 'lucide-react'
 import { buildThumbnailUrl } from '@/lib/youtube'
 import { Button } from '@/components/ui/button'
 
-export default function YouTubeThumbnail({ youtubeId, title, onClick }) {
+export default function YouTubeThumbnail({ youtubeId, src, title, onClick }) {
   return (
     <Button
       type="button"
@@ -12,7 +12,7 @@ export default function YouTubeThumbnail({ youtubeId, title, onClick }) {
       style={{ aspectRatio: '16/9' }}
     >
       <img
-        src={buildThumbnailUrl(youtubeId)}
+        src={src || buildThumbnailUrl(youtubeId)}
         alt={title ?? 'YouTube'}
         className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
       />
